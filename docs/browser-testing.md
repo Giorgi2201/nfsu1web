@@ -3,8 +3,10 @@
 The experimental browser host is built locally. Its module and game data remain
 private; nothing is uploaded. The user has reported clips with sound, a profile
 persisting across reload, successful profile loading and a race start. Broader
-compatibility and race completion are unverified. The latest page build fixes
-the reported `autosaved` startup exception; see [progress](progress.md).
+compatibility and race completion are unverified. The current runtime adds the
+missing date/time imports which aborted first-time profile creation, and the
+user confirmed that creation now works. The page also fixes the reported
+`autosaved` startup exception. See [progress](progress.md).
 
 ## Start the local server
 
@@ -22,6 +24,13 @@ install read-only. Stop it with Ctrl+C. If the port is occupied, pass
 `--port 8766` and use that port in the browser address.
 
 ## What to try
+
+For the date/time fix, stop and restart the local server, then reload the same
+address. Create a profile with a new unused name (for example `datefix1`) and
+press Enter. Confirm that the game continues without an unresolved import or
+exit code 134. Stop/reload afterward and check that the new profile loads.
+Keep browser storage intact; loading an existing profile alone does not test
+the initial creation path.
 
 1. Wait for the module and browser checks to finish. The module is about
    101 MiB; the page checks the required WebGPU, Wasm, shared-memory and storage

@@ -2,6 +2,46 @@
 
 ## Current bring-up checkpoint
 
+### First profile creation: date/time imports
+
+A later user log establishes the first-profile crash: after creating
+`Profiles.usr` and the profile's `_autosave.ugd`, the runtime aborts on
+`KERNEL32.dll!GetDateFormatA` at guest EIP `0x0041d90c`. This explains how files
+can exist after a failed creation attempt; successful loading after reload does
+not establish that the initial creation path completed.
+
+The private caller audit found two successive six-argument stdcall imports:
+`GetDateFormatA(LOCALE_SYSTEM_DEFAULT, DATE_SHORTDATE, NULL, NULL, out, 12)`
+and `GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS, NULL, format, out, 12)`.
+The time picture is either the locale default or `HH':'mm`. Both imports now
+have original implementations in `runtime/nfsu1_win32.c`. They use the current
+clock, the existing browser timezone adapter, and the runtime's English (US)
+locale. They preserve NUL-inclusive size queries, check guest buffer bounds,
+and set per-thread last-error on failure. This is focused formatting support,
+not complete Windows locale/calendar emulation.
+
+`tools/datetime_runtime_smoke.py` executes the actual helper with synthetic
+guest memory, both natively and compiled with the WASI runtime's compatibility
+header and timezone source. Both pass date/time formatting, the game's custom
+picture, size queries, short-buffer canaries, and error handling. The game
+module has been relinked, and the user subsequently confirmed that profile
+creation works. No original executable or generated guest functions were changed.
+
+The user also supplied a race screenshot showing the rendered world, car and
+HUD. Two issues remain deferred at the user's request: main-menu option labels
+appear about one second after their container, and minimap roads are absent in
+both 2D and 3D modes while player markers remain visible. Their causes are
+unconfirmed. No experimental menu/map tracing or rendering changes are retained.
+
+The `C:\NFSU2` prefix in the pasted write log is inherited virtual filesystem
+identity. Those requests resolve into `/save/nfsu1/NFS Underground/`, as the log
+shows; it does not identify the date-format abort or a write into NFSU2 saves.
+The movie `MAD_FRAME` warning is retained for investigation. Its origin in the
+original decoder and lack of an accompanying trap distinguish it from this
+explicit unresolved-import failure; its host-versus-game cause is not proven.
+
+### Earlier browser and Node observations
+
 The user reports that the browser plays clips with sound, creates a profile
 which survives a reload, loads that profile and starts a race. This is a
 user-observed browser milestone; no agent operated the browser, and race

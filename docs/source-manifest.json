@@ -354,5 +354,17 @@
     },
     "bundler_license_retained": "work/toolchain/web-bundler/node_modules/esbuild/LICENSE.md",
     "output_policy": "Private Wasm, game data, built page and build records stay ignored. No agent browser operation; user-reported browser observations are recorded separately in docs/progress.md."
+  },
+  "profile_datetime_imports": {
+    "date": "2026-10-22",
+    "implementation": "Original NFSU1 Win32 helpers for GetDateFormatA and GetTimeFormatA; English (US) formatting and bounded guest buffers, not full Windows NLS emulation.",
+    "timezone_source": "th0mk/nfsu2-web runtime/web/tz.c and runtime/web/compat/wasm_plat.h at 31da468582c3de14fd6f4233831f62816e2df83d; same retained MIT notice.",
+    "api_references": [
+      "https://learn.microsoft.com/en-us/windows/win32/api/datetimeapi/nf-datetimeapi-getdateformata",
+      "https://learn.microsoft.com/en-us/windows/win32/api/datetimeapi/nf-datetimeapi-gettimeformata",
+      "https://learn.microsoft.com/en-us/windows/win32/intl/day--month--year--and-era-format-pictures"
+    ],
+    "validation": "Focused synthetic native and compiled-WASI execution of actual helpers; private game module relink and browser bundle completed. User subsequently confirmed profile creation works; no agent operated a browser.",
+    "output_policy": "No original game input or generated game functions changed; linked game module remains ignored and local."
   }
 }

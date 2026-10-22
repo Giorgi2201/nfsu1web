@@ -74,3 +74,9 @@ vendored nor added as submodules. `NOTICE.md` summarizes attribution and
 `patches/` retains the nfsu2-web and pcrecomp MIT notices. The PC project's
 reported permission is recorded as reported permission, without assigning it
 a license it did not publish.
+
+The profile-creation date/time helpers are original code using the documented
+Microsoft Win32 API contracts (links in the source manifest). On Wasm, they
+reuse the existing pinned `runtime/web/tz.c` timezone adapter through
+`wasm_plat.h`; the same retained nfsu2-web MIT notice applies. Their focused
+smoke uses synthetic data, with no game bytes or generated game functions.
