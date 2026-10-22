@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "id": "nfsu1-pc-1.4",
+  "status": "runtime_overlay_applied_full_port_in_progress",
+  "address_encoding": "hexadecimal_strings_unsigned_32_bit",
+  "upstreams": {
+    "analysis": {
+      "repository": "codepdbh/nfsu1-recompiled",
+      "commit": "58d9d4f63d59c941031f91973ae48c2cdb1a42b1"
+    },
+    "runtime": {
+      "repository": "th0mk/nfsu2-web",
+      "commit": "31da468582c3de14fd6f4233831f62816e2df83d"
+    }
+  },
+  "evidence_blobs": {
+    "analysis:android/app/src/main/cpp/guest_runtime.cpp": "9eae45d11f3fc9d6720d4e5fc6bbc567997109c7",
+    "analysis:src/runtime/overrides.c": "87d5c6bb586d6a9df33856c74f8e02b43b7cb333",
+    "analysis:config/hooks.txt": "ed8b1381491fcc41f9f8795a2163ca366ba4a5da",
+    "runtime:runtime/web/main_web.c": "df20ec27b2cde6b049feb8be29e0adbef3a6d0f8",
+    "runtime:runtime/cpu.h": "7a6d17d2f76f8f096b3c9e13bc18b42a925e2529",
+    "runtime:runtime/dispatch.c": "f1e586523c71773d5146b9dd3455efbea3474a18",
+    "runtime:runtime/overrides.c": "5165ce16f071bb5a6991d1e92b87736979a49a31",
+    "runtime:runtime/win32.c": "267984c79ac5ec9dfc0aeee98689e4c3abded572"
+  },
+  "identity": {
+    "filename": "Speed.exe",
+    "edition": "PC patch 1.4",
+    "structural_values": {
+      "status": "verified_against_local_archive_member_and_upstream_loader_source",
+      "image_base": "0x00400000",
+      "size_of_image": "0x00394368",
+      "entry_rva": "0x00270cb5",
+      "entry_va": "0x00670cb5",
+      "evidence": "analysis:android/app/src/main/cpp/guest_runtime.cpp"
+    },
+    "sha256": "c0fad450912952f53809a54690d235aa8b4e25b9f46650693c7cbee1b4c074b7",
+    "sha256_status": "measured_local_candidate_matches_upstream_abbreviated_digest_full_reference_not_published",
+    "catalog_sha256": "11c6014df7e7ad9e9c47ae12d1bd25b8b094b26dfb4aa1fab08d34f67c8d068e",
+    "catalog_status": "generated_locally_using_original_seeded_analysis_pipeline_and_cached",
+    "ready_for_game_execution": false,
+    "local_archive_member": {
+      "archive": "Need For Speed - Underground.7z",
+      "member": "Need For Speed Underground/speed.exe",
+      "bytes": 3178496,
+      "inspection": "read_only_decompressed_in_memory_2026_10_21",
+      "full_upstream_digest_verified": false
+    },
+    "catalog_provenance": {
+      "metadata_path": "work/analysis/catalog.metadata.json",
+      "functions": 23617,
+      "pcrecomp_revision": "8c92919a99aaf9e129af5787776bca84863468cc",
+      "historical_catalog_reproduced": false
+    }
+  },
+  "lifting": {
+    "strategy": "redecode_saved_catalog_blocks_into_web_CPU_pointer_ABI",
+    "allow_fallback_full_discovery": false,
+    "preserve": [
+      "entries",
+      "block_ranges",
+      "successors",
+      "calls",
+      "jump_targets",
+      "entry_kinds",
+      "thunk_markers",
+      "exclusions",
+      "hooks",
+      "overrides"
+    ],
+    "dispatch_text_base": "0x00401000",
+    "dispatch_text_size": "0x00295ea7",
+    "dispatch_bounds_status": "measured_local_PE_text_virtual_extent_validate_saved_catalog_coverage_before_execution",
+    "function_tables": [
+      "g_fn_addr",
+      "g_fn_ptr",
+      "g_fn_count"
+    ],
+    "import_tables": [
+      "g_imp",
+      "g_imp_count"
+    ],
+    "import_record_fields": [
+      "iat",
+      "dll",
+      "name",
+      "nargs"
+    ],
+    "import_policy": "derive_from_matching_PE_audit_names_ordinals_and_guest_calling_conventions",
+    "reuse_nfsu2_relocations_inline_or_flag_tables": false,
+    "allow_initial_catalog_generation": true,
+    "catalog_generation_policy": "run_original_upstream_seed_and_catalog_passes_once_when_no_saved_catalog_exists_then_cache_by_input_and_tool_hashes"
+  },
+  "runtime": {
+    "guest_abi": "void(CPU *)",
+    "entry_symbol": "sub_00670cb5",
+    "guest_end": "0x28000000",
+    "guest_end_status": "existing_web_memory_contract_not_validated_for_NFSU1",
+    "com_token_base": "0xe0000000",
+    "import_token_base": "0xf0000000",
+    "token_policy": "dispatch_tokens_never_guest_memory_addresses",
+    "preserve_wasm_tail_dispatch": true,
+    "unknown_target_policy": "stop_bringup_and_report_instead_of_upstream_swallow_call_behavior",
+    "unsupported_instruction_policy": "stop_bringup_and_report",
+    "enable_nfsu2_address_based_features": false,
+    "enable_server_dll": false,
+    "enable_generic_genexec_fallback": false,
+    "abk_dispatch": "required_separate_CPU_pointer_AOT_module_not_implemented"
+  },
+  "filesystem": {
+    "read_only_game_mount": "/data",
+    "executable_path": "/data/Speed.exe",
+    "save_mount": "/save",
+    "save_namespace": "nfsu1",
+    "save_namespace_status": "proposed_isolation_requires_browser_storage_and_runtime_wiring"
+  },
+  "overrides": {
+    "status": "CPU_pointer_implementations_in_runtime_overlay_native_smoke_checked",
+    "evidence": "analysis:src/runtime/overrides.c",
+    "entries": [
+      {
+        "va": "0x00643a39",
+        "purpose": "non_Cyrix_CPU_probe",
+        "result": "eax_zero",
+        "guest_stack_pop_bytes_including_return": 4
+      },
+      {
+        "va": "0x00672630",
+        "purpose": "overlap_safe_CRT_memmove",
+        "guest_calling_convention": "cdecl",
+        "argument_count": 3,
+        "result": "eax_destination",
+        "guest_stack_pop_bytes_including_return": 4
+      },
+      {
+        "va": "0x00678d30",
+        "purpose": "second_overlap_safe_CRT_memmove",
+        "guest_calling_convention": "cdecl",
+        "argument_count": 3,
+        "result": "eax_destination",
+        "guest_stack_pop_bytes_including_return": 4
+      }
+    ]
+  },
+  "hooks": {
+    "enabled_sites": [],
+    "catalog_evidence": "analysis:config/hooks.txt",
+    "policy": "preserve_metadata_enable_only_after_individual_CPU_pointer_port"
+  },
+  "browser_requirements": [
+    "secure_context",
+    "cross_origin_isolation",
+    "SharedArrayBuffer",
+    "shared_WebAssembly_memory",
+    "Atomics.waitAsync",
+    "WebGPU_adapter",
+    "Wasm_SIMD",
+    "Wasm_bulk_memory",
+    "Wasm_tail_calls",
+    "Wasm_exception_handling"
+  ],
+  "validation": {
+    "profile_consumed_by_upstream": true,
+    "local_binary_identity_checked": true,
+    "real_catalog_lifted": true,
+    "runtime_compiled_with_this_profile": true,
+    "browser_boot_attempted": false,
+    "local_binary_identity_check_scope": "full_sha256_and_pe_structural_values",
+    "profile_consumption_scope": "handwritten_runtime_overlay_and_linked_wasm_bringup_with_abort_stubs",
+    "synthetic_wasm_compiled_and_executed_in_node": true,
+    "catalog_generated_locally": true,
+    "real_catalog_lift_scope": "saved_catalog_with_focused_callback_additions_and_remaining_abort_stubs",
+    "node_guest_startup_executed": true,
+    "rendering_validated": false,
+    "audio_output_validated": false,
+    "race_validated": false
+  },
+  "attribution": [
+    "codepdbh",
+    "th0mk",
+    "antoxa2584x",
+    "sp00nznet/pcrecomp"
+  ],
+  "source_policy": "original_integration_metadata_no_copied_source_or_game_derived_code"
+}

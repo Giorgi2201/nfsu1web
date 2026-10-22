@@ -1,0 +1,358 @@
+{
+  "inspected_on": "2026-10-21",
+  "repositories": [
+    {
+      "repository": "codepdbh/nfsu1-recompiled",
+      "commit": "58d9d4f63d59c941031f91973ae48c2cdb1a42b1",
+      "inspected_files": [
+        {
+          "path": "CMakeLists.txt",
+          "blob_sha": "0945b335d16952fae4011b3cf983fc5278436c05",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/CMakeLists.txt"
+        },
+        {
+          "path": "README.md",
+          "blob_sha": "61fe08f356bdd61856f9d39d1a1699d955cfc5e0",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/README.md"
+        },
+        {
+          "path": "android/app/src/main/cpp/guest_memory.h",
+          "blob_sha": "8153ebeee7621d561067f096f8deeeec954e0d9d",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/android/app/src/main/cpp/guest_memory.h"
+        },
+        {
+          "path": "android/app/src/main/cpp/guest_runtime.cpp",
+          "blob_sha": "9eae45d11f3fc9d6720d4e5fc6bbc567997109c7",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/android/app/src/main/cpp/guest_runtime.cpp"
+        },
+        {
+          "path": "android/app/src/main/cpp/guest_threads.inc",
+          "blob_sha": "05c4649192c01c88c04cfa1309a93f281b6ab482",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/android/app/src/main/cpp/guest_threads.inc"
+        },
+        {
+          "path": "config/hooks.txt",
+          "blob_sha": "ed8b1381491fcc41f9f8795a2163ca366ba4a5da",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/config/hooks.txt"
+        },
+        {
+          "path": "config/overrides.txt",
+          "blob_sha": "31e0440f19e8e93c8280b0945e7429ef43fcdb65",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/config/overrides.txt"
+        },
+        {
+          "path": "docs/AUDIT.md",
+          "blob_sha": "103638492d5b17bbfdbeaaecf681ec687e0954f2",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/docs/AUDIT.md"
+        },
+        {
+          "path": "scripts/abk_module.py",
+          "blob_sha": "7e7ace3135472dca1a01a918f66d3ddf516c01ee",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/scripts/abk_module.py"
+        },
+        {
+          "path": "scripts/prepare_module.py",
+          "blob_sha": "993d35aa2efb60b10128cdc0a00cbe0fce97a4b9",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/scripts/prepare_module.py"
+        },
+        {
+          "path": "scripts/run_lift.py",
+          "blob_sha": "54406db323ac24602ef24b0a348fcacefaf71f34",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/scripts/run_lift.py"
+        },
+        {
+          "path": "src/host/main.c",
+          "blob_sha": "34659b5eeaf166aea5ce8f39ebc68be7a23d1621",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/src/host/main.c"
+        },
+        {
+          "path": "src/runtime/abk_code.c",
+          "blob_sha": "c596ed00c12c75ffbb80dd7f181dd0a03a58556e",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/src/runtime/abk_code.c"
+        },
+        {
+          "path": "src/runtime/nfs_runtime.c",
+          "blob_sha": "ccc18e68edfc5df7112616707b6242496a86b951",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/src/runtime/nfs_runtime.c"
+        },
+        {
+          "path": "src/runtime/nfs_runtime.h",
+          "blob_sha": "ac153bd88bec971040ec3a2529a9afc3205e2723",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/src/runtime/nfs_runtime.h"
+        },
+        {
+          "path": "src/runtime/overrides.c",
+          "blob_sha": "87d5c6bb586d6a9df33856c74f8e02b43b7cb333",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/src/runtime/overrides.c"
+        },
+        {
+          "path": "scripts/data_seeds.py",
+          "blob_sha": "11d03560e84360910750232f00351b777f318b5c",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/scripts/data_seeds.py"
+        },
+        {
+          "path": "scripts/code_seeds.py",
+          "blob_sha": "45f0b6e3eb6c46f1e39f7ec51c2a24f2cd2c95a1",
+          "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/scripts/code_seeds.py"
+        }
+      ]
+    },
+    {
+      "repository": "th0mk/nfsu2-web",
+      "commit": "31da468582c3de14fd6f4233831f62816e2df83d",
+      "inspected_files": [
+        {
+          "path": "LICENSE",
+          "blob_sha": "fe8858826d9da7b52561037421aa85c68960d18e",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/LICENSE"
+        },
+        {
+          "path": "gen.sh",
+          "blob_sha": "9a5c779bac49cd284a556fd6ea54dd8910fba258",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/gen.sh"
+        },
+        {
+          "path": "runtime/com.c",
+          "blob_sha": "f32cbf8b5d568b8fcc206ee253397d52bd6ec18a",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/com.c"
+        },
+        {
+          "path": "runtime/cpu.h",
+          "blob_sha": "7a6d17d2f76f8f096b3c9e13bc18b42a925e2529",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/cpu.h"
+        },
+        {
+          "path": "runtime/dispatch.c",
+          "blob_sha": "f1e586523c71773d5146b9dd3455efbea3474a18",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/dispatch.c"
+        },
+        {
+          "path": "runtime/genexec.c",
+          "blob_sha": "8a9e7ef98274b9e15e2b9455b447ee8875e5a529",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/genexec.c"
+        },
+        {
+          "path": "runtime/mem.c",
+          "blob_sha": "90e416ff20f2928c726cc1b966bde4377fcab06f",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/mem.c"
+        },
+        {
+          "path": "runtime/web/audio_web.c",
+          "blob_sha": "f4e0037f7eb3ce6f1955cad86fabe6865dc51215",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/web/audio_web.c"
+        },
+        {
+          "path": "runtime/web/gcpu.c",
+          "blob_sha": "eb39bed5cd7cc86d7b08bd45a6a46f2848a6bf17",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/web/gcpu.c"
+        },
+        {
+          "path": "runtime/web/gpu_web.c",
+          "blob_sha": "87d7fa6fa240bd861c05cb6c6992a37aa4000b80",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/web/gpu_web.c"
+        },
+        {
+          "path": "runtime/web/host_abi.h",
+          "blob_sha": "4bb5f75aae0e59e8321ecb12598e57ca8e4914b0",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/web/host_abi.h"
+        },
+        {
+          "path": "runtime/web/main_web.c",
+          "blob_sha": "df20ec27b2cde6b049feb8be29e0adbef3a6d0f8",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/web/main_web.c"
+        },
+        {
+          "path": "runtime/win32.c",
+          "blob_sha": "267984c79ac5ec9dfc0aeee98689e4c3abded572",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/win32.c"
+        },
+        {
+          "path": "runtime/win32_ext.c",
+          "blob_sha": "114c3591e7f003559fb17f3563d9d00a95ff4c5b",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/win32_ext.c"
+        },
+        {
+          "path": "tools/genall.py",
+          "blob_sha": "057cd54e046831b19e9eb5eb8c3f5d6ca8090923",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/tools/genall.py"
+        },
+        {
+          "path": "tools/lift.py",
+          "blob_sha": "abc0d23c368d5a66da97fe86804e5289222ab356",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/tools/lift.py"
+        },
+        {
+          "path": "web/build.sh",
+          "blob_sha": "d3b77ae0617121d56f6f0da97b16d7c5df9e4cbc",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/web/build.sh"
+        },
+        {
+          "path": "web/gen.sh",
+          "blob_sha": "54ef9c2a397ed5404b6ad56a437f4ff453926198",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/web/gen.sh"
+        },
+        {
+          "path": "web/src/app/checks.ts",
+          "blob_sha": "e63ea7d31e1c2b1a9756b83e9ae016cb17c29d79",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/web/src/app/checks.ts"
+        },
+        {
+          "path": "tools/argcount.py",
+          "blob_sha": "08b642d29b52f7ccd6df9858b88df037f139ff4b",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/tools/argcount.py"
+        },
+        {
+          "path": "runtime/module.h",
+          "blob_sha": "4039f2a90764336f7c5a320ce4771af5f1aed78d",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/module.h"
+        },
+        {
+          "path": "runtime/module.c",
+          "blob_sha": "a3c1359d40cb1ce2006c9b7d67c88b74932d7e50",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/module.c"
+        },
+        {
+          "path": "runtime/watchdog.c",
+          "blob_sha": "d12f0802947e8d15bcecd437e409307c606f5abb",
+          "url": "https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/runtime/watchdog.c"
+        }
+      ]
+    },
+    {
+      "repository": "antoxa2584x/nfsu1-sw",
+      "commit": "d597e08f88e3f415eb44366b22e75054f2dfd15d",
+      "inspected_files": [
+        {
+          "path": "CMakeLists.txt",
+          "blob_sha": "aadd327e83aff4ccb4f8fe4f04fec3c35d72a2be",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/CMakeLists.txt"
+        },
+        {
+          "path": "src/recomp_manual.c",
+          "blob_sha": "04dc96a8e5038ae7f742714bbfbad56e2fd456f4",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/src/recomp_manual.c"
+        },
+        {
+          "path": "tools/regen.sh",
+          "blob_sha": "7892025a7b46c77dab8064e08047f3ffdb241fd0",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/tools/regen.sh"
+        },
+        {
+          "path": "xboxrecomp/LICENSE",
+          "blob_sha": "78282757baaab014afb0969574c47cf0ffedbbb0",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/xboxrecomp/LICENSE"
+        },
+        {
+          "path": "xboxrecomp/LICENSES/README.md",
+          "blob_sha": "5c53eebbb1dd5b3e99bac09ef7a053836535e0e8",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/xboxrecomp/LICENSES/README.md"
+        },
+        {
+          "path": "xboxrecomp/NOTICE",
+          "blob_sha": "f2a4948fa136073d247dcb30c750791d434001f5",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/xboxrecomp/NOTICE"
+        },
+        {
+          "path": "xboxrecomp/templates/runtime/recomp_types.h",
+          "blob_sha": "2eaad1fcf7f58b7667c6dc1b99210972907676cb",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/xboxrecomp/templates/runtime/recomp_types.h"
+        },
+        {
+          "path": "xboxrecomp/templates/runtime/xbox_memory.h",
+          "blob_sha": "34687e91394b530886ac24ba71e7af39860b10fc",
+          "url": "https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/xboxrecomp/templates/runtime/xbox_memory.h"
+        }
+      ]
+    },
+    {
+      "repository": "sp00nznet/pcrecomp",
+      "commit": "8c92919a99aaf9e129af5787776bca84863468cc",
+      "inspected_files": [
+        {
+          "path": "LICENSE",
+          "blob_sha": "78282757baaab014afb0969574c47cf0ffedbbb0",
+          "url": "https://github.com/sp00nznet/pcrecomp/blob/8c92919a99aaf9e129af5787776bca84863468cc/LICENSE"
+        },
+        {
+          "path": "tools/pe/pe_analyze.py",
+          "blob_sha": "65fb0dfd8bd5889230444f47c9bc29a256402ec4",
+          "url": "https://github.com/sp00nznet/pcrecomp/blob/8c92919a99aaf9e129af5787776bca84863468cc/tools/pe/pe_analyze.py"
+        },
+        {
+          "path": "tools/disasm/disasm32.py",
+          "blob_sha": "7084a0e0fdae6f93214c6babbcff001e8ac1e169",
+          "url": "https://github.com/sp00nznet/pcrecomp/blob/8c92919a99aaf9e129af5787776bca84863468cc/tools/disasm/disasm32.py"
+        }
+      ]
+    }
+  ],
+  "extended_on": "2026-10-22",
+  "runtime_bringup_updates": {
+    "date": "2026-10-22",
+    "upstream_commit": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "changes": [
+      "Original pre-Present observer uses upstream CPU registry and heuristic guest_backtrace; retained MIT notice applies to upstream interface excerpts.",
+      "Anchored COM overlay bounds D3DCAPS9 writes to304 bytes and disables NFSU2 mode-label writes and automatic size remapping.",
+      "Build renames three colliding NFSU2 wrapper symbols and rejects other duplicate definitions."
+    ],
+    "abi_references": [
+      "https://learn.microsoft.com/en-us/windows/win32/api/d3d9caps/ns-d3d9caps-d3dcaps9",
+      "https://learn.microsoft.com/en-us/windows/win32/api/d3d9caps/ns-d3d9caps-d3dvshadercaps2_0",
+      "https://learn.microsoft.com/en-us/windows/win32/api/d3d9caps/ns-d3d9caps-d3dpshadercaps2_0"
+    ]
+  },
+  "focused_callback_repair": {
+    "date": "2026-10-22",
+    "pc_source_revision": "58d9d4f63d59c941031f91973ae48c2cdb1a42b1",
+    "pcrecomp_revision": "8c92919a99aaf9e129af5787776bca84863468cc",
+    "reuse": "Pinned recursive descent plus original mov/push probe rule, scoped to runtime-observed roots and newly required callback closure; original source licenses/notices retained under ignored work/.",
+    "output_policy": "Private augmented catalog and emitted game bodies remain ignored; executable and saved baseline ranges unchanged."
+  },
+  "sound_bank_integration": {
+    "date": "2026-10-22",
+    "pc_source_revision": "58d9d4f63d59c941031f91973ae48c2cdb1a42b1",
+    "pcrecomp_revision": "8c92919a99aaf9e129af5787776bca84863468cc",
+    "web_emitter_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "reused_sources": {
+      "scripts/abk_module.py": "7e7ace3135472dca1a01a918f66d3ddf516c01ee",
+      "src/runtime/abk_code.c": "c596ed00c12c75ffbb80dd7f181dd0a03a58556e"
+    },
+    "reuse": "Original private bank parser/relocator and seeded recursive descent; content matching adapted to CPU* with full block and relocated-call checks, nested thread-local mappings and loaded return-address translation.",
+    "permission": "User-reported maintainer permission with attribution to codepdbh; original upstream files retained under ignored work/.",
+    "output_policy": "Bank bytes, derived analysis PE/catalog, matching tables, generated functions and linked game module stay local and ignored. Original game inputs unchanged."
+  },
+  "browser_bringup": {
+    "date": "2026-10-22",
+    "upstream_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "pinned_browser_files": {
+      "web/index.html": "dcd0d50b384ec6af61e836e8406514f9ee3cb735",
+      "web/src/app/game.ts": "a15310956e31c313fd61e9454f408421fc353729",
+      "web/src/app/settings-ui.ts": "e5d113afdb1e54abfd6851044a922c9d14d464b7",
+      "web/src/app/settings.ts": "7a279d9661886e97619c74ae7e2e60f13233a603",
+      "web/src/app/shell.ts": "d76dc20bc5b9e2a8a7a8a8397dac28df36031419",
+      "web/src/host/datacache.ts": "0996277c86f91168cd3ff0c5cb1f22e39ae3a177",
+      "web/src/sw.ts": "406d25673604f4f03cc5b41a112c37f68063f689"
+    },
+    "additional_pinned_runtime_file": {
+      "runtime/dinput_pad.c": "bfa162cdf129e14f652fc5cf1ff85adefed0e45d"
+    },
+    "reuse": "Reversible overlays reuse the MIT-licensed th0mk browser shell and generic WebGPU, audio, input and WASI worker host. Original notices remain in the ignored source snapshot and patches/nfsu2-web.LICENSE.",
+    "local_server": "Original standard-library loopback server; no upstream Rust server or game assets copied into distributable tooling.",
+    "bundler": {
+      "node_modules/esbuild": {
+        "version": "0.27.4",
+        "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.27.4.tgz",
+        "integrity": "sha512-Rq4vbHnYkK5fws5NF7MYTU68FPRE1ajX7heQ/8QXXWqNgqqJ/GkmmyxIzUnf2Sr/bakf8l54716CcMGHYhMrrQ==",
+        "license": "MIT"
+      },
+      "node_modules/@esbuild/darwin-arm64": {
+        "version": "0.27.4",
+        "resolved": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.27.4.tgz",
+        "integrity": "sha512-b7xaGIwdJlht8ZFCvMkpDN6uiSmnxxK56N2GDTMYPr2/gzvfdQN8rTfBsvVKmIVY/X7EM+/hJKEIbbHs9oA4tQ==",
+        "license": "MIT"
+      }
+    },
+    "bundler_license_retained": "work/toolchain/web-bundler/node_modules/esbuild/LICENSE.md",
+    "output_policy": "Private Wasm, game data, built page and build records stay ignored. No agent browser operation; user-reported browser observations are recorded separately in docs/progress.md."
+  }
+}

@@ -1,0 +1,784 @@
+{
+  "schema_version": 1,
+  "description": "Pinned public source files used by this research workspace. Fetches text sources and licenses only; game binaries, assets, catalogs and generated code are excluded.",
+  "sources": [
+    {
+      "repository": "th0mk/nfsu2-web",
+      "commit": "31da468582c3de14fd6f4233831f62816e2df83d",
+      "destination": "nfsu2-web",
+      "raw_base": "https://raw.githubusercontent.com/th0mk/nfsu2-web/31da468582c3de14fd6f4233831f62816e2df83d",
+      "license": "MIT; retain LICENSE",
+      "notes": "Selected runtime, emitter, build and browser text files from the existing pinned snapshot.",
+      "files": [
+        {
+          "path": "LICENSE",
+          "git_blob_sha1": "fe8858826d9da7b52561037421aa85c68960d18e"
+        },
+        {
+          "path": "README.md",
+          "git_blob_sha1": "cc2ee42f3689cbd6cf29ef7baa96c07e74370d04"
+        },
+        {
+          "path": "app/registry-defaults.txt",
+          "git_blob_sha1": "5caea7ed1de25f04147e58847eb4c69f1f6ce090"
+        },
+        {
+          "path": "build.sh",
+          "git_blob_sha1": "63c6619a686181a27337f2d3dba89a21c70da85f"
+        },
+        {
+          "path": "gen.sh",
+          "git_blob_sha1": "9a5c779bac49cd284a556fd6ea54dd8910fba258"
+        },
+        {
+          "path": "link.sh",
+          "git_blob_sha1": "dee8a29582078c334d69c9dff368c0dc9232eafc"
+        },
+        {
+          "path": "pack.sh",
+          "git_blob_sha1": "bc6b0dba2272ec4cc120af5e2890310c150f6e2c"
+        },
+        {
+          "path": "requirements.txt",
+          "git_blob_sha1": "6de4769a18872ee91f52f00ccf819d9d73e05a3b"
+        },
+        {
+          "path": "runtime/autotest.c",
+          "git_blob_sha1": "b9597f220976973dd8673ec7cca6199c99600933"
+        },
+        {
+          "path": "runtime/career.c",
+          "git_blob_sha1": "2ae7facee6da876663174648b4db5708ffe8f0b1"
+        },
+        {
+          "path": "runtime/carsfx.c",
+          "git_blob_sha1": "618189bee345f21b26f84d430f68ec909d915d5d"
+        },
+        {
+          "path": "runtime/carsfx.h",
+          "git_blob_sha1": "2ef0d47163398aec07f5804ea8dda4c83f26cc58"
+        },
+        {
+          "path": "runtime/com.c",
+          "git_blob_sha1": "f32cbf8b5d568b8fcc206ee253397d52bd6ec18a"
+        },
+        {
+          "path": "runtime/cpu.h",
+          "git_blob_sha1": "7a6d17d2f76f8f096b3c9e13bc18b42a925e2529"
+        },
+        {
+          "path": "runtime/d3d9_tables.h",
+          "git_blob_sha1": "6b57d2e77f1a4bd371de2bdb3c8ccc85b9a31482"
+        },
+        {
+          "path": "runtime/d3dx_hle.c",
+          "git_blob_sha1": "4979c3433adc73afdd9191e33e02779f2b7b9c1e"
+        },
+        {
+          "path": "runtime/debug.c",
+          "git_blob_sha1": "7976ca7f93cc64564219c930989dcee0539605e1"
+        },
+        {
+          "path": "runtime/dikeys.c",
+          "git_blob_sha1": "84fe1867b7f5e0cd4e8746abafd301fbc0ef6f9f"
+        },
+        {
+          "path": "runtime/dinput_kbd.c",
+          "git_blob_sha1": "c1e9151da9f8cb6597a88b81109eb6a22c95ae6d"
+        },
+        {
+          "path": "runtime/dinput_pad.c",
+          "git_blob_sha1": "bfa162cdf129e14f652fc5cf1ff85adefed0e45d"
+        },
+        {
+          "path": "runtime/discord.c",
+          "git_blob_sha1": "6f2e94546e0562d6abec795178f15b6e60cb36ad"
+        },
+        {
+          "path": "runtime/dispatch.c",
+          "git_blob_sha1": "f1e586523c71773d5146b9dd3455efbea3474a18"
+        },
+        {
+          "path": "runtime/drifttest.c",
+          "git_blob_sha1": "dddc60af06584ee89b7507981ed9efb3aa2ca5e4"
+        },
+        {
+          "path": "runtime/dxrec.h",
+          "git_blob_sha1": "08397acecb1aa6aa073690d71560a91f2d186e29"
+        },
+        {
+          "path": "runtime/enhance.c",
+          "git_blob_sha1": "081d04a38cfd766a14a1eb36b90646ecb067b9be"
+        },
+        {
+          "path": "runtime/enhance.h",
+          "git_blob_sha1": "7877028a55965ad36a9a95902193318359234151"
+        },
+        {
+          "path": "runtime/fileio.c",
+          "git_blob_sha1": "c4cfe956af52c198929a9e2c81c9beb9b69dd5cb"
+        },
+        {
+          "path": "runtime/fpscounter.h",
+          "git_blob_sha1": "cec56713d00e8dcd5f0d26395db7ac362e318547"
+        },
+        {
+          "path": "runtime/framerate.c",
+          "git_blob_sha1": "d44f5cc1b57c573915fed3387f6a9b018d15d97a"
+        },
+        {
+          "path": "runtime/gamepad.h",
+          "git_blob_sha1": "c2e9947778541bca60ea47d435f8ebb51901ef97"
+        },
+        {
+          "path": "runtime/genexec.c",
+          "git_blob_sha1": "8a9e7ef98274b9e15e2b9455b447ee8875e5a529"
+        },
+        {
+          "path": "runtime/gfx.h",
+          "git_blob_sha1": "e44d1bd400977a0b1ff9b469b8f33eec591b0244"
+        },
+        {
+          "path": "runtime/headlights.c",
+          "git_blob_sha1": "6d11107ec0565197c9086e30ad03ce23713e265e"
+        },
+        {
+          "path": "runtime/heap.c",
+          "git_blob_sha1": "e04ab2de8b71bdd9744548901440afad58b6cbc9"
+        },
+        {
+          "path": "runtime/horn.c",
+          "git_blob_sha1": "a27748d83bfc163c0b03eebaf36297c4dc14011b"
+        },
+        {
+          "path": "runtime/horn.h",
+          "git_blob_sha1": "34b467555054de03679a2a7b6c8f1d5ed677b448"
+        },
+        {
+          "path": "runtime/intro.c",
+          "git_blob_sha1": "652cff8089910618f033fdcdfe0908e26be8a076"
+        },
+        {
+          "path": "runtime/kbd.h",
+          "git_blob_sha1": "4d65a9761a5d169823f232723fa34a7d551869cf"
+        },
+        {
+          "path": "runtime/keyboard.c",
+          "git_blob_sha1": "258a768f391ca1a0cc7510d0bb6b5078d86a77b8"
+        },
+        {
+          "path": "runtime/lifecycle.c",
+          "git_blob_sha1": "fe570444b9765a8592cd08f561c1fa380f83659d"
+        },
+        {
+          "path": "runtime/mem.c",
+          "git_blob_sha1": "90e416ff20f2928c726cc1b966bde4377fcab06f"
+        },
+        {
+          "path": "runtime/modheap.c",
+          "git_blob_sha1": "7ab322fb01588e1a95e1985ef699a4d9dc69a1fd"
+        },
+        {
+          "path": "runtime/module.c",
+          "git_blob_sha1": "a3c1359d40cb1ce2006c9b7d67c88b74932d7e50"
+        },
+        {
+          "path": "runtime/module.h",
+          "git_blob_sha1": "4039f2a90764336f7c5a320ce4771af5f1aed78d"
+        },
+        {
+          "path": "runtime/names.h",
+          "git_blob_sha1": "b5b5fe082ac908cd43b99c005fd4fd90efda2b66"
+        },
+        {
+          "path": "runtime/net_vlan.c",
+          "git_blob_sha1": "8cb81ddfac786d641410fe03a20066f7c5ffca61"
+        },
+        {
+          "path": "runtime/netrace.c",
+          "git_blob_sha1": "e1c2c8197f65325fb5e94715ebbe3bd463837c8b"
+        },
+        {
+          "path": "runtime/nettest.h",
+          "git_blob_sha1": "5c097f9d8e7f60b20ed8b5ff791ace4ada5ea252"
+        },
+        {
+          "path": "runtime/online.c",
+          "git_blob_sha1": "6aedfc9416039249f195d5e6e82dfb26156c731f"
+        },
+        {
+          "path": "runtime/oracle.c",
+          "git_blob_sha1": "6f8f02582b124cc0963baa56a54eb513c1b579ba"
+        },
+        {
+          "path": "runtime/perflog.c",
+          "git_blob_sha1": "651ed6ee28e009949f1cdfedb480b9ba12f81936"
+        },
+        {
+          "path": "runtime/perflog.h",
+          "git_blob_sha1": "4a1aae4df1525d1983703fa962922baeb21d445a"
+        },
+        {
+          "path": "runtime/racehorn.c",
+          "git_blob_sha1": "be58c4a71e6fa6149fc310679616663fc94bc3b0"
+        },
+        {
+          "path": "runtime/res.c",
+          "git_blob_sha1": "cb0351698cf5e8a6ebbcd50fe718b2fc71fe4c87"
+        },
+        {
+          "path": "runtime/roam.c",
+          "git_blob_sha1": "747d0a6f5e9587acb2cf9819b71e4c1c514ae63a"
+        },
+        {
+          "path": "runtime/roam_asipeer.c",
+          "git_blob_sha1": "3fd174a505c01175e72dcde582dfa50735196096"
+        },
+        {
+          "path": "runtime/roam_bsd.c",
+          "git_blob_sha1": "3f77303c174bab17f34a380dc5afcbd52b331f5c"
+        },
+        {
+          "path": "runtime/roam_core.c",
+          "git_blob_sha1": "510a9e3a09d7f9c0c562f5662153dabd65045bfb"
+        },
+        {
+          "path": "runtime/roam_core.h",
+          "git_blob_sha1": "66ba4948d800a59729339c80f720938bd2f2b487"
+        },
+        {
+          "path": "runtime/roam_game.c",
+          "git_blob_sha1": "f66c2c8a133d43c2c8e9dfec520d1f4f90228dc6"
+        },
+        {
+          "path": "runtime/roam_host.h",
+          "git_blob_sha1": "52f4c8afdffade5529ed818aa87bb40fd64e9fb6"
+        },
+        {
+          "path": "runtime/roam_plat.h",
+          "git_blob_sha1": "3c69932acfd265d5990af5f4fd5c799abaf5351b"
+        },
+        {
+          "path": "runtime/texrep.h",
+          "git_blob_sha1": "301b19fd7ee0db9967bb2e039822e80427122bb1"
+        },
+        {
+          "path": "runtime/vsemu.c",
+          "git_blob_sha1": "625399176a2a6bdefa9ee7d4caed798410b522e4"
+        },
+        {
+          "path": "runtime/vsemu.h",
+          "git_blob_sha1": "ca78a4b96c67cf31ea43c30e3797bdbab9589ddc"
+        },
+        {
+          "path": "runtime/watchdog.c",
+          "git_blob_sha1": "d12f0802947e8d15bcecd437e409307c606f5abb"
+        },
+        {
+          "path": "runtime/web/audio_proto.h",
+          "git_blob_sha1": "3e1be90ec9c4f80ee880a92d67489063377b8d42"
+        },
+        {
+          "path": "runtime/web/audio_web.c",
+          "git_blob_sha1": "f4e0037f7eb3ce6f1955cad86fabe6865dc51215"
+        },
+        {
+          "path": "runtime/web/compat/libproc.h",
+          "git_blob_sha1": "18d8d1c16f5a7b977224441cb07a4b934c87c256"
+        },
+        {
+          "path": "runtime/web/compat/mach/mach.h",
+          "git_blob_sha1": "0fbebd0ab9c4c3c5735d1fa81bd5460abae7dad2"
+        },
+        {
+          "path": "runtime/web/compat/mach/mach_time.h",
+          "git_blob_sha1": "c29b148a5c07e88263dcbb34f6fe7cfb8585db79"
+        },
+        {
+          "path": "runtime/web/compat/os/lock.h",
+          "git_blob_sha1": "00a8ec4a2aa5de351f12b1691f14724856beed80"
+        },
+        {
+          "path": "runtime/web/compat/pthread/qos.h",
+          "git_blob_sha1": "7997fe56f7340fd40c3173c7a34191408aef9c41"
+        },
+        {
+          "path": "runtime/web/compat/sys/event.h",
+          "git_blob_sha1": "43b83b4e6deaafa811e8426f89a63cf5d32e9d91"
+        },
+        {
+          "path": "runtime/web/compat/sys/mount.h",
+          "git_blob_sha1": "fe723342c652266547cc13ce375356f92e0ac293"
+        },
+        {
+          "path": "runtime/web/compat/wasm_plat.h",
+          "git_blob_sha1": "3efe1d23b919b1856e87ef80554874d8981d72fe"
+        },
+        {
+          "path": "runtime/web/gcpu.c",
+          "git_blob_sha1": "eb39bed5cd7cc86d7b08bd45a6a46f2848a6bf17"
+        },
+        {
+          "path": "runtime/web/gpu_proto.h",
+          "git_blob_sha1": "cfac62c8dfaa4cffaf4ae90e377dce62c501731b"
+        },
+        {
+          "path": "runtime/web/gpu_web.c",
+          "git_blob_sha1": "87d7fa6fa240bd861c05cb6c6992a37aa4000b80"
+        },
+        {
+          "path": "runtime/web/host_abi.h",
+          "git_blob_sha1": "4bb5f75aae0e59e8321ecb12598e57ca8e4914b0"
+        },
+        {
+          "path": "runtime/web/input_proto.h",
+          "git_blob_sha1": "6fe39d46f2ec220c956981de7ef16edb0e5ae2b6"
+        },
+        {
+          "path": "runtime/web/input_web.c",
+          "git_blob_sha1": "1ca00905b33c591ada782cb6012ef21efbed6c73"
+        },
+        {
+          "path": "runtime/web/lan_vfd.h",
+          "git_blob_sha1": "ea207dfa1dc0865f297971f30d5b0d10b657b94c"
+        },
+        {
+          "path": "runtime/web/main_web.c",
+          "git_blob_sha1": "df20ec27b2cde6b049feb8be29e0adbef3a6d0f8"
+        },
+        {
+          "path": "runtime/web/memchk.c",
+          "git_blob_sha1": "c7e60d23d89a33a3445762a3bddf125514670c67"
+        },
+        {
+          "path": "runtime/web/memcmp.c",
+          "git_blob_sha1": "b0491dbfd6a96579f864caa187776287211b5bef"
+        },
+        {
+          "path": "runtime/web/net_lan.c",
+          "git_blob_sha1": "e4d4f96d2af857de3cb12fc72dee0638f86e7260"
+        },
+        {
+          "path": "runtime/web/net_proto.h",
+          "git_blob_sha1": "5aad12b8dd0e00b5b2943f15b7b2e6b1de89e470"
+        },
+        {
+          "path": "runtime/web/null_platform.c",
+          "git_blob_sha1": "f6bf7723944c497780fefdcb723dcaf34d26a1d8"
+        },
+        {
+          "path": "runtime/web/roam_web.c",
+          "git_blob_sha1": "705d14059d6cdcf12a6c13d9502088c2bcc1e161"
+        },
+        {
+          "path": "runtime/web/sha256.c",
+          "git_blob_sha1": "9d91b77438730347c4436d51614ba43ba951af57"
+        },
+        {
+          "path": "runtime/web/shader_dump.c",
+          "git_blob_sha1": "36b0c36be9e3a86b8cd52f501584379ec62316ec"
+        },
+        {
+          "path": "runtime/web/stackprobe.c",
+          "git_blob_sha1": "79ee2c63d882aeeeb5c0bbebfc7c2bf8755e81ff"
+        },
+        {
+          "path": "runtime/web/status_proto.h",
+          "git_blob_sha1": "73a9cad6097a89b757fb9d58e41cc4c403d0fef4"
+        },
+        {
+          "path": "runtime/web/status_web.c",
+          "git_blob_sha1": "000d239c43fd4c90d45807f2a10fab303c387eaf"
+        },
+        {
+          "path": "runtime/web/thread_exit.c",
+          "git_blob_sha1": "50166623e73e9c56e137347594933470e0b93aed"
+        },
+        {
+          "path": "runtime/web/ticketlock.h",
+          "git_blob_sha1": "70a51b2a70676435028c38ab757ec50e78beef83"
+        },
+        {
+          "path": "runtime/web/tz.c",
+          "git_blob_sha1": "c2ca65b00fb12c2c2bb6adfd2918f1b98cc64350"
+        },
+        {
+          "path": "runtime/web/vsemu_psref.inc",
+          "git_blob_sha1": "b78a1255df9762edc1f4e6513ca657bd12a25500"
+        },
+        {
+          "path": "runtime/web/vsemu_wgsl.inc",
+          "git_blob_sha1": "443f747f89b0d994bd8dcc3b8d518f75c605e541"
+        },
+        {
+          "path": "runtime/web/wgsl.h",
+          "git_blob_sha1": "fc848734a4bb488da4738f9411d7bedc36217084"
+        },
+        {
+          "path": "runtime/widescreen.c",
+          "git_blob_sha1": "5dc520c26673d46ad37771e64c090d1ed181f779"
+        },
+        {
+          "path": "runtime/widescreen.h",
+          "git_blob_sha1": "360a8037df2e50ba3f45ed6d13d5bc4796ece432"
+        },
+        {
+          "path": "runtime/win32.c",
+          "git_blob_sha1": "267984c79ac5ec9dfc0aeee98689e4c3abded572"
+        },
+        {
+          "path": "runtime/win32_ext.c",
+          "git_blob_sha1": "114c3591e7f003559fb17f3563d9d00a95ff4c5b"
+        },
+        {
+          "path": "runtime/winsock.c",
+          "git_blob_sha1": "680c179d3be2f9b33c79b79a30da08b0cd1890cb"
+        },
+        {
+          "path": "runtime/winsock.h",
+          "git_blob_sha1": "26d129319d8d73f4ac5a73c1f6725f7aad451ba6"
+        },
+        {
+          "path": "runtime/xxhash.h",
+          "git_blob_sha1": "951a187f1c272f4cbe0fee52dc10fb9482aac11b"
+        },
+        {
+          "path": "tools/argcount.py",
+          "git_blob_sha1": "08b642d29b52f7ccd6df9858b88df037f139ff4b"
+        },
+        {
+          "path": "tools/flagabi.py",
+          "git_blob_sha1": "e2772912b882471721b99dd39368fddef5468ada"
+        },
+        {
+          "path": "tools/genall.py",
+          "git_blob_sha1": "057cd54e046831b19e9eb5eb8c3f5d6ca8090923"
+        },
+        {
+          "path": "tools/genstamp.sh",
+          "git_blob_sha1": "e297668cc8b5de7294923b6b73b9dfbfd2f4a221"
+        },
+        {
+          "path": "tools/inline_hot.txt",
+          "git_blob_sha1": "473fa5f8897fc8d77ba935118a0d772ece682eb3"
+        },
+        {
+          "path": "tools/lift.py",
+          "git_blob_sha1": "abc0d23c368d5a66da97fe86804e5289222ab356"
+        },
+        {
+          "path": "tools/lregs.py",
+          "git_blob_sha1": "efeaf90e5de242c06dc9797e1a0bca5a4c557a87"
+        },
+        {
+          "path": "tools/prepare_module.py",
+          "git_blob_sha1": "7d1af8fb6e278c898ee3e51a5e6ad9f7fac52f2a"
+        },
+        {
+          "path": "tools/reloc2.py",
+          "git_blob_sha1": "2e3dd8b9a33d096b411984f87e639ee82214e590"
+        },
+        {
+          "path": "web/build.mjs",
+          "git_blob_sha1": "1d509c6471c14aec92955d16b03ea87b9a2b2e35"
+        },
+        {
+          "path": "web/build.sh",
+          "git_blob_sha1": "d3b77ae0617121d56f6f0da97b16d7c5df9e4cbc"
+        },
+        {
+          "path": "web/gen.sh",
+          "git_blob_sha1": "54ef9c2a397ed5404b6ad56a437f4ff453926198"
+        },
+        {
+          "path": "web/index.html",
+          "git_blob_sha1": "dcd0d50b384ec6af61e836e8406514f9ee3cb735"
+        },
+        {
+          "path": "web/package-lock.json",
+          "git_blob_sha1": "82b5b229222fd0308f5b5ca3116f5e224926552e"
+        },
+        {
+          "path": "web/package.json",
+          "git_blob_sha1": "9b86f42a4cc0a544a24685da311dfafe8ef8f1ef"
+        },
+        {
+          "path": "web/src/app/away.ts",
+          "git_blob_sha1": "f9357a7982584d5989ea3fea090fedf146eb00fe"
+        },
+        {
+          "path": "web/src/app/checks.ts",
+          "git_blob_sha1": "e63ea7d31e1c2b1a9756b83e9ae016cb17c29d79"
+        },
+        {
+          "path": "web/src/app/contract.ts",
+          "git_blob_sha1": "6f6d7745262a1fd346fb32832f37d099fe172cfe"
+        },
+        {
+          "path": "web/src/app/display.ts",
+          "git_blob_sha1": "f2861f3e9a5f9ab9c53ba7545713b900393c179f"
+        },
+        {
+          "path": "web/src/app/game.ts",
+          "git_blob_sha1": "a15310956e31c313fd61e9454f408421fc353729"
+        },
+        {
+          "path": "web/src/app/instance.ts",
+          "git_blob_sha1": "babb549d3dba734abd6f64050f33996878e0d6c4"
+        },
+        {
+          "path": "web/src/app/loader.ts",
+          "git_blob_sha1": "7c49af9127c06a1baa57c701c55d1f6d0f1bd142"
+        },
+        {
+          "path": "web/src/app/logs.ts",
+          "git_blob_sha1": "e61bf164b663fa2155bd58036fb8382840d78df6"
+        },
+        {
+          "path": "web/src/app/names.mjs",
+          "git_blob_sha1": "179143f20db76d783b55cce4e8e9c376d1892e47"
+        },
+        {
+          "path": "web/src/app/overlay.ts",
+          "git_blob_sha1": "1c9c03c45918d933e2cbc05a1a6b3ba8bfea5a46"
+        },
+        {
+          "path": "web/src/app/players.ts",
+          "git_blob_sha1": "49ce0a699fba5013db9e91680f0f9a38f7c990a9"
+        },
+        {
+          "path": "web/src/app/predownload.ts",
+          "git_blob_sha1": "f4ff2dc3a2a554747cfd1f619f6c8caabb20ac6f"
+        },
+        {
+          "path": "web/src/app/profile.ts",
+          "git_blob_sha1": "0b74f72175bd6b0d1c2bdac66eb5c30006159d8c"
+        },
+        {
+          "path": "web/src/app/savefs.ts",
+          "git_blob_sha1": "a30c48a6dfdfc6ba3fdd0b1fff098e1f97c0dcd4"
+        },
+        {
+          "path": "web/src/app/saves-ui.ts",
+          "git_blob_sha1": "9f97fd81d3f09d970a57606c5c0eaccfa69a3ce0"
+        },
+        {
+          "path": "web/src/app/settings-ui.ts",
+          "git_blob_sha1": "e5d113afdb1e54abfd6851044a922c9d14d464b7"
+        },
+        {
+          "path": "web/src/app/settings.ts",
+          "git_blob_sha1": "7a279d9661886e97619c74ae7e2e60f13233a603"
+        },
+        {
+          "path": "web/src/app/shell.ts",
+          "git_blob_sha1": "d76dc20bc5b9e2a8a7a8a8397dac28df36031419"
+        },
+        {
+          "path": "web/src/app/status.ts",
+          "git_blob_sha1": "793c42cb59c98fcf69eac5cf3618f23cf3b9d997"
+        },
+        {
+          "path": "web/src/app/style.css",
+          "git_blob_sha1": "e8c5d7e21fd6ec430167219974c6f38565df5d40"
+        },
+        {
+          "path": "web/src/app/subsystems.ts",
+          "git_blob_sha1": "0e5e70d41040face3b89920ce5e5aa8440d3c0cb"
+        },
+        {
+          "path": "web/src/app/text.d.ts",
+          "git_blob_sha1": "f38090f20be2b673c654b0be208dfe9e0f42de27"
+        },
+        {
+          "path": "web/src/app/zip.ts",
+          "git_blob_sha1": "710c5aff7ef2f8fd58dea007fab71feb14454d72"
+        },
+        {
+          "path": "web/src/audio/index.ts",
+          "git_blob_sha1": "24de9c2e7ed9f9b17f2d882929c221b1f6a91f61"
+        },
+        {
+          "path": "web/src/audio/proto.ts",
+          "git_blob_sha1": "8f3a1791a29eb270c27c6106c7c29fd6db940ffe"
+        },
+        {
+          "path": "web/src/audio/worklet.ts",
+          "git_blob_sha1": "da25421af23283b47c10c6c452295077a1639446"
+        },
+        {
+          "path": "web/src/gpu/dxt.ts",
+          "git_blob_sha1": "15f0161b64549267c8990e66d9d6142ff892bdc4"
+        },
+        {
+          "path": "web/src/gpu/encoder.ts",
+          "git_blob_sha1": "399a04f2db47df9ea7ef93a10f29807f2da19dcb"
+        },
+        {
+          "path": "web/src/gpu/index.ts",
+          "git_blob_sha1": "a91547c0bd5c88173a09392b70e150eb3164babf"
+        },
+        {
+          "path": "web/src/gpu/proto.ts",
+          "git_blob_sha1": "982d0b5ee6de732fe3af8eed7170d4d165e367e8"
+        },
+        {
+          "path": "web/src/gpu/shader-abi.ts",
+          "git_blob_sha1": "a15236e2bf3746fe0b259ef4f98fda0ba7ca0497"
+        },
+        {
+          "path": "web/src/gpu/wgsl.ts",
+          "git_blob_sha1": "7f0c6c1c1d0076fe470869ef3f6f7de879b9aabf"
+        },
+        {
+          "path": "web/src/host/abi.ts",
+          "git_blob_sha1": "ac774270a13d214a2dc7819ccf024b63e1ee6671"
+        },
+        {
+          "path": "web/src/host/datacache.ts",
+          "git_blob_sha1": "0996277c86f91168cd3ff0c5cb1f22e39ae3a177"
+        },
+        {
+          "path": "web/src/host/game-worker.ts",
+          "git_blob_sha1": "9348977da3d718a96d601cae8e81f6eb02a0a003"
+        },
+        {
+          "path": "web/src/host/io-worker.ts",
+          "git_blob_sha1": "ce6bbfc71e2341c457f6c1601c09e39f0e8c5127"
+        },
+        {
+          "path": "web/src/host/predownload-worker.ts",
+          "git_blob_sha1": "b90e03fb751f5b9f58e4d7f54e31701d448c28ad"
+        },
+        {
+          "path": "web/src/host/process.ts",
+          "git_blob_sha1": "f0c7b6a32f29d4abdb1ff93706c5d00fff7824c8"
+        },
+        {
+          "path": "web/src/host/proto.ts",
+          "git_blob_sha1": "9e4d029d58eaa8370d009dc5736214f1f4f70390"
+        },
+        {
+          "path": "web/src/host/tz.ts",
+          "git_blob_sha1": "73f845422b0c42ad71b5fcb60e7bd5f2a18b86c8"
+        },
+        {
+          "path": "web/src/input/gamepad.ts",
+          "git_blob_sha1": "cab69e57194fda54c8c0bb00f08841ce1d30041c"
+        },
+        {
+          "path": "web/src/input/index.ts",
+          "git_blob_sha1": "b322ec69927eb1c046cd67be8ce5e5d00caec44f"
+        },
+        {
+          "path": "web/src/input/keymap.ts",
+          "git_blob_sha1": "1b8f95e5a8790d5b8c7cf1528703087e6b2072b3"
+        },
+        {
+          "path": "web/src/input/proto.ts",
+          "git_blob_sha1": "95f19b43f80416a0ae25af5a11a11b15b3dc95e1"
+        },
+        {
+          "path": "web/src/input/synth.ts",
+          "git_blob_sha1": "282473a3a5c0b505e0a7101e7207e20ff66da085"
+        },
+        {
+          "path": "web/src/main.ts",
+          "git_blob_sha1": "d1215f3ea6cc5fbad3714e602957636461be7d4a"
+        },
+        {
+          "path": "web/src/net/index.ts",
+          "git_blob_sha1": "006b1e40546bd55b7f38ebc967a6bb3332091b86"
+        },
+        {
+          "path": "web/src/net/proto.ts",
+          "git_blob_sha1": "46c392e064b2ba758a5204fdf2e939da9b5fcae1"
+        },
+        {
+          "path": "web/src/sw.ts",
+          "git_blob_sha1": "406d25673604f4f03cc5b41a112c37f68063f689"
+        },
+        {
+          "path": "web/start.sh",
+          "git_blob_sha1": "583f672888f22b039329a72d3bcb855894c2d43d"
+        },
+        {
+          "path": "web/tools/aliasguard.sh",
+          "git_blob_sha1": "6f60060bf893037ebb3577136a67780566bfeea7"
+        },
+        {
+          "path": "web/tools/check-gpu-proto.mjs",
+          "git_blob_sha1": "f858681e8ace79d6661d1bde5a77e8a76b737cfc"
+        },
+        {
+          "path": "web/tools/check-proto.mjs",
+          "git_blob_sha1": "05e29ea0e5fd8e64808ced28ba335cb03b8b7781"
+        },
+        {
+          "path": "web/tools/dev-server.mjs",
+          "git_blob_sha1": "1bb0867ae4b546d04bac8f952626616397af3374"
+        },
+        {
+          "path": "web/tools/gencheck.sh",
+          "git_blob_sha1": "97f9a7b6f457b6ca8d1c11cf5f472a8006f17f5a"
+        },
+        {
+          "path": "web/tsconfig.json",
+          "git_blob_sha1": "5ca50bc5422fbe207825ad6562234c6c8a069e8e"
+        }
+      ]
+    },
+    {
+      "repository": "codepdbh/nfsu1-recompiled",
+      "commit": "58d9d4f63d59c941031f91973ae48c2cdb1a42b1",
+      "destination": "nfsu1-recompiled",
+      "raw_base": "https://raw.githubusercontent.com/codepdbh/nfsu1-recompiled/58d9d4f63d59c941031f91973ae48c2cdb1a42b1",
+      "license": "No repository-level license found at the pinned revision; user reports maintainer permission conditioned on attribution.",
+      "notes": "Only analysis and ABK source dependencies used by this project.",
+      "files": [
+        {
+          "path": "scripts/abk_module.py",
+          "git_blob_sha1": "7e7ace3135472dca1a01a918f66d3ddf516c01ee"
+        },
+        {
+          "path": "scripts/code_seeds.py",
+          "git_blob_sha1": "45f0b6e3eb6c46f1e39f7ec51c2a24f2cd2c95a1"
+        },
+        {
+          "path": "scripts/data_seeds.py",
+          "git_blob_sha1": "11d03560e84360910750232f00351b777f318b5c"
+        },
+        {
+          "path": "scripts/run_lift.py",
+          "git_blob_sha1": "54406db323ac24602ef24b0a348fcacefaf71f34"
+        },
+        {
+          "path": "src/runtime/abk_code.c",
+          "git_blob_sha1": "c596ed00c12c75ffbb80dd7f181dd0a03a58556e"
+        }
+      ]
+    },
+    {
+      "repository": "sp00nznet/pcrecomp",
+      "commit": "8c92919a99aaf9e129af5787776bca84863468cc",
+      "destination": "pcrecomp",
+      "raw_base": "https://raw.githubusercontent.com/sp00nznet/pcrecomp/8c92919a99aaf9e129af5787776bca84863468cc",
+      "license": "MIT; retain LICENSE",
+      "notes": "Pinned PE and x86 disassembly modules used by local analysis.",
+      "files": [
+        {
+          "path": "LICENSE",
+          "git_blob_sha1": "78282757baaab014afb0969574c47cf0ffedbbb0"
+        },
+        {
+          "path": "tools/disasm/disasm32.py",
+          "git_blob_sha1": "7084a0e0fdae6f93214c6babbcff001e8ac1e169"
+        },
+        {
+          "path": "tools/pe/pe_analyze.py",
+          "git_blob_sha1": "65fb0dfd8bd5889230444f47c9bc29a256402ec4"
+        }
+      ]
+    }
+  ]
+}

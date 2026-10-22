@@ -1,0 +1,131 @@
+{
+  "description": "Supplement to upstream tools/argcount.py KNOWN, explicit Win32 32-bit stack argument counts; API coverage still requires runtime validation.",
+  "entries": [
+    {
+      "name": "GetKeyState",
+      "nargs": 1,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getkeystate"
+    },
+    {
+      "name": "keybd_event",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-keybd_event"
+    },
+    {
+      "name": "RegisterClassA",
+      "nargs": 1,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerclassa"
+    },
+    {
+      "name": "AdjustWindowRectEx",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-adjustwindowrectex"
+    },
+    {
+      "name": "UnhookWindowsHookEx",
+      "nargs": 1,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-unhookwindowshookex"
+    },
+    {
+      "name": "SetWindowsHookExA",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowshookexa"
+    },
+    {
+      "name": "CharUpperA",
+      "nargs": 1,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-charuppera"
+    },
+    {
+      "name": "SystemParametersInfoA",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa"
+    },
+    {
+      "name": "SendNotifyMessageA",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendnotifymessagea"
+    },
+    {
+      "name": "CallNextHookEx",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-callnexthookex"
+    },
+    {
+      "name": "ReadConsoleInputA",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/console/readconsoleinput"
+    },
+    {
+      "name": "SetConsoleMode",
+      "nargs": 2,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/console/setconsolemode"
+    },
+    {
+      "name": "GetConsoleMode",
+      "nargs": 2,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/console/getconsolemode"
+    },
+    {
+      "name": "PeekConsoleInputA",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/console/peekconsoleinput"
+    },
+    {
+      "name": "GetNumberOfConsoleInputEvents",
+      "nargs": 2,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/console/getnumberofconsoleinputevents"
+    },
+    {
+      "name": "GetTimeFormatA",
+      "nargs": 6,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/datetimeapi/nf-datetimeapi-gettimeformata"
+    },
+    {
+      "name": "GetDateFormatA",
+      "nargs": 6,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/datetimeapi/nf-datetimeapi-getdateformata"
+    },
+    {
+      "name": "FormatMessageA",
+      "nargs": 7,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessagea"
+    },
+    {
+      "name": "GetVolumeInformationA",
+      "nargs": 8,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationa"
+    },
+    {
+      "name": "GetLogicalDriveStringsA",
+      "nargs": 2,
+      "calling_convention": "stdcall",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getlogicaldrivestringsa"
+    },
+    {
+      "name": "DirectInputCreateA",
+      "nargs": 4,
+      "calling_convention": "stdcall",
+      "source": "https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/dinput.h"
+    }
+  ]
+}
