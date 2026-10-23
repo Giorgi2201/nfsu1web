@@ -63,6 +63,17 @@ Do not commit original executables, XBE files, assets, real analysis catalogs,
 sound-bank instruction bytes, game-derived C, or modules compiled from that C.
 The ignore rules provide basic protection, not a substitute for reviewing files.
 
+The 2026-10-23 graphics adapter is original host code. Its NFSU1 names, value
+addresses and preset ranges were verified read-only against the matching local
+image and cached emission; no game instructions are included in the adapter.
+The website selectors extend th0mk's existing MIT settings panel at the same
+pinned revision, with its notices retained. Private comparison harnesses and
+linked modules stay ignored. No additional third-party source was copied.
+Automatic resolution also uses th0mk's pinned `runtime/web/gpu_web.c`
+(`87d7fa6fa240bd861c05cb6c6992a37aa4000b80`), already present in the source
+snapshot. Its live view sizing and device-reset watcher are reused with a
+consistent bounded-size comparison. The original MIT notice remains retained.
+
 ## Repository packaging
 
 `tools/fetch_upstreams.py` materializes the public text sources listed in

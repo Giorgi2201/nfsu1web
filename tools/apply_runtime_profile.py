@@ -19,6 +19,7 @@ PINNED = {
     "runtime/web/main_web.c": "df20ec27b2cde6b049feb8be29e0adbef3a6d0f8",
     "runtime/win32.c": "267984c79ac5ec9dfc0aeee98689e4c3abded572",
     "runtime/web/gcpu.c": "eb39bed5cd7cc86d7b08bd45a6a46f2848a6bf17",
+    "runtime/web/gpu_web.c": "87d7fa6fa240bd861c05cb6c6992a37aa4000b80",
     "runtime/com.c": "f32cbf8b5d568b8fcc206ee253397d52bd6ec18a",
     "runtime/dinput_pad.c": "bfa162cdf129e14f652fc5cf1ff85adefed0e45d",
 }
@@ -117,6 +118,23 @@ void unsupported_insn(CPU *c, uint32_t addr, const char *mn){
         return source
     if name == "runtime/web/gcpu.c":
         return replace(source, 'mem_is_committed(0x8654a4u) ? MR32(0x8654a4u) : 0u', '0u /* NFSU2 game-flow address is invalid for NFSU1 */')
+    if name == "runtime/web/gpu_web.c":
+        source = replace(source,
+                         '    if (vw < 320u || vh < 240u || vw > 8192u || vh > 8192u){ vw = 1280u; vh = 720u; }\n'
+                         '    *w = vw & ~1u; *h = vh & ~1u;',
+                         '    if (vw < 320u || vh < 240u){ vw = 1280u; vh = 720u; }\n'
+                         '    if (vw > 8192u || vh > 8192u){\n'
+                         '        double scale = 8192.0 / fmax((double)vw, (double)vh);\n'
+                         '        vw = (unsigned)((double)vw * scale);\n'
+                         '        vh = (unsigned)((double)vh * scale);\n'
+                         '    }\n'
+                         '    *w = vw >= 2u ? vw & ~1u : 2u;\n'
+                         '    *h = vh >= 2u ? vh & ~1u : 2u;')
+        return replace(source,
+                       '    unsigned w = g_ctl->view_w & ~1u, h = g_ctl->view_h & ~1u;\n'
+                       '    if (w < 320u || h < 240u || (w == g_view_used_w && h == g_view_used_h)) { seen_w = w; seen_h = h; return; }',
+                       '    unsigned w, h; view_wh(&w, &h);\n'
+                       '    if (w == g_view_used_w && h == g_view_used_h) { seen_w = w; seen_h = h; return; }')
     if name == "runtime/com.c":
         # D3DCAPS9 is 304 bytes in the 32-bit guest ABI. The upstream 336-byte
         # clear overwrites NFSU1's adjacent RECT and four mode-availability words.
@@ -128,6 +146,12 @@ void unsupported_insn(CPU *c, uint32_t addr, const char *mn){
                          'static int modemap_on(void){ return 0; } /* NFSU1: no NFSU2 menu writes. */')
         source = replace(source, 'static int rdone = 0, pinned = 0;',
                          'static int rdone = 0, pinned = 1; /* NFSU1: native size unless NFSRES is explicit. */')
+        source = replace(source, '    if (!aw || !ah){',
+                         '    /* Follow the live canvas and arm the upstream device-reset watcher.\n'
+                         '     * Preserve the guest aspect until NFSU1 widescreen is ported. */\n'
+                         '    { extern int nfsu1_graphics_size(uint32_t, uint32_t, uint32_t *, uint32_t *);\n'
+                         '      nfsu1_graphics_size(gw, gh, &aw, &ah); }\n'
+                         '    if (!aw || !ah){')
         source = replace(source, '                           MR32(pm+12)= fmt; }',
                          '                           MR32(pm+12)= fmt;\n'
                          '                           if (g_com_trace) fprintf(stderr,\n'
@@ -256,7 +280,32 @@ def main():
         for name, info in state['files'].items():
             if hashlib.sha256((upstream / name).read_bytes()).hexdigest() != info['applied_sha256']:
                 raise ValueError(f'overlay has later edits: {name}')
-        print('NFSU1 runtime overlay already applied and unchanged.')
+        # Upgrade only from canonical originals, after checking for later edits.
+        outputs = {}
+        originals = {}
+        for name, expected in PINNED.items():
+            backup = state_dir / name
+            original = backup.read_bytes() if name in state['files'] else (upstream / name).read_bytes()
+            if blob(original) != expected:
+                raise ValueError(f'overlay backup differs from pinned upstream: {name}')
+            originals[name] = original
+            outputs[name] = edits(name, original.decode()).encode()
+        outputs['runtime/nfsu1_profile.h'] = header(profile).replace('#endif\n', f'#define NFSU1_GUEST_LIMIT {int(profile["runtime"]["guest_end"], 16)}ull\n#endif\n').encode()
+        outputs['runtime/overrides.c'] = OVERRIDES.encode()
+        changed = 0
+        for name, data in outputs.items():
+            digest = hashlib.sha256(data).hexdigest()
+            if name not in state['files']:
+                backup = state_dir / name
+                backup.parent.mkdir(parents=True, exist_ok=True)
+                backup.write_bytes(originals[name])
+                state['files'][name] = {'existed': True, 'applied_sha256': ''}
+            if digest != state['files'][name]['applied_sha256']:
+                (upstream / name).write_bytes(data)
+                state['files'][name]['applied_sha256'] = digest
+                changed += 1
+        state_path.write_text(json.dumps(state, indent=2) + '\n')
+        print(f'NFSU1 runtime overlay verified; updated {changed} files.')
         return
     license_data = (upstream / 'LICENSE').read_bytes()
     if blob(license_data) != 'fe8858826d9da7b52561037421aa85c68960d18e':

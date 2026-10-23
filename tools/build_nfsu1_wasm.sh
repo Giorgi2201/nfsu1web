@@ -103,7 +103,8 @@ export CC OBJDUMP CFLAGS SHARDFLAGS OUT FULL MEMCHECK OBJCACHE HDRSUM CACHE_KEYS
 cp -f "$ROOT/runtime/nfsu1_win32.c" "$UPSTREAM/runtime/nfsu1_win32.c"
 cp -f "$ROOT/runtime/nfsu1_diagnostics.c" "$UPSTREAM/runtime/nfsu1_diagnostics.c"
 cp -f "$ROOT/runtime/nfsu1_intro.c" "$UPSTREAM/runtime/nfsu1_intro.c"
-RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics nfsu1_intro com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
+cp -f "$ROOT/runtime/nfsu1_graphics.c" "$UPSTREAM/runtime/nfsu1_graphics.c"
+RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics nfsu1_intro nfsu1_graphics com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
 WEB="$(cd runtime/web && ls *.c | sed 's/\.c$//')"
 ABK_OBJS=()
 if [ -f "$ABK_GEN/report.json" ]; then
@@ -169,8 +170,26 @@ done
 for f in $WEB; do OBJS+=("$OUT/rt/web_$f.o"); done
 OBJS+=("$OUT/rt/nfsu1_link_stubs.o")
 PAGES=$(( INITIAL_MB * 16 ))
+# Presets run after the original config loader. The Wasm linker wraps both
+# direct calls and function-table references, including calls in the same
+# shard. Refuse a build that optimized away the only direct loader call.
+for entry in sub_0041c680 sub_00410e50; do
+  graphics_refs=0
+  for src in gen/all/shard_*.c; do
+    if grep -Fq "$entry(c)" "$src"; then
+      obj="$OUT/obj/$(basename "$src" .c).o"
+      if ! "$OBJDUMP" -r "$obj" | grep "R_WASM_FUNCTION_INDEX_LEB $entry+" >/dev/null; then
+        echo "graphics $entry call was inlined in $src; rebuild with OPT=-O1" >&2
+        exit 1
+      fi
+      graphics_refs=$(( graphics_refs + 1 ))
+    fi
+  done
+  [ "$graphics_refs" -gt 0 ] || { echo "missing graphics caller: $entry" >&2; exit 1; }
+done
 rm -f "$OUT/nfsu1.wasm"
 $CC $TARGET $OPT $FEAT $EXTRA -o "$OUT/nfsu1.wasm" "${OBJS[@]}" \
+  -Wl,--wrap=sub_0041c680,--wrap=sub_00410e50 \
   -Wl,--import-memory,--export-memory,--shared-memory,--max-memory=4294967296 \
   -Wl,--initial-memory=$(( INITIAL_MB * 1048576 )),--global-base=$GUEST_END \
   -Wl,-z,stack-size=$(( 8 * 1048576 )) -Wl,--no-stack-first \

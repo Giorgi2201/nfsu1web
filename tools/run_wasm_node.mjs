@@ -28,6 +28,8 @@ const diagnosticNames = [
   'BT', 'COMTRACE', 'TRACE_MAX', 'VERBOSE', 'WATCH_ADDR', 'FILELIST', 'PRESENTBT',
   'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'NFSU2_WATCHDOG',
   'NOWIDE', 'NFSNATIVE', 'NFSRES',
+  'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO',
+  'NFSU2_WIDTH', 'NFSU2_HEIGHT', 'RESETAT',
 ];
 const guestEnvironment = isMainThread
   ? diagnosticNames.filter((name) => process.env[name] !== undefined)

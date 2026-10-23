@@ -28,6 +28,26 @@ install read-only. Stop it with Ctrl+C. If the port is occupied, pass
 For the **Startup movies** control, follow the focused
 [movie skip checks](movie-skipping.md#user-browser-check).
 
+For graphics, restart the local server after rebuilding and reload the same
+address. Open **Settings → Graphics**. **Maximum** is the default; render
+resolution is automatic and has no selector. Start the game, load your
+existing profile and inspect its graphics options. Start the same race and
+check road/car reflections, shadows, particles and blur. Stop with F9, select
+**Low**, restart and repeat. The downloaded log should contain
+`[nfsu1 graphics] applied max` (or the selected preset), including the number
+of options limited by game capabilities. Use **Game** to let saved in-game
+graphics choices control the next profile load.
+
+Resize the browser during play, both larger and smaller, and toggle full
+screen through F9. After the window settles, the game should recreate its
+render targets automatically, retaining proportions with black bars as
+needed. Check that menus, mouse targets and the race still work; a brief
+redraw during reset is expected. No restart is required. Logs should show
+`[gpu] canvas ... requesting a device reset` followed by a new
+`com: device resolution ...` size. Check both a saved 4:3 resolution and
+1280×1024 (5:4) if available. True widescreen camera and HUD support is still
+pending. See the [setting map](graphics.md).
+
 For the drag-loading dispatch fix, restart the local server and reload this
 same origin. Load the existing profile and repeat the drag event that aborted
 at `0x00482f48`. Check whether loading reaches the starting grid and the race

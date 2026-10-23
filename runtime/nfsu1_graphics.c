@@ -1,0 +1,127 @@
+/* Original NFSU1 graphics preset adapter for the selected PC 1.4 image.
+ * Names, addresses and ranges were verified locally against the settings
+ * descriptor table and preset/capability routines; see docs/graphics.md.
+ * No translated game instructions or original image bytes are included. */
+#include "cpu.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    const char *name;
+    uint32_t address;
+    uint32_t cap_address;
+    uint32_t level[4];
+} GraphicsSetting;
+
+/* Low/medium/high/max correspond to the game's four detail levels, 0..3.
+ * Resolution is deliberately independent of the detail preset. */
+static const GraphicsSetting graphics_settings[] = {
+    { "ENVMAP",          0x700e74u, 0x701040u, {0, 1, 2, 3} },
+    { "WORLDENVMAP",     0x700e78u, 0x701044u, {0, 0, 1, 1} },
+    { "SHADOW",          0x700e7cu, 0x701048u, {1, 1, 2, 2} },
+    { "HEADLIGHTS",      0x700e80u, 0x70104cu, {0, 0, 1, 1} },
+    { "CARLIGHTING",     0x700e84u, 0x701050u, {1, 0, 1, 1} },
+    { "DAMAGE",          0x700e88u, 0x701054u, {0, 0, 1, 1} },
+    { "CROWD",           0x700e8cu, 0x701058u, {0, 0, 1, 1} },
+    { "ROADREFLECTION",  0x700e90u, 0x70105cu, {0, 1, 2, 2} },
+    { "FOG",             0x700e94u, 0x701060u, {0, 0, 1, 1} },
+    { "MOTIONBLUR",      0x700e98u, 0x701064u, {0, 0, 0, 1} },
+    { "LIGHTSTREAKS",    0x700e9cu, 0x701068u, {0, 0, 0, 1} },
+    { "LIGHTGLOW",       0x700ea0u, 0x70106cu, {1, 1, 1, 1} },
+    { "ANIMATEDTEXTURE", 0x700ea4u, 0x701070u, {1, 1, 1, 1} },
+    { "PARTICLESYSTEMS", 0x700ea8u, 0x701074u, {0, 1, 1, 1} },
+    { "DEPTHOFFIELD",    0x700eacu, 0x701078u, {0, 0, 1, 1} },
+    { "WorldLOD",        0x700eb0u, 0x70107cu, {1, 1, 3, 3} },
+    { "CarLOD",          0x700eb4u, 0x701080u, {0, 1, 1, 1} },
+};
+
+/* Use the current canvas on CreateDevice and Reset. metal_view_size also
+ * records the canvas size used here, arming the GPU host's resize detector.
+ * Whole multiples of the reduced guest aspect preserve the projection and
+ * HUD proportions, including the game's 1280x1024 (5:4) mode. */
+int nfsu1_graphics_size(uint32_t gw, uint32_t gh, uint32_t *dw, uint32_t *dh){
+    const char *dynamic = getenv("NFSU1_DYNAMIC_RESOLUTION");
+    if (!dynamic || strcmp(dynamic, "1")) return 0;
+    unsigned vw, vh;
+    extern void metal_view_size(unsigned *, unsigned *);
+    metal_view_size(&vw, &vh);
+    *dw = *dh = 0;
+    if (!gw || !gh) return 1;
+    if (vw > 8192u) vw = 8192u;
+    if (vh > 8192u) vh = 8192u;
+    uint32_t a = gw, b = gh;
+    while (b){ uint32_t remainder = a % b; a = b; b = remainder; }
+    uint32_t aspect_w = gw / a, aspect_h = gh / a;
+    uint32_t units_w = vw / aspect_w, units_h = vh / aspect_h;
+    uint32_t units = units_w < units_h ? units_w : units_h;
+    *dw = aspect_w * units;
+    *dh = aspect_h * units;
+    return 1;
+}
+
+static void graphics_resolution(void){
+    const char *dynamic = getenv("NFSU1_DYNAMIC_RESOLUTION");
+    if (dynamic && !strcmp(dynamic, "1")) return;
+    const char *resolution = getenv("NFSRES");
+    unsigned width, height;
+    char extra;
+    if (!resolution || sscanf(resolution, "%ux%u%c", &width, &height, &extra) != 2 ||
+        width < 640 || height < 480 || width > 8192 || height > 8192 ||
+        (uint64_t)width * 3u != (uint64_t)height * 4u)
+        return;
+    /* The host supplies the selected pixel dimensions. Keep the guest's
+     * projection and HUD based on a 4:3 mode even if its saved RES was 5:4.
+     * RES=0 selects the first enumerated legacy mode, 640x480. */
+    MR32(0x700e70u) = 0;
+}
+
+void nfsu1_graphics_apply(void){
+    graphics_resolution();
+    const char *preset = getenv("NFSU1_GRAPHICS");
+    int level = 3;
+    if (!preset || !*preset) preset = "max";
+    if (!strcmp(preset, "game")) return;
+    if (!strcmp(preset, "low")) level = 0;
+    else if (!strcmp(preset, "medium")) level = 1;
+    else if (!strcmp(preset, "high")) level = 2;
+    else if (strcmp(preset, "max")){
+        fprintf(stderr, "[nfsu1 graphics] unknown preset '%s'; using max\n", preset);
+        preset = "max";
+    }
+    unsigned limited = 0;
+    for (unsigned i = 0; i < sizeof graphics_settings / sizeof graphics_settings[0]; i++){
+        const GraphicsSetting *setting = &graphics_settings[i];
+        uint32_t requested = setting->level[level];
+        uint32_t cap = MR32(setting->cap_address);
+        uint32_t applied = requested < cap ? requested : cap;
+        limited += applied != requested;
+        MR32(setting->address) = applied;
+    }
+    MR32(0x736334u) = (uint32_t)level; /* PERFORMANCE, used by the graphics menu. */
+    fprintf(stderr, "[nfsu1 graphics] applied %s; %u option(s) limited by game capabilities\n",
+            preset, limited);
+}
+
+/* The linker wraps the real profile settings loader. It still owns parsing,
+ * the guest ABI and the return; this adapter changes only graphics globals
+ * after it has returned, preserving every CPU field it produced. */
+extern void __real_sub_0041c680(CPU *);
+void __wrap_sub_0041c680(CPU *c){
+    __real_sub_0041c680(c);
+    nfsu1_graphics_apply();
+}
+
+/* Initial device setup establishes capabilities and an automatic detail
+ * level before allocating effect resources. New profiles inherit this level
+ * without loading a .cfg, so apply the website choice here as well. Later
+ * device resets preserve the current session's in-game graphics choices. */
+extern void __real_sub_00410e50(CPU *);
+void __wrap_sub_00410e50(CPU *c){
+    static int initial_applied;
+    __real_sub_00410e50(c);
+    if (!initial_applied){
+        nfsu1_graphics_apply();
+        initial_applied = 1;
+    }
+}

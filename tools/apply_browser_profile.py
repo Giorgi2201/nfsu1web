@@ -44,6 +44,22 @@ def transform(path: str, source: str) -> str:
         return exact(source, "args: ['nfsu2', '/data/SPEED2.EXE']", "args: ['nfsu1', '/data/Speed.exe']")
 
     if path == "web/src/app/settings.ts":
+        source = exact(source, "  // display\n", """  // NFSU1 graphics quality; resolution follows the live canvas.
+  { key: 'graphics_quality', env: 'NFSU1_GRAPHICS', kind: 'enum', vals: 'game|low|medium|high|max', scope: 'web' },
+  // Legacy setting is accepted on restore but no longer controls rendering.
+  { key: 'render_resolution', env: 'NFSU1_RESOLUTION', kind: 'enum', vals: 'game|window|800x600|1280x960|1600x1200|1920x1440|2560x1920', scope: 'web' },
+  // display
+""")
+        source = exact(source, "# ---- Display -------------------------------------------------------------", """# ---- NFSU1 graphics ------------------------------------------------------
+
+# Game uses the graphics options saved in the game. Other presets apply at
+# launch; Maximum enables the mapped original effects. [NFSU1_GRAPHICS]
+#graphics_quality = max
+# Render resolution automatically follows the window and full-screen size
+# at device pixel density, preserving the game aspect. No resolution choice
+# or restart is needed when resizing.
+
+# ---- Display -------------------------------------------------------------""")
         source = exact(source, "env: 'NFSU2_INTRO'", "env: 'NFSU1_INTRO'")
         source = exact(source,
                        "# The movies at startup (EA and THX logos, the PSA, the intro): skippable =\n"
@@ -54,7 +70,7 @@ def transform(path: str, source: str) -> str:
                        "# ends each movie; original = the game's original skip behavior; off = finish\n"
                        "# startup screens on their first update (a brief frame may appear). Story\n"
                        "# movies keep their original behavior.  [NFSU1_INTRO]")
-        source = exact(source, "ALARM: '0', FIXMAT:", "NFSU1_INTRO: 'skippable', ALARM: '0', FIXMAT:")
+        source = exact(source, "ALARM: '0', FIXMAT:", "NFSU1_GRAPHICS: 'max', NFSU1_INTRO: 'skippable', ALARM: '0', FIXMAT:")
         source = exact(source, "NFSU2_FNG_LOG: '1', NFSU2_STATUS_EVERY: '3600', NFSU2_AUDIO_STATUS: '0',",
                        "NFSU2_FNG_LOG: '0', NFSU2_STATUS_EVERY: '0', NFSU2_AUDIO_STATUS: '0',")
         return source
@@ -63,6 +79,9 @@ def transform(path: str, source: str) -> str:
         start = source.index("const GROUPS: Group[] = [")
         end = source.index("\n];", start) + 3
         replacement = '''const GROUPS: Group[] = [
+  { title: 'Graphics', items: [
+    { key: 'graphics_quality', label: 'Graphics quality', help: 'Maximum enables the mapped original effects. Lower presets reduce reflections, shadows and effects. Game uses your saved in-game options. Changes apply on the next start. Render resolution automatically follows the window and full-screen size.', c: { t: 'seg', opts: [['game', 'Game'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['max', 'Maximum']] } },
+  ] },
   { title: 'Browser', items: [
     { key: 'intro', label: 'Startup movies', help: 'Skippable: Enter, Esc, Space or controller A, B or Start ends each movie. Original: use the original game behavior. Off: finish startup screens immediately; a brief frame may appear. Story movies keep their original behavior.', c: { t: 'seg', opts: [['skippable', 'Skippable'], ['original', 'Original'], ['off', 'Off']] } },
     { key: 'fullscreen', label: 'Full screen on Play', help: 'Open the game canvas full screen when the browser allows it.', c: { t: 'switch' } },
@@ -74,7 +93,24 @@ def transform(path: str, source: str) -> str:
     { key: 'gamepad_trigger_deadzone', label: 'Trigger dead zone', help: 'Fraction of full trigger travel ignored by the browser input adapter.', c: { t: 'num', min: 0, max: 0.9, step: 0.01 } },
   ] },
 ];'''
-        return source[:start] + replacement + source[end:]
+        source = source[:start] + replacement + source[end:]
+        source = exact(source,
+                       "    const row = document.createElement('div'); row.className = 'set'; row.dataset.key = it.key;",
+                       """    const row = document.createElement('div'); row.className = 'set'; row.dataset.key = it.key;
+    const graphics = it.key === 'graphics_quality';
+    if (graphics) {
+      row.style.gridTemplateColumns = 'minmax(0, 1fr)';
+      row.style.gridTemplateAreas = '"label" "help" "ctl"';
+    }""")
+        source = exact(source,
+                       "    const ctl = document.createElement('div'); ctl.className = 'set-control';",
+                       """    const ctl = document.createElement('div'); ctl.className = 'set-control';
+    if (graphics) { ctl.style.justifyContent = 'flex-start'; ctl.style.flexWrap = 'wrap'; ctl.style.marginTop = '8px'; }""")
+        source = exact(source,
+                       "      const seg = document.createElement('div'); seg.className = 'seg';",
+                       """      const seg = document.createElement('div'); seg.className = 'seg';
+      if (graphics) seg.style.flexWrap = 'wrap';""")
+        return source
 
     if path == "web/src/host/datacache.ts":
         return exact(source, "export const CACHE_DIR = 'cache';", "export const CACHE_DIR = 'cache-nfsu1';")
@@ -87,6 +123,11 @@ def transform(path: str, source: str) -> str:
         source = exact(source, "let SAVE = 'save';", "let SAVE = 'save-nfsu1';")
         source = exact(source, "const ASK_ROAM = true;", "const ASK_ROAM = false;")
         source = exact(source, "  const r = resolved(host);", """  const r = resolved(host);
+  // The runtime follows live device pixels through the upstream resize/reset path.
+  // Retired resolution choices and restored fixed overrides cannot pin the browser.
+  delete r.env.NFSRES;
+  r.env.NFSU1_DYNAMIC_RESOLUTION = '1';
+  log.add(`[app] graphics quality: ${r.env.NFSU1_GRAPHICS ?? 'max'}; render: automatic device pixels, follows window/full screen, preserves game aspect`);
   // Preserve shared host options; filter unsupported game variables before startup.
   Object.assign(r.env, {
     NFSU2_AUTOSAVE: '0', NFSU2_NET: 'off', NFSU2_ONLINE: '0', NFSU2_ROAM: '0',
@@ -122,10 +163,10 @@ def transform(path: str, source: str) -> str:
                        """const BROWSER_ENV = new Set([
   'HOME', 'NFSU2_DATA', 'NFSU2_SAVEDIR', 'NFSU2_REGFILE', 'NFSU2_WIDTH', 'NFSU2_HEIGHT',
   'NFSU2_DISPLAY_HZ', 'NFSU2_RENDERER', 'NFSU2_READONLY_DATA', 'NFSU1_SAVEDIR', 'NFSU1_READONLY_DATA',
-  'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'SNDSYNC', 'NFSFULL', 'NFSRES', 'NFSMAXPIX',
+  'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'SNDSYNC', 'NFSFULL', 'NFSMAXPIX',
   'NFSU2_PAD', 'NFSU2_PAD_DEADZONE', 'NFSU2_PAD_TRIGGER_DEADZONE', 'NFSU2_PAD_TRIGGER_CLICK', 'NFSU2_FF',
   'NFSU2_AUDIO_LATENCY', 'NFSU2_TZ', 'NFSU2_TZ_NAME',
-  'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
+  'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
   'NFSU2_AUTOSAVE', 'NFSU2_NET', 'NFSU2_ONLINE', 'NFSU2_ROAM', 'NFSU2_SEED_REGISTRY', 'NFSU2_FPS_COUNTER', 'NFSU2_PAD_FE_KEYS',
 ]);
 /** Pass only host contracts and explicitly supported bring-up diagnostics to the process. */
@@ -133,7 +174,7 @@ function browserEnv(input: Record<string, string>): Record<string, string> {
   const out = Object.fromEntries(Object.entries(input).filter(([key]) => BROWSER_ENV.has(key)));
   Object.assign(out, { NFSU2_AUTOSAVE: '0', NFSU2_NET: 'off', NFSU2_ONLINE: '0', NFSU2_ROAM: '0',
     NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NFSU2_PAD_FE_KEYS: '0',
-    NFSU1_SAVEDIR: '/save/nfsu1', NFSU1_READONLY_DATA: '1' });
+    NFSU1_DYNAMIC_RESOLUTION: '1', NFSU1_SAVEDIR: '/save/nfsu1', NFSU1_READONLY_DATA: '1' });
   return out;
 }
 
@@ -305,7 +346,23 @@ def main() -> None:
         for name, info in state["files"].items():
             if hashlib.sha256((upstream / name).read_bytes()).hexdigest() != info["applied_sha256"]:
                 raise ValueError(f"overlay file has later edits: {name}")
-        print(f"PC NFSU1 browser overlay already applied and unchanged ({len(state['files'])} files).")
+        # Recompute from verified originals so builds pick up newer overlay
+        # revisions without requiring a destructive revert of local edits.
+        outputs = {}
+        for name, expected in FILES.items():
+            original = (state_dir / name).read_bytes()
+            if git_blob(original) != expected:
+                raise ValueError(f"overlay backup differs from pinned upstream: {name}")
+            outputs[name] = transform(name, original.decode("utf-8")).encode("utf-8")
+        changed = 0
+        for name, data in outputs.items():
+            digest = hashlib.sha256(data).hexdigest()
+            if digest != state["files"][name]["applied_sha256"]:
+                (upstream / name).write_bytes(data)
+                state["files"][name]["applied_sha256"] = digest
+                changed += 1
+        state_path.write_text(json.dumps(state, indent=2) + "\n")
+        print(f"PC NFSU1 browser overlay verified; updated {changed} of {len(outputs)} files.")
         return
 
     outputs: dict[str, bytes] = {}

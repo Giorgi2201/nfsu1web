@@ -385,5 +385,21 @@
     ],
     "validation": "Focused synthetic native and compiled-WASI execution of actual helpers; private game module relink and browser bundle completed. User subsequently confirmed profile creation works; no agent operated a browser.",
     "output_policy": "No original game input or generated game functions changed; linked game module remains ignored and local."
+  },
+  "graphics_presets": {
+    "date": "2026-10-23",
+    "implementation": "Original NFSU1 presets after capability setup/profile load via Wasm LLD wrappers. Automatic resolution fits live canvas device pixels while preserving guest aspect, using the pinned browser settings and GPU device-reset host.",
+    "runtime_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "evidence": "Read-only matching PC 1.4 settings descriptor table at 0x700ec0, original four-level preset routine at 0x410ed0, capability limits at 0x701040 and config loader at 0x41c680. Exact mapping documented in docs/graphics.md.",
+    "reuse": "No additional third-party source copied. Existing browser shell excerpts remain covered by patches/nfsu2-web.LICENSE; attribution to th0mk and the existing PC analysis pipeline by codepdbh/sp00nz is retained.",
+    "output_policy": "Original game inputs unchanged. Emitted routines, local mapping comparison harness and linked game module remain ignored and private.",
+    "limitations": "Effect correctness/performance and live resize recovery require user browser checks. True NFSU1 widescreen hooks remain unported; smaller post-processing buffers retain original game sizing.",
+    "dynamic_resolution": {
+      "gpu_host_blob": "87d7fa6fa240bd861c05cb6c6992a37aa4000b80",
+      "source": "th0mk/nfsu2-web runtime/web/gpu_web.c at pinned runtime revision",
+      "reuse": "Existing metal_view_size/view_follow and game-driven device loss/reset; normalized oversized view comparison prevents repeated resets. Existing MIT notice retained.",
+      "validation": "Focused native execution of actual res_pick/view_wh/metal_view_size/view_follow with growth, shrinkage, aspect preservation and debounce; private Wasm and browser bundle checks.",
+      "real_guest_smoke": "Bounded Node run forced RESETAT=20, recovered through original game Reset, chose 1440x1080 for1920x1080 view (800x600 guest, aspect1.0), and continued to intentional15s timeout. No browser rendering validated."
+    }
   }
 }
