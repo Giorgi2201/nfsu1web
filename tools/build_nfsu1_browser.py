@@ -46,6 +46,7 @@ def main():
     subprocess.run([sys.executable, str(ROOT / "tools/apply_browser_profile.py"),
                     "--upstream", str(upstream)], check=True)
     subprocess.run(["node", str(ROOT / "tools/browser_startup_smoke.mjs"), str(upstream)], check=True)
+    subprocess.run(["node", str(ROOT / "tools/keyboard_smoke.mjs"), str(upstream)], check=True)
     subprocess.run(["node", "build.mjs"], cwd=web, check=True)
     dist = web / "dist"
     missing = [name for name in ASSETS if not (dist / name).is_file()]
@@ -82,6 +83,9 @@ def main():
         "esbuild_package_sha256": digest(package),
         "source_maps": "retained in dist-dev without public map URL advertisements",
         "overlay_sha256": digest(ROOT / "tools/apply_browser_profile.py"),
+        "menu_sources": {str(p.relative_to(ROOT)): digest(p) for p in sorted((ROOT / "browser").glob("*")) if p.is_file()},
+        "keyboard_overlay_sha256": digest(ROOT / "tools/browser_keyboard_overlay.py"),
+        "keyboard_smoke_sha256": digest(ROOT / "tools/keyboard_smoke.mjs"),
         "builder_sha256": digest(Path(__file__)),
         "startup_smoke_sha256": digest(ROOT / "tools/browser_startup_smoke.mjs"),
         "server_sha256": digest(ROOT / "tools/serve_nfsu1.py"),

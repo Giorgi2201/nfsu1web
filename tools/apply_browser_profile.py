@@ -13,10 +13,14 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from browser_keyboard_overlay import keyboard_input
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMIT = "31da468582c3de14fd6f4233831f62816e2df83d"
 FILES = {
+    "web/src/main.ts": "d1215f3ea6cc5fbad3714e602957636461be7d4a",
+    "web/src/app/style.css": "e8c5d7e21fd6ec430167219974c6f38565df5d40",
+    "web/src/input/index.ts": "b322ec69927eb1c046cd67be8ce5e5d00caec44f",
     "web/index.html": "dcd0d50b384ec6af61e836e8406514f9ee3cb735",
     "web/src/app/game.ts": "a15310956e31c313fd61e9454f408421fc353729",
     "web/src/app/settings-ui.ts": "e5d113afdb1e54abfd6851044a922c9d14d464b7",
@@ -26,6 +30,10 @@ FILES = {
     "web/src/sw.ts": "406d25673604f4f03cc5b41a112c37f68063f689",
 }
 STATE_DIR = ".nfsu1-browser-profile"
+ADDED = {
+    "web/src/app/menu.ts": "browser/menu.ts",
+    "web/src/app/keyboard.ts": "browser/keyboard.ts",
+}
 
 
 def git_blob(data: bytes) -> str:
@@ -39,7 +47,42 @@ def exact(source: str, old: str, new: str, *, count: int = 1) -> str:
     return source.replace(old, new, count)
 
 
+def redesign_page(source: str) -> str:
+    """Keep the host's element contracts inside the original menu layout."""
+    def section(marker: str) -> str:
+        start = source.index(marker)
+        return source[start:source.index('</section>', start) + len('</section>')]
+
+    page = (ROOT / 'browser/menu.html').read_text()
+    parts = {
+        'HERO': section('<section class="panel hero"'),
+        'SETTINGS': section('<section class="panel" id="settings"'),
+        'DATA': section('<section class="panel" id="game-data"'),
+        'LEGACY': section('<section class="panel" id="saves"') + '\n' + section('<section class="panel" id="online"'),
+    }
+    for name, content in parts.items():
+        page = exact(page, '{{' + name + '}}', content)
+    start = source.index('<main ')
+    end = source.index('</main>', start) + len('</main>')
+    source = source[:start] + page + source[end:]
+    source = source.replace('Start experiment', 'Launch game').replace('Stop experiment', 'Stop game')
+    source = source.replace('Saved in this browser. Changes apply the next time you press Play.',
+                            'Saved automatically in this browser. Changes apply at your next launch.')
+    source = source.replace('PC NFS Underground 1 Experimental Bring-up', 'NFS Underground | Browser Edition')
+    source = re.sub(r'<meta name="google-adsense-account"[^>]*>\n', '', source)
+    return source
+
+
 def transform(path: str, source: str) -> str:
+    if path == "web/src/main.ts":
+        return exact(source, "void boot();", "import { mountMenu } from './app/menu';\n\nmountMenu();\nvoid boot();")
+
+    if path == "web/src/app/style.css":
+        return source + "\n" + (ROOT / "browser/menu.css").read_text()
+
+    if path == "web/src/input/index.ts":
+        return keyboard_input(source)
+
     if path == "web/src/app/game.ts":
         return exact(source, "args: ['nfsu2', '/data/SPEED2.EXE']", "args: ['nfsu1', '/data/Speed.exe']")
 
@@ -82,15 +125,21 @@ def transform(path: str, source: str) -> str:
   { title: 'Graphics', items: [
     { key: 'graphics_quality', label: 'Graphics quality', help: 'Maximum enables the mapped original effects. Lower presets reduce reflections, shadows and effects. Game uses your saved in-game options. Changes apply on the next start. Render resolution follows the window; widescreen FOV and HUD hooks are enabled by default.', c: { t: 'seg', opts: [['game', 'Game'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['max', 'Maximum']] } },
   ] },
+  { title: 'Audio', items: [
+    { key: 'sound', label: 'Sound output', help: 'Enable game audio. Music, engine and effects levels can be adjusted in the game’s Options menu.', c: { t: 'switch' } },
+    { key: 'audio_latency', label: 'Audio latency', help: 'Low reacts fastest. Robust uses a larger output buffer for busy computers.', c: { t: 'seg', opts: [['interactive', 'Low'], ['balanced', 'Balanced'], ['playback', 'Robust']] } },
+  ] },
   { title: 'Browser', items: [
     { key: 'intro', label: 'Startup movies', help: 'Skippable: Enter, Esc, Space or controller A, B or Start ends each movie. Original: use the original game behavior. Off: finish startup screens immediately; a brief frame may appear. Story movies keep their original behavior.', c: { t: 'seg', opts: [['skippable', 'Skippable'], ['original', 'Original'], ['off', 'Off']] } },
     { key: 'fullscreen', label: 'Full screen on Play', help: 'Open the game canvas full screen when the browser allows it.', c: { t: 'switch' } },
-    { key: 'audio_latency', label: 'Audio latency', help: 'Choose the browser audio output buffer.', c: { t: 'seg', opts: [['interactive', 'Low'], ['balanced', 'Balanced'], ['playback', 'Robust']] } },
+    { key: 'background', label: 'When the tab is in the background', help: 'Pause freezes the game and its audio when you switch away. Keep running continues the game.', c: { t: 'seg', opts: [['pause', 'Pause'], ['run', 'Keep running']] } },
   ] },
   { title: 'Input device', items: [
     { key: 'gamepad', label: 'Controller input', help: 'Choose whether the browser exposes a connected game controller to the runtime.', c: { t: 'seg', opts: [['on', 'On'], ['hotplug', 'While connected'], ['off', 'Off']] } },
     { key: 'gamepad_deadzone', label: 'Stick dead zone', help: 'Fraction of full stick travel ignored by the browser input adapter.', c: { t: 'num', min: 0, max: 0.9, step: 0.01 } },
     { key: 'gamepad_trigger_deadzone', label: 'Trigger dead zone', help: 'Fraction of full trigger travel ignored by the browser input adapter.', c: { t: 'num', min: 0, max: 0.9, step: 0.01 } },
+    { key: 'gamepad_trigger_click', label: 'Trigger full press', help: 'Trigger travel required to register full throttle or full brake.', c: { t: 'num', min: 0, max: 1, step: 0.01 } },
+    { key: 'rumble', label: 'Controller vibration', help: 'Allow force feedback when the game and connected controller provide it.', c: { t: 'switch' } },
   ] },
 ];'''
         source = source[:start] + replacement + source[end:]
@@ -120,6 +169,15 @@ def transform(path: str, source: str) -> str:
         return exact(source, "k.startsWith('nfsu2-offline-')", "k.startsWith('nfsu1-offline-')")
 
     if path == "web/src/app/shell.ts":
+        source = "import { toggleKeyboardAliases } from './keyboard';\n" + source
+        source = exact(source,
+                       "    if (session && (e.code === 'F8' || e.code === 'F9')) {",
+                       """    if (session && e.code === 'F10') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (!e.repeat) toast(`Keyboard mappings ${toggleKeyboardAliases() ? 'on' : 'off — original keys for typing'}. F10 toggles.`, 3500);
+      return;
+    }
+    if (session && (e.code === 'F8' || e.code === 'F9')) {""")
         source = exact(source, "let SAVE = 'save';", "let SAVE = 'save-nfsu1';")
         source = exact(source, "const ASK_ROAM = true;", "const ASK_ROAM = false;")
         source = exact(source, "  const r = resolved(host);", """  const r = resolved(host);
@@ -164,7 +222,7 @@ def transform(path: str, source: str) -> str:
                        """const BROWSER_ENV = new Set([
   'HOME', 'NFSU2_DATA', 'NFSU2_SAVEDIR', 'NFSU2_REGFILE', 'NFSU2_WIDTH', 'NFSU2_HEIGHT',
   'NFSU2_DISPLAY_HZ', 'NFSU2_RENDERER', 'NFSU2_READONLY_DATA', 'NFSU1_SAVEDIR', 'NFSU1_READONLY_DATA',
-  'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'SNDSYNC', 'NFSFULL', 'NFSMAXPIX',
+  'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'NOSOUND', 'NFSU2_BACKGROUND', 'SNDSYNC', 'NFSFULL', 'NFSMAXPIX',
   'NFSU2_PAD', 'NFSU2_PAD_DEADZONE', 'NFSU2_PAD_TRIGGER_DEADZONE', 'NFSU2_PAD_TRIGGER_CLICK', 'NFSU2_FF',
   'NFSU2_AUDIO_LATENCY', 'NFSU2_TZ', 'NFSU2_TZ_NAME',
   'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
@@ -271,6 +329,14 @@ function onSaved(path: string) {
   line.textContent = saved ? `File writes reported: ${saved.count}.` : 'No file writes reported during this experiment.';
 """
         source = exact(source, old_menu, new_menu)
+        source = exact(source,
+                       "  if (!body.firstChild) body.append(...[...$('#keys').childNodes].map(n => n.cloneNode(true)));",
+                       "  body.replaceChildren(...[...$('#keys').childNodes].map(n => n.cloneNode(true)));")
+        source = source.replace('Start experiment', 'Launch game').replace('Stop experiment', 'Stop game')
+        source = source.replace('Starting experiment', 'Starting game').replace('Runtime experiment running', 'Game running')
+        source = source.replace('Experiment ended', 'Game closed')
+        source = source.replace('The experimental runtime will be stopped immediately.',
+                                'The game will stop immediately. Progress since your last in-game save will be lost.')
         return source
 
     if path == "web/index.html":
@@ -316,7 +382,7 @@ function onSaved(path: string) {
         source = exact(source, '<details class="raw" id="settings-raw">',
                        '<details class="raw" id="settings-raw" hidden>')
         source = exact(source, '    <button type="button" class="btn" data-act="fps">Frame-rate counter: off</button>\n', '')
-        return source
+        return redesign_page(source)
 
     raise ValueError(f"unrecognized browser overlay path: {path}")
 
@@ -337,60 +403,54 @@ def main() -> None:
             if hashlib.sha256(target.read_bytes()).hexdigest() != info["applied_sha256"]:
                 raise ValueError(f"refusing to discard later edits in {name}")
         for name, info in state["files"].items():
-            (upstream / name).write_bytes((state_dir / name).read_bytes())
+            if info["original_sha256"] is None:
+                (upstream / name).unlink()
+            else:
+                (upstream / name).write_bytes((state_dir / name).read_bytes())
         state_path.unlink()
         print(f"Restored {len(state['files'])} browser files from {STATE_DIR}.")
         return
 
-    if state_path.exists():
-        state = json.loads(state_path.read_text())
-        for name, info in state["files"].items():
-            if hashlib.sha256((upstream / name).read_bytes()).hexdigest() != info["applied_sha256"]:
-                raise ValueError(f"overlay file has later edits: {name}")
-        # Recompute from verified originals so builds pick up newer overlay
-        # revisions without requiring a destructive revert of local edits.
-        outputs = {}
-        for name, expected in FILES.items():
-            original = (state_dir / name).read_bytes()
-            if git_blob(original) != expected:
-                raise ValueError(f"overlay backup differs from pinned upstream: {name}")
-            outputs[name] = transform(name, original.decode("utf-8")).encode("utf-8")
-        changed = 0
-        for name, data in outputs.items():
-            digest = hashlib.sha256(data).hexdigest()
-            if digest != state["files"][name]["applied_sha256"]:
-                (upstream / name).write_bytes(data)
-                state["files"][name]["applied_sha256"] = digest
-                changed += 1
-        state_path.write_text(json.dumps(state, indent=2) + "\n")
-        print(f"PC NFSU1 browser overlay verified; updated {changed} of {len(outputs)} files.")
-        return
-
-    outputs: dict[str, bytes] = {}
-    originals: dict[str, bytes] = {}
+    state = json.loads(state_path.read_text()) if state_path.exists() else {
+        "upstream_commit": COMMIT, "files": {},
+    }
+    # Verify every managed output before changing anything, including added files.
+    for name, info in state["files"].items():
+        if hashlib.sha256((upstream / name).read_bytes()).hexdigest() != info["applied_sha256"]:
+            raise ValueError(f"overlay file has later edits: {name}")
+    outputs = {}
+    originals = {}
     for name, expected in FILES.items():
-        target = upstream / name
-        data = target.read_bytes()
-        actual = git_blob(data)
-        if actual != expected:
-            raise ValueError(f"{name} is not the pinned upstream blob: expected {expected}, found {actual}")
-        originals[name] = data
-        outputs[name] = transform(name, data.decode("utf-8")).encode("utf-8")
-
+        original = ((state_dir / name) if name in state["files"] else (upstream / name)).read_bytes()
+        if git_blob(original) != expected:
+            raise ValueError(f"browser source differs from pinned upstream: {name}")
+        originals[name] = original
+        outputs[name] = transform(name, original.decode("utf-8")).encode("utf-8")
+    for name, local in ADDED.items():
+        if name not in state["files"] and (upstream / name).exists():
+            raise ValueError(f"refusing to overwrite an unmanaged file: {name}")
+        outputs[name] = (ROOT / local).read_bytes()
+    changed = 0
+    for name, data in outputs.items():
+        if name not in state["files"]:
+            if name in originals:
+                backup = state_dir / name
+                backup.parent.mkdir(parents=True, exist_ok=True)
+                backup.write_bytes(originals[name])
+            state["files"][name] = {
+                "original_sha256": hashlib.sha256(originals[name]).hexdigest() if name in originals else None,
+                "applied_sha256": None,
+            }
+        digest = hashlib.sha256(data).hexdigest()
+        if digest != state["files"][name]["applied_sha256"]:
+            target = upstream / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+            state["files"][name]["applied_sha256"] = digest
+            changed += 1
     state_dir.mkdir(parents=True, exist_ok=True)
-    state = {"upstream_commit": COMMIT, "files": {}}
-    for name, data in originals.items():
-        (state_dir / name).parent.mkdir(parents=True, exist_ok=True)
-        (state_dir / name).write_bytes(data)
-        target = upstream / name
-        target.write_bytes(outputs[name])
-        state["files"][name] = {"original_sha256": hashlib.sha256(data).hexdigest(),
-                                "applied_sha256": hashlib.sha256(outputs[name]).hexdigest()}
     state_path.write_text(json.dumps(state, indent=2) + "\n")
-    print(f"Applied PC NFSU1 browser overlay to {len(outputs)} pinned files under {upstream}.")
-    for name in outputs:
-        print(f"  {name}")
-    print(f"Revert with: python3 tools/apply_browser_profile.py --upstream {upstream} --revert")
+    print(f"PC NFSU1 browser overlay verified; updated {changed} of {len(outputs)} files.")
 
 
 if __name__ == "__main__":

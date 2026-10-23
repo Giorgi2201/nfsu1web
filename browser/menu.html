@@ -1,0 +1,62 @@
+<main class="app underground-menu" id="app">
+  <a class="skip-menu" href="#menu-content">Skip to content</a>
+  <header class="top">
+    <div class="top-row">
+      <h1 class="wordmark"><span class="wordmark-small">Need for Speed</span><span class="wordmark-name">Underground</span><span class="wordmark-edition">Browser edition <i aria-hidden="true">/</i> 01</span></h1>
+      <div class="build-tag"><span class="signal-dot" aria-hidden="true"></span> PC edition <span class="build-separator">/</span> Experimental</div>
+    </div>
+    <div class="bar" id="progress" role="progressbar" aria-label="Game loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar-fill" id="progress-fill"></div></div>
+  </header>
+
+  <aside class="menu-rail">
+    <p class="eyebrow rail-caption">Main menu</p>
+    <nav class="screen-nav" aria-label="Main menu">
+      <button type="button" data-screen="play" aria-current="page" aria-controls="screen-play"><span class="nav-index">01</span><span>Play</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+      <button type="button" data-screen="options" aria-controls="screen-options"><span class="nav-index">02</span><span>Options</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+      <button type="button" data-screen="controls" aria-controls="screen-controls"><span class="nav-index">03</span><span>Controls</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+      <button type="button" data-screen="storage" aria-controls="screen-storage"><span class="nav-index">04</span><span>Game data</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+      <button type="button" data-screen="about" aria-controls="screen-about"><span class="nav-index">05</span><span>About</span><span class="nav-arrow" aria-hidden="true">›</span></button>
+    </nav>
+  </aside>
+
+  <div class="menu-content" id="menu-content" tabindex="-1">
+    <div class="menu-screen" id="screen-play" data-menu-screen="play">
+      {{HERO}}
+      <div class="screen-strip"><span><kbd>Enter</kbd> Start</span><span><kbd>F9</kbd> Menu while playing</span></div>
+    </div>
+
+    <div class="menu-screen" id="screen-options" data-menu-screen="options" hidden>
+      {{SETTINGS}}
+      <p class="screen-note">For transmission, difficulty and the music / effects mix, use Options inside the game.</p>
+    </div>
+
+    <div class="menu-screen" id="screen-controls" data-menu-screen="controls" hidden>
+      <section class="panel" id="controls" aria-labelledby="controls-title">
+        <h2 id="controls-title">Keyboard controls</h2>
+        <div id="keys">
+          <p class="hint">Set the game’s driving actions in its Options → Controls menu. Browser key mappings below let your physical keys send different keys to the game.</p>
+          <dl class="keys"><div><dt><kbd>F10</kbd></dt><dd>Toggle keyboard mappings for text entry</dd></div><div><dt><kbd>F9</kbd></dt><dd>Open the browser game menu</dd></div><div><dt><kbd>Enter</kbd></dt><dd>Start from this page</dd></div></dl>
+          <p class="hint">Hold Escape to leave fullscreen when the browser keyboard lock is active. Browser shortcuts may be unavailable to the game outside fullscreen.</p>
+        </div>
+        <div id="keyboard-controls"></div>
+      </section>
+    </div>
+
+    <div class="menu-screen" id="screen-storage" data-menu-screen="storage" hidden>
+      {{DATA}}
+      <p class="screen-note">Game data is cached in this browser. Clearing browser site data can also remove your local settings and saves.</p>
+    </div>
+
+    <div class="menu-screen" id="screen-about" data-menu-screen="about" hidden>
+      <section class="panel about-panel" aria-labelledby="about-title">
+        <h2 id="about-title">Underground, in your browser</h2>
+        <p>The PC edition of Need for Speed: Underground, adapted to a browser runtime with WebAssembly, WebGPU graphics and Web Audio.</p>
+        <div class="about-specs"><div><span class="eyebrow">Display</span><p>Automatic resolution<br>Widescreen layout</p></div><div><span class="eyebrow">Input</span><p>Keyboard mappings<br>Controller support</p></div></div>
+        <p class="hint">This is an experimental local build. Intro playback, profile persistence and a race start have been reported; full game compatibility remains under testing.</p>
+        <p class="hint">Fan project. Not affiliated with or endorsed by Electronic Arts. Original game files are required and stay local.</p>
+      </section>
+    </div>
+  </div>
+  <div hidden>{{LEGACY}}</div>
+  <footer class="foot"><p>Need for Speed: Underground <span aria-hidden="true">/</span> Experimental browser build</p><p>Fan project · Not affiliated with Electronic Arts</p></footer>
+</main>

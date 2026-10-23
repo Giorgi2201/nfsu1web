@@ -23,13 +23,16 @@ server accepts loopback connections only and serves the local build and game
 install read-only. Stop it with Ctrl+C. If the port is occupied, pass
 `--port 8766` and use that port in the browser address.
 
+For the redesigned launcher and keyboard settings, follow the
+[menu and controls checks](menu-settings.md#user-browser-check).
+
 ## What to try
 
 For the **Startup movies** control, follow the focused
 [movie skip checks](movie-skipping.md#user-browser-check).
 
 For graphics, restart the local server after rebuilding and reload the same
-address. Open **Settings → Graphics**. **Maximum** is the default; render
+address. Open **Options → Graphics**. **Maximum** is the default; render
 resolution is automatic and has no selector. Start the game, load your
 existing profile and inspect its graphics options. Start the same race and
 check road/car reflections, shadows, particles and blur. Stop with F9, select
@@ -67,14 +70,14 @@ the initial creation path.
 1. Wait for the module and browser checks to finish. The module is about
    101 MiB; the page checks the required WebGPU, Wasm, shared-memory and storage
    features. A failed check is useful evidence; record its exact message.
-2. Click **Start experiment**. Use the keyboard first. Observe whether a picture
+2. Click **Launch game**. Use the keyboard first. Observe whether a picture
    appears, movies advance and sound starts. Allow about three minutes so the
    music-bank callback path is exercised.
 3. Load or create a profile, try Enter and Escape, and start a race. Record
    input, rendering and save behavior, especially any failure around first-time
    profile creation. Profile loading and race start have been reported by the
    user; repeatability and race completion remain open.
-4. Press F9 and choose **Stop experiment**, then use **Download log** on the
+4. Press F9 and choose **Stop game**, then use **Download log** on the
    page. Share the log with what appeared, whether sound/input worked, and when
    any failure occurred. This stop terminates the runtime; it makes no claim
    that an in-game save completed.

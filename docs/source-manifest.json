@@ -353,7 +353,7 @@
     "output_policy": "Bank bytes, derived analysis PE/catalog, matching tables, generated functions and linked game module stay local and ignored. Original game inputs unchanged."
   },
   "browser_bringup": {
-    "date": "2026-10-22",
+    "date": "2026-10-23",
     "upstream_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
     "pinned_browser_files": {
       "web/index.html": "dcd0d50b384ec6af61e836e8406514f9ee3cb735",
@@ -362,7 +362,10 @@
       "web/src/app/settings.ts": "7a279d9661886e97619c74ae7e2e60f13233a603",
       "web/src/app/shell.ts": "d76dc20bc5b9e2a8a7a8a8397dac28df36031419",
       "web/src/host/datacache.ts": "0996277c86f91168cd3ff0c5cb1f22e39ae3a177",
-      "web/src/sw.ts": "406d25673604f4f03cc5b41a112c37f68063f689"
+      "web/src/sw.ts": "406d25673604f4f03cc5b41a112c37f68063f689",
+      "web/src/main.ts": "d1215f3ea6cc5fbad3714e602957636461be7d4a",
+      "web/src/app/style.css": "e8c5d7e21fd6ec430167219974c6f38565df5d40",
+      "web/src/input/index.ts": "b322ec69927eb1c046cd67be8ce5e5d00caec44f"
     },
     "additional_pinned_runtime_file": {
       "runtime/dinput_pad.c": "bfa162cdf129e14f652fc5cf1ff85adefed0e45d"
@@ -384,7 +387,8 @@
       }
     },
     "bundler_license_retained": "work/toolchain/web-bundler/node_modules/esbuild/LICENSE.md",
-    "output_policy": "Private Wasm, game data, built page and build records stay ignored. No agent browser operation; user-reported browser observations are recorded separately in docs/progress.md."
+    "output_policy": "Private Wasm, game data, built page and build records stay ignored. No agent browser operation; user-reported browser observations are recorded separately in docs/progress.md.",
+    "menu_redesign": "Original browser/menu.html, menu.css, menu.ts and keyboard.ts; no game art or fonts copied. Physical-key aliases adapt the pinned upstream DirectInput/Windows key event bridge. Audio, lifecycle and controller options reuse existing host contracts; NFSU2-only game patches remain disabled."
   },
   "startup_movie_controls": {
     "date": "2026-10-23",

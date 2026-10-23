@@ -82,7 +82,7 @@ const context = {
   quitAt: null,
   refreshMeasured: Promise.resolve(),
   resolved: () => ({
-    env: { NFSFULL: '0', NFSU1_GRAPHICS: 'max', NFSU1_RESOLUTION: '800x600', NFSRES: '800x600', NFSU1_DYNAMIC_RESOLUTION: '0', NFSU2_AUDIO_LATENCY: 'interactive', NFSU2_REGFILE: '/save/registry.txt', NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NOMOVIES: '1', NFSU1_INTRO: 'off', NFSU2_INTRO: 'original' },
+    env: { NOSOUND: '1', NFSU2_BACKGROUND: 'run', NFSFULL: '0', NFSU1_GRAPHICS: 'max', NFSU1_RESOLUTION: '800x600', NFSRES: '800x600', NFSU1_DYNAMIC_RESOLUTION: '0', NFSU2_AUDIO_LATENCY: 'interactive', NFSU2_REGFILE: '/save/registry.txt', NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NOMOVIES: '1', NFSU1_INTRO: 'off', NFSU2_INTRO: 'original' },
     notes: [],
   }),
   saves: { async settled() {} },
@@ -122,6 +122,8 @@ assert.equal(exitHandlerAttached, true, 'the session exit handler attaches after
 assert.equal(toastCalls.length, 1, 'startup shows its generic hint');
 assert.equal(toastCalls[0].duration, 6000);
 assert.match(toastCalls[0].message, /F9 opens the menu/);
+assert.equal(startOptions.env.NOSOUND, '1', 'sound output reaches the shared audio host');
+assert.equal(startOptions.env.NFSU2_BACKGROUND, 'run', 'background policy reaches the shared lifecycle host');
 assert.equal(startOptions.env.NFSU1_SAVEDIR, '/save/nfsu1');
 assert.equal(startOptions.env.NFSU1_INTRO, 'off');
 assert.equal(startOptions.env.NFSU2_INTRO, undefined);

@@ -131,6 +131,15 @@ remain ignored and private; regression shader data is authored synthetically.
 
 ## Publication license and widescreen notice
 
+The browser menu redesign and key-binding panel are original HTML, CSS and
+TypeScript in `browser/`, with no copied game artwork or fonts. The reversible
+overlay extends th0mk's pinned MIT-licensed `web/src/main.ts`,
+`web/src/app/style.css` and `web/src/input/index.ts`, using the original input
+mailbox and DirectInput/Windows key translation. Their pinned blob hashes are
+recorded in the source manifest; `patches/nfsu2-web.LICENSE` remains applicable.
+The settings audit reuses existing shared audio, lifecycle and controller
+contracts, without applying NFSU2-specific gameplay or profile patches.
+
 Original contributions by Yurii Smetanka are MIT-licensed under the root
 [LICENSE](../LICENSE). This grants no new rights to third-party or game material.
 The full ThirteenAG MIT notice is retained in
