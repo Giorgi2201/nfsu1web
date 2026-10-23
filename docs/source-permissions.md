@@ -74,6 +74,13 @@ Automatic resolution also uses th0mk's pinned `runtime/web/gpu_web.c`
 snapshot. Its live view sizing and device-reset watcher are reused with a
 consistent bounded-size comparison. The original MIT notice remains retained.
 
+NFSU1 widescreen host hooks in `runtime/nfsu1_widescreen.c` port the pinned
+PC project's `src/runtime/widescreen.c` / `widescreen_hud.inc` /
+`config/hooks.txt` (revision `58d9d4f…`) to the web `CPU *` ABI. Patch
+semantics come from ThirteenAG's [NFSUnderground.WidescreenFix](https://github.com/ThirteenAG/WidescreenFixesPack/tree/master/source/NFSUnderground.WidescreenFix)
+(MIT). Preserve that MIT notice on redistribution of the adapter. No ASI
+binary or game instructions are included.
+
 ## Repository packaging
 
 `tools/fetch_upstreams.py` materializes the public text sources listed in
@@ -106,3 +113,18 @@ emission in th0mk's MIT-licensed `tools/lift.py` at revision
 `abc0d23c368d5a66da97fe86804e5289222ab356`), with the same retained notice.
 Its regression fixtures are authored synthetic bytes. Re-emitted game bodies,
 catalogs and linked modules stay private and ignored; the executable is unchanged.
+
+The widescreen layout correction scopes the port's HUD constants to verified
+PC 1.4 projection operands and preserves shared FE quad extents. It is
+original adapter logic; the inherited crop was removed after comparison with
+ThirteenAG's `source/NFSUnderground.WidescreenFix/Frontend.ixx` and local
+read-only instruction inspection. Existing attribution and notices apply.
+No original game bytes or generated functions are included in tracked files.
+
+The character-skinning correction overlays th0mk's MIT-licensed
+`runtime/web/vsemu_wgsl.inc` at the pinned runtime revision
+`31da468582c3de14fd6f4233831f62816e2df83d` (blob
+`443f747f89b0d994bd8dcc3b8d518f75c605e541`). It reuses that translator's
+source-operand helper for consecutive matrix rows. The retained
+`patches/nfsu2-web.LICENSE` applies. Real effect/shader inspection outputs
+remain ignored and private; regression shader data is authored synthetically.

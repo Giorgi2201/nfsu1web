@@ -81,6 +81,8 @@ def main():
     parser.add_argument("--cooperative-yield-entry", type=lambda value: int(value, 16),
                         action="append", default=[],
                         help="opt-in runtime scheduler yield before a catalog entry's first instruction (hex VA)")
+    parser.add_argument("--hooks-file", type=Path,
+                        help="VA list (hooks.txt): emit guest_hook(c, va) before each site")
     parser.add_argument("--link-stubs", action="store_true",
                         help="emit abort stubs + fntab for failed/unresolved "
                              "addresses so a Wasm module can link (not clean)")
@@ -122,7 +124,21 @@ def main():
     os.environ["X87PC"] = "1"
     module = load_web_lifter(args.upstream.resolve())
     os.environ["JTSWITCH"] = "1"
-    lifter = module.Lifter(str(args.image.resolve()), comments=False)
+    hook_vas = []
+    if args.hooks_file:
+        for line in args.hooks_file.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            token = line.split()[0]
+            if not token.lower().startswith("0x"):
+                raise ValueError(f"hooks file expects hex VAs: {line!r}")
+            hook_vas.append(int(token, 16))
+        if len(hook_vas) != len(set(hook_vas)):
+            raise ValueError("hooks file contains duplicate VAs")
+    lifter = module.Lifter(str(args.image.resolve()), comments=False, hooks=hook_vas)
+    from widescreen_operands import attach as attach_widescreen_operands, SITES
+    hud_operands = attach_widescreen_operands(lifter) if hook_vas else set()
     structural = profile["identity"]["structural_values"]
     import pefile
     pe = pefile.PE(data=image)
@@ -177,6 +193,8 @@ def main():
               "stubbed_functions": 0, "unresolved_direct_targets": [],
               "ready_for_runtime_build": False, "link_stubs": args.link_stubs}
     report["cooperative_yield_entries"] = sorted(cooperative_yield_entries)
+    report["widescreen_operands_version"] = 1 if hook_vas else 0
+    report["hooks"] = [f"0x{va:08x}" for va in sorted(hook_vas)]
     if extension:
         report["parent_catalog_sha256"] = extension[2]
         report["callback_entries_appended"] = len(extension[1])
@@ -240,6 +258,25 @@ def main():
     if cooperative_yield_entries - emitted:
         parser.error("a cooperative yield entry failed emission; refusing an unhooked stub")
     flush()
+    if hook_vas:
+        # Mid-block sites must appear as guest_hook calls in emitted bodies.
+        # Fail closed: a missing site means the runtime cannot apply the patch.
+        emitted_text = []
+        for path in sorted(output.glob("shard_*.c")):
+            emitted_text.append(path.read_text())
+        joined = "\n".join(emitted_text)
+        missing = [va for va in hook_vas
+                   if f"guest_hook(c, 0x{va:x}u)" not in joined]
+        if missing:
+            report["missing_hooks"] = [f"0x{va:08x}" for va in missing]
+            (output / "lift-report.json").write_text(json.dumps(report, indent=2) + "\n")
+            raise SystemExit(
+                "hooks were not emitted at: " +
+                ", ".join(f"0x{va:08x}" for va in missing))
+        if hud_operands != set(SITES):
+            raise SystemExit("missing scoped widescreen HUD operands")
+        report["widescreen_operand_sites"] = [f"0x{va:08x}" for va in sorted(hud_operands)]
+        report["hooks_emitted"] = len(hook_vas)
     report["unresolved_direct_targets"] = [f"0x{a:08x}" for a in sorted(unresolved)]
     complete = not args.limit and not report["failures"] and not unresolved
     if args.link_stubs and not complete:
@@ -267,6 +304,9 @@ def main():
                     'void unsupported_insn(CPU *, uint32_t, const char *);',
                     'void cpuid_shim(CPU *);', 'uint64_t rdtsc_shim(void);']
     declarations += [f"void sub_{a:08x}(CPU *);" for a in sorted(available)]
+    if hook_vas:
+        declarations += ['float nfsu1_widescreen_hud_scale_x(void);',
+                         'float nfsu1_widescreen_hud_pos_x(void);']
     declarations.append('#endif')
     (output / "decls.h").write_text("\n".join(declarations) + "\n")
     # Clean lifts always publish tables. --link-stubs publishes for bring-up link.

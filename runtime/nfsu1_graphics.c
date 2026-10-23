@@ -38,18 +38,36 @@ static const GraphicsSetting graphics_settings[] = {
 
 /* Use the current canvas on CreateDevice and Reset. metal_view_size also
  * records the canvas size used here, arming the GPU host's resize detector.
- * Whole multiples of the reduced guest aspect preserve the projection and
- * HUD proportions, including the game's 1280x1024 (5:4) mode. */
+ * With NFSU1_WIDESCREEN (default when dynamic resolution is on), the device
+ * matches the canvas and PC widescreen hooks own FOV/HUD. NFSU1_WIDESCREEN=0
+ * keeps whole multiples of the guest aspect (4:3 / 5:4 letterbox). */
 int nfsu1_graphics_size(uint32_t gw, uint32_t gh, uint32_t *dw, uint32_t *dh){
     const char *dynamic = getenv("NFSU1_DYNAMIC_RESOLUTION");
     if (!dynamic || strcmp(dynamic, "1")) return 0;
     unsigned vw, vh;
     extern void metal_view_size(unsigned *, unsigned *);
+    extern void nfsu1_widescreen_set_display_aspect(float);
+    extern void nfsu1_widescreen_set_resolution(unsigned, unsigned);
     metal_view_size(&vw, &vh);
     *dw = *dh = 0;
     if (!gw || !gh) return 1;
     if (vw > 8192u) vw = 8192u;
     if (vh > 8192u) vh = 8192u;
+    if (vw < 2u) vw = 2u;
+    if (vh < 2u) vh = 2u;
+    vw &= ~1u;
+    vh &= ~1u;
+    const char *wide = getenv("NFSU1_WIDESCREEN");
+    int widescreen = !wide || strcmp(wide, "0");
+    if (widescreen) {
+        float aspect = (float)vw / (float)vh;
+        nfsu1_widescreen_set_display_aspect(aspect);
+        *dw = vw;
+        *dh = vh;
+        nfsu1_widescreen_set_resolution(vw, vh);
+        return 1;
+    }
+    nfsu1_widescreen_set_display_aspect(0.0f);
     uint32_t a = gw, b = gh;
     while (b){ uint32_t remainder = a % b; a = b; b = remainder; }
     uint32_t aspect_w = gw / a, aspect_h = gh / a;

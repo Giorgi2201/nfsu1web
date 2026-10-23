@@ -25,7 +25,7 @@ const ctl = isMainThread
 // Keep the diagnostic environment identical in every Wasm instance/thread.
 // Do not expose unrelated host variables (credentials, shell configuration).
 const diagnosticNames = [
-  'BT', 'COMTRACE', 'TRACE_MAX', 'VERBOSE', 'WATCH_ADDR', 'FILELIST', 'PRESENTBT',
+  'VSDUMP', 'BT', 'COMTRACE', 'TRACE_MAX', 'VERBOSE', 'WATCH_ADDR', 'FILELIST', 'PRESENTBT',
   'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'NFSU2_WATCHDOG',
   'NOWIDE', 'NFSNATIVE', 'NFSRES',
   'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO',

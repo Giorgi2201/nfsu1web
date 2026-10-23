@@ -154,8 +154,17 @@ python3 tools/lift_catalog.py \
   --base-catalog work/analysis/catalog.json \
   --upstream work/upstream/nfsu2-web \
   --output-dir gen/nfsu1-current \
-  --cooperative-yield-entry 0x0063f0a0 --link-stubs
+  --cooperative-yield-entry 0x0063f0a0 \
+  --hooks-file work/upstream/nfsu1-recompiled/config/hooks.txt \
+  --link-stubs
 ```
+
+`--hooks-file` emits `guest_hook` before each NFSU1 widescreen site so
+`runtime/nfsu1_widescreen.c` can apply FOV/HUD corrections. The current lifter
+also scopes five HUD constant operands so menu layout keeps its original
+constants; older widescreen emissions must be regenerated. Choose a fresh
+`--output-dir` when re-emitting; the lift refuses a nonempty destination.
+
 
 The emitter consumes the saved catalog; it does not scan for new functions.
 `--link-stubs` remains necessary because some entries are unresolved; a stub

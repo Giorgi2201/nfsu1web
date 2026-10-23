@@ -56,8 +56,8 @@ def transform(path: str, source: str) -> str:
 # launch; Maximum enables the mapped original effects. [NFSU1_GRAPHICS]
 #graphics_quality = max
 # Render resolution automatically follows the window and full-screen size
-# at device pixel density, preserving the game aspect. No resolution choice
-# or restart is needed when resizing.
+# at device pixel density. Widescreen FOV/HUD hooks run by default; set
+# NFSU1_WIDESCREEN=0 to letterbox to the saved guest aspect instead.
 
 # ---- Display -------------------------------------------------------------""")
         source = exact(source, "env: 'NFSU2_INTRO'", "env: 'NFSU1_INTRO'")
@@ -80,7 +80,7 @@ def transform(path: str, source: str) -> str:
         end = source.index("\n];", start) + 3
         replacement = '''const GROUPS: Group[] = [
   { title: 'Graphics', items: [
-    { key: 'graphics_quality', label: 'Graphics quality', help: 'Maximum enables the mapped original effects. Lower presets reduce reflections, shadows and effects. Game uses your saved in-game options. Changes apply on the next start. Render resolution automatically follows the window and full-screen size.', c: { t: 'seg', opts: [['game', 'Game'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['max', 'Maximum']] } },
+    { key: 'graphics_quality', label: 'Graphics quality', help: 'Maximum enables the mapped original effects. Lower presets reduce reflections, shadows and effects. Game uses your saved in-game options. Changes apply on the next start. Render resolution follows the window; widescreen FOV and HUD hooks are enabled by default.', c: { t: 'seg', opts: [['game', 'Game'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['max', 'Maximum']] } },
   ] },
   { title: 'Browser', items: [
     { key: 'intro', label: 'Startup movies', help: 'Skippable: Enter, Esc, Space or controller A, B or Start ends each movie. Original: use the original game behavior. Off: finish startup screens immediately; a brief frame may appear. Story movies keep their original behavior.', c: { t: 'seg', opts: [['skippable', 'Skippable'], ['original', 'Original'], ['off', 'Off']] } },
@@ -127,7 +127,8 @@ def transform(path: str, source: str) -> str:
   // Retired resolution choices and restored fixed overrides cannot pin the browser.
   delete r.env.NFSRES;
   r.env.NFSU1_DYNAMIC_RESOLUTION = '1';
-  log.add(`[app] graphics quality: ${r.env.NFSU1_GRAPHICS ?? 'max'}; render: automatic device pixels, follows window/full screen, preserves game aspect`);
+  if (r.env.NFSU1_WIDESCREEN === undefined) r.env.NFSU1_WIDESCREEN = '1';
+  log.add(`[app] graphics quality: ${r.env.NFSU1_GRAPHICS ?? 'max'}; render: automatic device pixels, widescreen=${r.env.NFSU1_WIDESCREEN}`);
   // Preserve shared host options; filter unsupported game variables before startup.
   Object.assign(r.env, {
     NFSU2_AUTOSAVE: '0', NFSU2_NET: 'off', NFSU2_ONLINE: '0', NFSU2_ROAM: '0',

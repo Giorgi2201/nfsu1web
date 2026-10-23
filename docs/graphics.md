@@ -10,9 +10,9 @@ Game, Low, Medium, High and Maximum. The `settings.ini` key is
 
 Render resolution always follows the live window or full-screen canvas at
 its device pixel density. There is no resolution selector or fixed preset
-ceiling. The host chooses the largest image that fits while preserving the
-game's aspect, subject to its 8192-pixel dimension limit. Saved 4:3 and 5:4
-guest modes both retain their proportions; this does not enable widescreen.
+ceiling. Widescreen uses the whole canvas, subject to the 8192-pixel
+dimension limit. With `NFSU1_WIDESCREEN=0`, the host fits the saved guest
+aspect (4:3 or 5:4) inside the canvas instead.
 
 After a resize settles for 250 ms, the existing upstream device-loss path
 asks the game to release and recreate its render targets at the new size.
@@ -63,8 +63,8 @@ value also follows the original game.
 `BPP`, `SOUNDPERF` and `SOUNDENABLE` share the configuration table but
 are not changed by the detail adapter. `PERFORMANCE` lives at `0x736334`.
 `RES` is an index into the game's legacy resolution list; it is not a pixel
-width. Dynamic rendering preserves this guest mode's aspect and supplies the
-actual pixel dimensions through the host. It does not rewrite `RES`.
+width. Dynamic rendering supplies the actual pixel dimensions through the host;
+the guest mode's aspect is preserved only with widescreen disabled. It does not rewrite `RES`.
 Texture filtering and multisampling are not separate entries in this
 NFSU1 table, and native NFSU2 renderer enhancements are not implied by Max.
 
@@ -111,20 +111,64 @@ the original game's Reset/recovery path: the 800×600 guest mode recreated a
 until the planned 15-second deadline. This confirms command-line recovery,
 not visible rendering or browser resize behavior.
 
-## Widescreen work remaining
+## Widescreen
 
-True widescreen is feasible using the pinned PC project's NFSU1 hooks for
-projection, HUD, minimap, mirror, movies and mouse coordinates. The current
-emission contains none of these interior callbacks; the NFSU2 runtime's hooks
-target a different game. Porting them requires wiring verified NFSU1 sites
-into the existing lifter, re-emitting from the cached catalog, and coordinating
-device resets. No new analysis artifacts are needed. Merely selecting a wide
-framebuffer does not provide this support; automatic rendering currently
-preserves the original game aspect.
+True widescreen uses the pinned PC project's NFSU1 hook sites (ThirteenAG
+WidescreenFixesPack semantics via `codepdbh/nfsu1-recompiled`). Sites are
+listed in `config/hooks.txt`, emitted with `tools/lift_catalog.py --hooks-file`,
+and handled by `runtime/nfsu1_widescreen.c` through `guest_hook` →
+`nfsu1_ws_hook`. The NFSU2 runtime's `widescreen.c` addresses are not used.
+
+With `NFSU1_DYNAMIC_RESOLUTION=1` (browser default), the device follows the
+canvas. Widescreen is on unless `NFSU1_WIDESCREEN=0`, which restores
+guest-aspect letterboxing. When widescreen is active, clip-space
+`aspfix` stays 1.0 so hooks correct FOV, HUD, minimap, mirror
+and mouse hit tests. Re-emit after changing the hook list; the Wasm build
+refuses a selection that lacks the key `guest_hook` sites.
 
 Follow the focused [manual browser checks](browser-testing.md#what-to-try)
-after restarting the local server and reloading the existing origin.
+after rebuilding, restarting the local server and reloading the existing
+origin. Check 16:9 FOV, HUD edges, FMV framing, menus/mouse and live resize.
 
 The backbuffer and matching full-size render targets follow the canvas.
 Original smaller post-processing buffers, including motion blur, retain the
 game's own sizing rules.
+
+The HUD scale and center are scoped to five verified instruction operands
+by `tools/widescreen_operands.py`; the original shared float constants remain
+intact for menu layout, clipping and animation. The three inherited FMV quad
+hooks are accepted but inert: those helpers also draw menu rectangles and
+loading artwork, so enlarging their extents crops images and overlaps menus.
+Re-emission with the current lifter is required; the build rejects older
+emissions without the scoped operand marker.
+
+The focused native widescreen smoke checks unchanged shared constants,
+unchanged quad extents and minimap center, in addition to resolution and FOV
+hook behavior. Real emission verifies all five scoped operands. These are
+command-line checks. The private Wasm relink and browser bundle/startup
+checks also passed; visual layout and movie framing still require the user
+browser checks.
+
+## Character skinning
+
+The browser WGSL translator must preserve relative constant addressing in
+matrix instructions. The original translator resolved `m4x4` matrix rows as
+fixed constants, ignoring the address register selected by the character
+shader. This made all three weighted position transforms read bone zero,
+while normal calculations still used the selected bones. The result was
+incorrect limb poses.
+
+The runtime overlay now resolves each consecutive matrix row through the
+existing source-operand helper. That preserves dynamic bone selection and
+shader-defined constants for the matrix instruction family. This change is
+in `runtime/web/vsemu_wgsl.inc` in the pinned upstream, applied reversibly by
+`tools/apply_runtime_profile.py`; no game re-emission is needed.
+
+A bounded Node run captured the real startup-created character shader and
+confirmed three affected matrix operations. That run dropped graphics output;
+it establishes shader reachability, not visible rendering. The focused
+`tools/skinning_shader_smoke.py` uses authored synthetic shader data to check
+CPU bone transforms and generated WGSL matrix addressing; it passes the
+overlay and fails the pinned original. Wasm linking, browser bundling and
+startup checks also passed. Browser validation
+must still check crowd and starter poses and animation during a race start.

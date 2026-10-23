@@ -734,7 +734,7 @@
       "destination": "nfsu1-recompiled",
       "raw_base": "https://raw.githubusercontent.com/codepdbh/nfsu1-recompiled/58d9d4f63d59c941031f91973ae48c2cdb1a42b1",
       "license": "No repository-level license found at the pinned revision; user reports maintainer permission conditioned on attribution.",
-      "notes": "Only analysis and ABK source dependencies used by this project.",
+      "notes": "Analysis, ABK and widescreen hook sources used by this project.",
       "files": [
         {
           "path": "scripts/abk_module.py",
@@ -755,6 +755,22 @@
         {
           "path": "src/runtime/abk_code.c",
           "git_blob_sha1": "c596ed00c12c75ffbb80dd7f181dd0a03a58556e"
+        },
+        {
+          "path": "config/hooks.txt",
+          "git_blob_sha1": "ed8b1381491fcc41f9f8795a2163ca366ba4a5da"
+        },
+        {
+          "path": "src/runtime/widescreen.c",
+          "git_blob_sha1": "8cc0bc61a98c9f7c7089397120077f369ea928d1"
+        },
+        {
+          "path": "src/runtime/nfs_widescreen.h",
+          "git_blob_sha1": "131e81593741166a1110a6460b3eef22d3b64cc8"
+        },
+        {
+          "path": "src/runtime/widescreen_hud.inc",
+          "git_blob_sha1": "604922862761ffc7340d0a58b48b78cb94d5a686"
         }
       ]
     },

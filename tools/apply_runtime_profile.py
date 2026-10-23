@@ -21,7 +21,9 @@ PINNED = {
     "runtime/web/gcpu.c": "eb39bed5cd7cc86d7b08bd45a6a46f2848a6bf17",
     "runtime/web/gpu_web.c": "87d7fa6fa240bd861c05cb6c6992a37aa4000b80",
     "runtime/com.c": "f32cbf8b5d568b8fcc206ee253397d52bd6ec18a",
+    "runtime/web/vsemu_wgsl.inc": "443f747f89b0d994bd8dcc3b8d518f75c605e541",
     "runtime/dinput_pad.c": "bfa162cdf129e14f652fc5cf1ff85adefed0e45d",
+    "runtime/debug.c": "7976ca7f93cc64564219c930989dcee0539605e1",
 }
 
 
@@ -135,6 +137,44 @@ void unsupported_insn(CPU *c, uint32_t addr, const char *mn){
                        '    if (w < 320u || h < 240u || (w == g_view_used_w && h == g_view_used_h)) { seen_w = w; seen_h = h; return; }',
                        '    unsigned w, h; view_wh(&w, &h);\n'
                        '    if (w == g_view_used_w && h == g_view_used_h) { seen_w = w; seen_h = h; return; }')
+    if name == "runtime/web/vsemu_wgsl.inc":
+        return replace(source, '''            /* m?x? dst, src0, src1: rows are consecutive registers from src1
+             * (as on the Mac: K.c rows ignore def and relative addressing) */
+            int rows = (y->op==O_M4x4) ? 4 : (y->op==O_M4x3 ? 3 :
+                       (y->op==O_M3x3 ? 3 : (y->op==O_M3x4 ? 4 : 2)));
+            int vec3 = (y->op==O_M3x3 || y->op==O_M3x4 || y->op==O_M3x2);
+            const char *sw2 = vec3 ? ".xyz" : "";
+            WBuf eb; wb_init(&eb, ex, WEX);
+            wb_put(&eb, "vec4f(");
+            for (int rr = 0; rr < rows; rr++){
+                unsigned tok2 = y->src[1];
+                int ty2 = RT(tok2), nn2 = RN(tok2) + rr;
+                if (ty2 == R_CONST2) nn2 += 2048; else if (ty2 == R_CONST3) nn2 += 4096;
+                else if (ty2 == R_CONST4) nn2 += 6144;
+                char row[48];
+                if (ty2 == R_TEMP){ x.r |= 1u << (nn2 & 31); snprintf(row, sizeof row, "r%d", nn2 & 31); }
+                else if (ty2 == R_INPUT){ x.v |= 1u << (nn2 & 15); snprintf(row, sizeof row, "v%d", nn2 & 15); }
+                else snprintf(row, sizeof row, "K.c[kb + %du]", (nn2 & 255) + 1);
+                wb_put(&eb, "%sdot((%s)%s, (%s)%s)", rr ? ", " : "", s0, sw2, row, sw2);
+            }
+''',
+                       '''            /* Resolve every consecutive matrix row as a source operand.
+             * Skinning uses c[a0.x + row]; fixed c[row] collapses all bones
+             * onto bone zero. Keep relative addressing and def resolution. */
+            int rows = (y->op==O_M4x4) ? 4 : (y->op==O_M4x3 ? 3 :
+                       (y->op==O_M3x3 ? 3 : (y->op==O_M3x4 ? 4 : 2)));
+            int vec3 = (y->op==O_M3x3 || y->op==O_M3x4 || y->op==O_M3x2);
+            const char *sw2 = vec3 ? ".xyz" : "";
+            WBuf eb; wb_init(&eb, ex, WEX);
+            wb_put(&eb, "vec4f(");
+            for (int rr = 0; rr < rows; rr++){
+                unsigned base = y->src[1];
+                unsigned tok2 = (base & ~0x7FFu) | ((RN(base) + rr) & 0x7FFu);
+                char row[512];
+                w_src(&x, row, sizeof row, tok2, y->rel[1]);
+                wb_put(&eb, "%sdot((%s)%s, (%s)%s)", rr ? ", " : "", s0, sw2, row, sw2);
+            }
+''')
     if name == "runtime/com.c":
         # D3DCAPS9 is 304 bytes in the 32-bit guest ABI. The upstream 336-byte
         # clear overwrites NFSU1's adjacent RECT and four mode-availability words.
@@ -148,10 +188,56 @@ void unsupported_insn(CPU *c, uint32_t addr, const char *mn){
                          'static int rdone = 0, pinned = 1; /* NFSU1: native size unless NFSRES is explicit. */')
         source = replace(source, '    if (!aw || !ah){',
                          '    /* Follow the live canvas and arm the upstream device-reset watcher.\n'
-                         '     * Preserve the guest aspect until NFSU1 widescreen is ported. */\n'
+                         '     * Widescreen uses the full canvas; letterbox when NFSU1_WIDESCREEN=0. */\n'
                          '    { extern int nfsu1_graphics_size(uint32_t, uint32_t, uint32_t *, uint32_t *);\n'
                          '      nfsu1_graphics_size(gw, gh, &aw, &ah); }\n'
                          '    if (!aw || !ah){')
+        # PC HUD/FOV hooks own geometry. Keep clip-space mapping identity so
+        # NFSU2 aspect_apply does not double-correct a wide device.
+        source = replace(source,
+                         '    g_req_w = gw; g_req_h = gh;\n'
+                         '    /* The game keeps drawing for its own aspect; we compensate for the\n'
+                         '     * difference in clip space.  If the aspect is kept exactly, this\n'
+                         '     * factor stays 1.0. */\n'
+                         '    if (gw && gh){\n'
+                         '        float ga = (float)gw / (float)gh, da = (float)aw / (float)ah;\n'
+                         '        g_aspfix = ga / da;\n'
+                         '        const char *ov = ENVC("ASPFIX");\n'
+                         '        if (ov && *ov) g_aspfix = (float)atof(ov);\n'
+                         '    }\n'
+                         '    *dw = aw; *dh = ah;\n'
+                         '    /* widescreen.c decides what the renderer and the game hooks do with\n'
+                         '     * the ratio; the mouse maps onto the 4:3 HUD the same way. */\n'
+                         '    ws_set_mapping(g_aspfix);\n'
+                         '    { void metal_set_ui_aspect(float, float); metal_set_ui_aspect(ws_ui_x(), ws_ui_y()); }\n'
+                         '    fprintf(stderr,"com: device resolution %ux%u -> %ux%u (aspfix=%.4f)\\n",\n'
+                         '            gw, gh, aw, ah, (double)g_aspfix);\n'
+                         '}',
+                         '    g_req_w = gw; g_req_h = gh;\n'
+                         '    { extern int nfsu1_widescreen_active(void);\n'
+                         '      if (nfsu1_widescreen_active()){\n'
+                         '        g_aspfix = 1.f;\n'
+                         '        *dw = aw; *dh = ah;\n'
+                         '        ws_set_mapping(1.f);\n'
+                         '        { void metal_set_ui_aspect(float, float); metal_set_ui_aspect(1.f, 1.f); }\n'
+                         '        fprintf(stderr,"com: device resolution %ux%u -> %ux%u (nfsu1 widescreen)\\n",\n'
+                         '                gw, gh, aw, ah);\n'
+                         '        return;\n'
+                         '      }\n'
+                         '    }\n'
+                         '    /* Letterbox path: game aspect vs device aspect in clip space. */\n'
+                         '    if (gw && gh){\n'
+                         '        float ga = (float)gw / (float)gh, da = (float)aw / (float)ah;\n'
+                         '        g_aspfix = ga / da;\n'
+                         '        const char *ov = ENVC("ASPFIX");\n'
+                         '        if (ov && *ov) g_aspfix = (float)atof(ov);\n'
+                         '    }\n'
+                         '    *dw = aw; *dh = ah;\n'
+                         '    ws_set_mapping(g_aspfix);\n'
+                         '    { void metal_set_ui_aspect(float, float); metal_set_ui_aspect(ws_ui_x(), ws_ui_y()); }\n'
+                         '    fprintf(stderr,"com: device resolution %ux%u -> %ux%u (aspfix=%.4f)\\n",\n'
+                         '            gw, gh, aw, ah, (double)g_aspfix);\n'
+                         '}')
         source = replace(source, '                           MR32(pm+12)= fmt; }',
                          '                           MR32(pm+12)= fmt;\n'
                          '                           if (g_com_trace) fprintf(stderr,\n'
@@ -160,6 +246,18 @@ void unsupported_insn(CPU *c, uint32_t addr, const char *mn){
                          '                           if (g_com_trace){ void nfsu1_diagnostics_words(void);\n'
                          '                               nfsu1_diagnostics_words(); } }')
         return source
+    if name == "runtime/debug.c":
+        return replace(source,
+                       'void guest_hook(CPU *c, uint32_t ip){\n'
+                       '    g_hook_hits++;\n'
+                       '    { int ws_hook(CPU *, uint32_t); if (ws_hook(c, ip)) return; }\n'
+                       '    { int roam_hook(CPU *, uint32_t); if (roam_hook(c, ip)) return; }\n',
+                       'void guest_hook(CPU *c, uint32_t ip){\n'
+                       '    g_hook_hits++;\n'
+                       '    { extern int nfsu1_ws_hook(CPU *, uint32_t);\n'
+                       '      if (nfsu1_ws_hook(c, ip)) return; }\n'
+                       '    { int ws_hook(CPU *, uint32_t); if (ws_hook(c, ip)) return; }\n'
+                       '    { int roam_hook(CPU *, uint32_t); if (roam_hook(c, ip)) return; }\n')
     if name == "runtime/dinput_pad.c":
         # The NFSU2 hotplug rescan flag is not part of the NFSU1 image. Keep
         # DirectInput enumeration and connection-state behavior, but omit the

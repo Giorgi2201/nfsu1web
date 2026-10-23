@@ -45,8 +45,11 @@ needed. Check that menus, mouse targets and the race still work; a brief
 redraw during reset is expected. No restart is required. Logs should show
 `[gpu] canvas ... requesting a device reset` followed by a new
 `com: device resolution ...` size. Check both a saved 4:3 resolution and
-1280×1024 (5:4) if available. True widescreen camera and HUD support is still
-pending. See the [setting map](graphics.md).
+1280×1024 (5:4) if available. With widescreen enabled (default), also check a
+wide window: race FOV should not look stretched, HUD/minimap should sit on the
+edges, loading artwork should retain its top and bottom, and front-end mouse targets should still hit.
+Set `NFSU1_WIDESCREEN=0` only to compare letterboxed guest aspect. See the
+[setting map](graphics.md).
 
 For the drag-loading dispatch fix, restart the local server and reload this
 same origin. Load the existing profile and repeat the drag event that aborted
@@ -135,3 +138,23 @@ interfaces remain; their game behavior still needs this browser check.
 
 Private evidence is in `out/browser-build.json`, `out/browser-serving-check.json`,
 `out/browser-runtime-build.log` and `out/browser-runtime-node.log`.
+
+### Widescreen layout regression
+
+After rebuilding the module and browser bundle, restart the local server and
+reload `http://127.0.0.1:8765/` at the same origin. At 16:9, check the loading
+artwork's top and bottom, then the user-profile menu: logo, title, selection
+rows and bottom hints should retain their spacing without overlapping.
+Check both keyboard selection and mouse hit positions. Repeat after resizing
+to 4:3 and back to 16:9, then start a race and check HUD and minimap placement.
+Also check an intro movie for framing; the shared FE quad helpers now preserve
+the original extents instead of forcing a 16:9 crop.
+
+### Character skinning regression
+
+After rebuilding and restarting the server, reload the same local origin and
+start a race. Inspect the starter and roadside crowd during the opening camera
+sequence and countdown: limbs should follow their poses without stretched or
+detached joints. Check animation through the countdown and inspect the first
+race camera after the start. Record any remaining character deformation
+separately from widescreen layout problems.

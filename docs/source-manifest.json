@@ -393,13 +393,32 @@
     "evidence": "Read-only matching PC 1.4 settings descriptor table at 0x700ec0, original four-level preset routine at 0x410ed0, capability limits at 0x701040 and config loader at 0x41c680. Exact mapping documented in docs/graphics.md.",
     "reuse": "No additional third-party source copied. Existing browser shell excerpts remain covered by patches/nfsu2-web.LICENSE; attribution to th0mk and the existing PC analysis pipeline by codepdbh/sp00nz is retained.",
     "output_policy": "Original game inputs unchanged. Emitted routines, local mapping comparison harness and linked game module remain ignored and private.",
-    "limitations": "Effect correctness/performance and live resize recovery require user browser checks. True NFSU1 widescreen hooks remain unported; smaller post-processing buffers retain original game sizing.",
+    "limitations": "Effect correctness/performance and live resize recovery require user browser checks. Widescreen FOV/HUD hooks are ported but need browser validation; smaller post-processing buffers retain original game sizing.",
     "dynamic_resolution": {
       "gpu_host_blob": "87d7fa6fa240bd861c05cb6c6992a37aa4000b80",
       "source": "th0mk/nfsu2-web runtime/web/gpu_web.c at pinned runtime revision",
       "reuse": "Existing metal_view_size/view_follow and game-driven device loss/reset; normalized oversized view comparison prevents repeated resets. Existing MIT notice retained.",
       "validation": "Focused native execution of actual res_pick/view_wh/metal_view_size/view_follow with growth, shrinkage, aspect preservation and debounce; private Wasm and browser bundle checks.",
       "real_guest_smoke": "Bounded Node run forced RESETAT=20, recovered through original game Reset, chose 1440x1080 for1920x1080 view (800x600 guest, aspect1.0), and continued to intentional15s timeout. No browser rendering validated."
+    },
+    "widescreen_layout_correction": {
+      "date": "2026-10-23",
+      "implementation": "Preserve generic frontend quad extents; scope HUD scale to four render operands and center to one comparison, leaving the shared float pool intact.",
+      "evidence": "User screenshot and read-only local PC 1.4 instruction inspection. Original mod comparison: https://github.com/ThirteenAG/WidescreenFixesPack/blob/master/source/NFSUnderground.WidescreenFix/Frontend.ixx",
+      "validation": "Focused native regression smoke passed; full private emission changed only two expected shards with unchanged failures/stubs; Wasm link, browser bundle, startup/syntax and server-input checks passed. Browser visual verification remains manual."
     }
+  },
+  "character_skinning": {
+    "date": "2026-10-23",
+    "runtime_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "source": "runtime/web/vsemu_wgsl.inc",
+    "blob": "443f747f89b0d994bd8dcc3b8d518f75c605e541",
+    "implementation": "Resolve matrix instruction rows through existing WGSL source-operand helper, preserving selected bone addressing and shader-defined constants.",
+    "evidence": "Private effect inspection and bounded Node guest capture: startup-created character shader contains three relative matrix operations that translated to fixed bone-zero constants.",
+    "api_reference": "https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/m4x4---vs",
+    "reuse": "Pinned th0mk/nfsu2-web translator and source-operand helper under existing retained MIT notice.",
+    "output_policy": "Original game inputs unchanged; decoded effects and captured shader output stay ignored and private.",
+    "limitations": "No browser operated; visible character deformation and animation require user validation.",
+    "validation": "Authored synthetic native smoke passes overlay and fails pinned original; CPU selects distinct bone palettes and WGSL preserves every active matrix row for the five matrix opcodes. Wasm link, browser bundle/startup/syntax, server-input and pinned-source checks passed. No GPU/browser execution."
   }
 }
