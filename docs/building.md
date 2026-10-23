@@ -1,6 +1,6 @@
 # Building and running locally
 
-This is a private bring-up build for the PC NFSU1 1.4 executable. It combines
+This is an experimental local build for the PC NFSU1 1.4 executable. It combines
 the pinned `nfsu2-web` runtime/emitter with locally generated code based on
 `nfsu1-recompiled` and its pinned `pcrecomp` analysis dependency. It is still
 experimental: the user's browser report covers intro clips with sound, profile
@@ -8,7 +8,8 @@ creation and reload, profile loading, and starting a race. It does not establish
 a completed race or general game compatibility. Synthetic checks and Node
 guest runs are separate from browser/game validation.
 
-If this workspace is already built, start it with
+Run commands from the repository root. If this workspace is already built,
+check it with `python3 tools/serve_nfsu1.py --check`, then start it with
 `python3 tools/serve_nfsu1.py`; rebuilding or repeating emission is unnecessary.
 The steps below describe a fresh setup. Both lift tools require empty output
 directories and deliberately refuse to overwrite earlier emissions.
@@ -21,6 +22,22 @@ tests work with Node.js 20+, but the full Wasm Node host was tested with Node.js
 A full game-module build also needs a WASI SDK with threads, SIMD, exception
 handling and tail-call support. The tested workspace used WASI SDK 34; see
 [toolchain notes](toolchain.md) for exact flags and setup.
+
+The scripts assume a Unix-like shell with Bash, `tar`, `shasum`, `xargs` and
+standard command-line utilities. Apple Silicon macOS is the tested build host;
+Windows and Linux builds have not been verified. Network access is needed for
+the pinned source snapshots and toolchain dependencies. Allow disk space for
+your full installation, SDK, generated C and object cache; no minimum disk or
+build-time estimate has been established. `J=4` limits guest-shard compilation
+jobs, though runtime compilation also starts parallel jobs.
+
+To play locally, use a browser with WebGPU, shared memory, storage and the Wasm
+features checked by the startup page. The default module reserves 1 GiB of
+initial shared Wasm memory and permits growth to 4 GiB; the browser and GPU
+need additional memory. No minimum machine specification or browser support
+matrix has been established. Use the supplied loopback server so the required
+cross-origin isolation headers are present; opening `index.html` directly is
+insufficient.
 
 Install the SDK separately from the
 [official WASI SDK 34 release](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-34),
@@ -82,6 +99,11 @@ the private analysis directory and stage game data under `work/data/`:
 mkdir -p work/analysis work/data
 cp /path/to/your/Speed.exe work/analysis/Speed.analysis.exe
 ```
+
+See [supported inputs](game-inputs.md) for the exact executable fingerprint.
+The repository supplies no game files or download instructions. A different
+executable requires a separate compatibility investigation; changing the hash
+check alone does not make its addresses compatible.
 
 For the browser host, `work/data/` must contain the game files it requests and
 data directories. Copy the contents of your installation there, including
@@ -196,13 +218,25 @@ python3 tools/build_nfsu1_browser.py
 ```
 
 The npm step can be skipped if `work/toolchain/web-bundler/node_modules/` is
-already present. Start the loopback server with `python3 tools/serve_nfsu1.py`
+already present. Validate the staged build without opening a browser:
+
+```sh
+python3 tools/serve_nfsu1.py --check
+```
+
+This checks local inputs, not game compatibility. Start the loopback server
+with `python3 tools/serve_nfsu1.py`
 and open `http://127.0.0.1:8765/` in your browser. Keep the server terminal open;
 stop it with Ctrl+C. After changing the module or game data, restart the server
 and reload the same address. Browser storage is origin-specific, so keep the
 same host and port to retain the created profile. The server exposes local game
 files as read-only. See [browser-testing.md](browser-testing.md) for the user
 test steps and evidence to record.
+
+For a runtime-only change, re-run the Wasm build and browser bundler using the
+existing emissions. For a browser-only change, re-run the bundler. If emission
+must be repeated, select a fresh ignored output directory and set `GEN` or
+`ABK_GEN` when building; lift tools do not overwrite nonempty directories.
 
 ## Keep outputs private
 

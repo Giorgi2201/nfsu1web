@@ -46,6 +46,14 @@ Wasm modules and build output must stay in ignored `work/`, `gen/` or `out/`;
 they are not repository deliverables. Do not modify or redistribute original
 game files or generated proprietary code.
 
+You must supply your own legally obtained game installation and the exact
+[supported executable](docs/game-inputs.md); no game download or playable build
+is provided. The tested build host is Apple Silicon macOS with WASI SDK 34.
+Running it requires a browser with WebGPU and the Wasm features checked by the
+local page. The module starts with 1 GiB of shared Wasm memory, with additional
+memory needed for the browser, GPU and game data. Other hosts and browser
+configurations remain unverified.
+
 For the latest browser checks and what remains unverified, read
 [browser-testing.md](docs/browser-testing.md). Historical findings and
 diagnostics are in [progress.md](docs/progress.md); the original runtime
@@ -59,3 +67,13 @@ runtime/input pins), `tests/` (small source-only checks), `docs/` (findings and
 instructions), `poc/` (synthetic Wasm ABI fixture), and `patches/` (upstream
 license notices). Private `work/`, `gen/`, and `out/` directories hold local
 inputs, cached analysis, emitted code and build evidence.
+
+Contributions and reproducible bug reports are welcome; see
+[CONTRIBUTING.md](CONTRIBUTING.md) for the source boundaries, focused checks and
+what to include in a report.
+
+Original contributions are [MIT-licensed](LICENSE). Upstream components and
+adaptations retain their respective terms in [NOTICE.md](NOTICE.md), including
+ThirteenAG's widescreen work. This is an unofficial project with no EA
+affiliation or endorsement. See [rights and distribution boundaries](docs/rights.md)
+for the scope of permissions and remaining risks.

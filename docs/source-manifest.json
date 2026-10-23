@@ -94,6 +94,18 @@
           "path": "scripts/code_seeds.py",
           "blob_sha": "45f0b6e3eb6c46f1e39f7ec51c2a24f2cd2c95a1",
           "url": "https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/scripts/code_seeds.py"
+        },
+        {
+          "path": "src/runtime/widescreen.c",
+          "blob_sha": "8cc0bc61a98c9f7c7089397120077f369ea928d1"
+        },
+        {
+          "path": "src/runtime/nfs_widescreen.h",
+          "blob_sha": "131e81593741166a1110a6460b3eef22d3b64cc8"
+        },
+        {
+          "path": "src/runtime/widescreen_hud.inc",
+          "blob_sha": "604922862761ffc7340d0a58b48b78cb94d5a686"
         }
       ]
     },
@@ -284,6 +296,25 @@
           "url": "https://github.com/sp00nznet/pcrecomp/blob/8c92919a99aaf9e129af5787776bca84863468cc/tools/disasm/disasm32.py"
         }
       ]
+    },
+    {
+      "repository": "ThirteenAG/WidescreenFixesPack",
+      "commit": "708f7528fb8b54c79d4ac3c6071ea7ccc01ae162",
+      "inspected_files": [
+        {
+          "path": "data/NFSUnderground.WidescreenFix/scripts/NFSUnderground.WidescreenFix.dat",
+          "blob_sha": "373ee8ff0a0c9c1acacc7a88d90fd133aad97c39"
+        },
+        {
+          "path": "license",
+          "blob_sha": "574d883cdb6ddc02823f907dcfa85e3990438b71"
+        },
+        {
+          "path": "source/NFSUnderground.WidescreenFix/Frontend.ixx",
+          "blob_sha": "bece19e32a91cd797220049eda6434fd6606a727"
+        }
+      ],
+      "notes": "License and reference paths pinned during publication audit on 2026-10-23. HUD data and host hooks were adapted through the separately pinned PC project; this does not claim its original port used this ThirteenAG revision."
     }
   ],
   "extended_on": "2026-10-22",
@@ -420,5 +451,11 @@
     "output_policy": "Original game inputs unchanged; decoded effects and captured shader output stay ignored and private.",
     "limitations": "No browser operated; visible character deformation and animation require user validation.",
     "validation": "Authored synthetic native smoke passes overlay and fails pinned original; CPU selects distinct bone palettes and WGSL preserves every active matrix row for the five matrix opcodes. Wasm link, browser bundle/startup/syntax, server-input and pinned-source checks passed. No GPU/browser execution."
+  },
+  "publication_license": {
+    "date": "2026-10-23",
+    "original_contributions": "MIT; copyright 2026 Yurii Smetanka",
+    "third_party_terms": "NOTICE.md and docs/source-permissions.md; PC project permission is not relicensed as MIT",
+    "widescreen_notice": "patches/WidescreenFixesPack.LICENSE"
   }
 }

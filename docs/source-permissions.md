@@ -76,8 +76,8 @@ consistent bounded-size comparison. The original MIT notice remains retained.
 
 NFSU1 widescreen host hooks in `runtime/nfsu1_widescreen.c` port the pinned
 PC project's `src/runtime/widescreen.c` / `widescreen_hud.inc` /
-`config/hooks.txt` (revision `58d9d4f…`) to the web `CPU *` ABI. Patch
-semantics come from ThirteenAG's [NFSUnderground.WidescreenFix](https://github.com/ThirteenAG/WidescreenFixesPack/tree/master/source/NFSUnderground.WidescreenFix)
+`config/hooks.txt` (revision `58d9d4f63d59c941031f91973ae48c2cdb1a42b1`) to the web `CPU *` ABI. Patch
+semantics come from ThirteenAG's [NFSUnderground.WidescreenFix](https://github.com/ThirteenAG/WidescreenFixesPack/tree/708f7528fb8b54c79d4ac3c6071ea7ccc01ae162/source/NFSUnderground.WidescreenFix)
 (MIT). Preserve that MIT notice on redistribution of the adapter. No ASI
 binary or game instructions are included.
 
@@ -128,3 +128,15 @@ The character-skinning correction overlays th0mk's MIT-licensed
 source-operand helper for consecutive matrix rows. The retained
 `patches/nfsu2-web.LICENSE` applies. Real effect/shader inspection outputs
 remain ignored and private; regression shader data is authored synthetically.
+
+## Publication license and widescreen notice
+
+Original contributions by Yurii Smetanka are MIT-licensed under the root
+[LICENSE](../LICENSE). This grants no new rights to third-party or game material.
+The full ThirteenAG MIT notice is retained in
+[patches/WidescreenFixesPack.LICENSE](../patches/WidescreenFixesPack.LICENSE).
+The publication audit pinned its license, HUD data and frontend reference at
+`708f7528fb8b54c79d4ac3c6071ea7ccc01ae162`; hashes are in the manifest.
+The actual port is sourced through the separately pinned PC project; the
+reference pin does not establish which ThirteenAG revision that port used.
+See [rights and distribution boundaries](rights.md) for remaining limitations.

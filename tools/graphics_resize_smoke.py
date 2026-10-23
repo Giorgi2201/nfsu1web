@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 HARNESS = r'''
 #include "cpu.h"
+#include "nfsu1_widescreen.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,7 +62,8 @@ static void pick(unsigned gw, unsigned gh, unsigned vw, unsigned vh,
     uint32_t dw = 0, dh = 0;
     res_pick(gw, gh, &dw, &dh);
     assert(dw == expected_w && dh == expected_h);
-    assert((uint64_t)dw * gh == (uint64_t)dh * gw);
+    if (!nfsu1_widescreen_active())
+        assert((uint64_t)dw * gh == (uint64_t)dh * gw);
     assert(g_aspfix == 1.f && mapping == 1.f);
     assert(g_view_used_w == (vw & ~1u) && g_view_used_h == (vh & ~1u));
 }
@@ -73,6 +75,7 @@ int main(void){
     assert(nfsu1_graphics_size(640, 480, &dw, &dh) == 0);
     assert(dw == 123 && dh == 456 && g_view_used_w == 0);
     setenv("NFSU1_DYNAMIC_RESOLUTION", "1", 1);
+    setenv("NFSU1_WIDESCREEN", "0", 1);
     control.attached = GW_ATTACHED;
     pick(640, 480, 1920, 1080, 1440, 1080);
 
@@ -102,7 +105,20 @@ int main(void){
     assert(dw == 5460 && dh == 4095);
     assert(g_view_used_w == 8192 && g_view_used_h == 4096);
     clock_ms = 11000; view_follow(); assert(reset_requests == 3);
-    puts("PASS: actual res_pick follows canvas up/down, preserves 4:3 and 5:4, and arms the GPU host's debounced reset tracking");
+
+    /* Default widescreen fills the canvas and keeps host mapping at identity.
+     * Use the real widescreen adapter to exercise its active-state handshake. */
+    unsetenv("NFSU1_WIDESCREEN");
+    pick(640, 480, 1920, 1080, 1920, 1080);
+    assert(nfsu1_widescreen_active());
+    pick(1280, 1024, 1601, 901, 1600, 900);
+    assert(nfsu1_widescreen_active());
+    pick(640, 480, 800, 600, 800, 600);
+    assert(!nfsu1_widescreen_active());
+    setenv("NFSU1_WIDESCREEN", "0", 1);
+    pick(640, 480, 1920, 1080, 1440, 1080);
+    assert(!nfsu1_widescreen_active());
+    puts("PASS: actual res_pick follows canvas up/down, preserves legacy aspects, fills widescreen views, and arms the GPU host's debounced reset tracking");
     return 0;
 }
 '''
@@ -145,8 +161,10 @@ def main():
     executable = output / "graphics-resize"
     source.write_text(harness)
     subprocess.run([args.cc, "-std=gnu11", "-O1", "-Wall", "-Wextra",
-                    "-I", str(upstream / "runtime"), str(source),
+                    "-I", str(upstream / "runtime"),
+                    "-I", str(ROOT / "runtime"), str(source),
                     str(ROOT / "runtime/nfsu1_graphics.c"),
+                    str(ROOT / "runtime/nfsu1_widescreen.c"), "-lm",
                     "-o", str(executable)], check=True)
     return subprocess.run([str(executable)], check=False).returncode
 

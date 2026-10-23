@@ -1,5 +1,10 @@
 # Attribution and source boundaries
 
+Original contributions by Yurii Smetanka are licensed under the root
+[MIT license](LICENSE). That grant covers only rights held by the author;
+third-party material below retains its own terms. See
+[rights and distribution boundaries](docs/rights.md).
+
 This integration builds on these projects at fixed revisions:
 
 - **th0mk/nfsu2-web**, by th0mk, with portions by Talha Müderrisoğlu:
@@ -11,6 +16,10 @@ This integration builds on these projects at fixed revisions:
   pinned revision.
 - **sp00nznet/pcrecomp**, by sp00nz: PE analysis and x86 disassembly.
   Its [MIT notice](patches/pcrecomp.LICENSE) is retained.
+- **ThirteenAG/WidescreenFixesPack**, by ThirteenAG: NFS Underground
+  widescreen patch semantics and HUD layout data, through the PC project's
+  widescreen port. Its [MIT notice](patches/WidescreenFixesPack.LICENSE)
+  is retained. The PC port also retains the permission basis described above.
 
 The Xbox investigation also referenced **antoxa2584x/nfsu1-sw**. No source from
 that repository or its vendored Xbox runtime is included in this integration.

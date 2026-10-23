@@ -1,64 +1,77 @@
-# Local archive selection
+# Supported local game inputs
 
-Read-only inspection on 2026-10-21 selected **`Need For Speed - Underground.7z`**
-as the PC NFSU1 1.4 candidate for integration. Executable members were decompressed
-into memory for hashing and PE metadata inspection. Neither archive nor original
-game binary was modified; no executable bytes were saved or distributed.
+Supply your own legally obtained PC Need for Speed Underground installation.
+This repository contains no game files and provides no game download source.
+The current integration targets one exact executable associated with PC patch
+1.4. Other editions or executables are unverified, even if their displayed
+version is the same. Follow the [build guide](building.md) to stage inputs
+under ignored `work/` without modifying originals.
 
-| Property | Selected larger archive | Smaller installed-English archive |
-| --- | --- | --- |
-| Archive | `Need For Speed - Underground.7z` | `Need_for_Speed_Underground_Win_Installed_EN.7z` |
-| Executable member | `Need For Speed Underground/speed.exe` | `Need_for_Speed_Underground_Win_Installed_EN/Game Files/Speed.exe` |
-| Executable bytes | 3,178,496 | 3,121,152 |
-| Image base | `0x00400000` | `0x00400000` |
-| SizeOfImage | `0x00394368` | `0x00385d98` |
-| Entry RVA | `0x00270cb5` | `0x00264245` |
-| Entry VA | `0x00670cb5` | `0x00664245` |
-| Matches upstream structural checks | Yes | No |
-| Matches published hash prefix/suffix | Yes | No |
+## Executable fingerprint
 
-Selected executable SHA-256:
+Read-only local inspection on 2026-10-21 measured the following input:
+
+| Property | Selected executable |
+| --- | --- |
+| Filename | `Speed.exe` |
+| Executable bytes | 3,178,496 |
+| Image base | `0x00400000` |
+| SizeOfImage | `0x00394368` |
+| Entry RVA | `0x00270cb5` |
+| Entry VA | `0x00670cb5` |
+
+SHA-256:
 
 ```text
 c0fad450912952f53809a54690d235aa8b4e25b9f46650693c7cbee1b4c074b7
 ```
 
-The upstream README publishes only `c0fad450…c074b7`. The full digest above is
-our local measurement, not an independently verified full upstream fingerprint.
-Combined with exact loader-field matches, this is the selected input. The local
-analysis pipeline checks this full digest before generating or reusing catalogs.
+Check your file before building; on macOS:
 
-The smaller executable's SHA-256 is
+```sh
+shasum -a 256 /path/to/your/Speed.exe
+```
+
+The pinned upstream README publishes only `c0fad450…c074b7`. The full digest
+above is a local measurement, not an independently verified full upstream
+fingerprint. Its prefix/suffix and PE loader fields match the upstream
+references. The analysis pipeline checks this full digest before generating or
+reusing catalogs. Do not bypass the check: a different binary can have
+incompatible function addresses and runtime layouts.
+
+A second locally inspected executable had 3,121,152 bytes, image base
+`0x00400000`, SizeOfImage `0x00385d98`, entry RVA `0x00264245`, and SHA-256
 `6e472463ae43279ea09bfa4aac8d6d2a544104fde83e2e4bb52808f6aae761a2`.
-Its exact patch version was not established; its differing layout makes it
-unsuitable for directly reusing the current 1.4 catalog and override addresses.
+Its exact patch version was not established; its layout does not match the
+current catalog or override addresses.
 
 The selected executable imports 254 functions across 15 DLLs. Its `.text`
 virtual extent is `0x00401000..0x00696ea7` (end exclusive), size `0x00295ea7`.
-Raw section alignment extends to `0x00697000`; do not confuse padding with the
-virtual extent. Catalog coverage must be validated before choosing final
-dispatch bounds.
+Raw section alignment extends to `0x00697000`; padding is outside that virtual
+extent. These measured values are recorded in the
+[integration profile](../profiles/nfsu1-pc.json), which is separate from a
+player save profile.
 
-Both archives list 106 `.abk` sound banks and 25 movie entries. Counts alone do
-not establish identical assets. The larger archive additionally contains
-`dinput8.dll` and five ASI mods. Initial browser integration should use the game
-executable/data path without loading these native Windows plugins or applying
-their patches. No archive programs were executed.
+## Game data
 
-The [profile](../profiles/nfsu1-pc.json) now records the measured fingerprint
-and section bounds. It remains an integration specification, not a player save
-profile. A reversible overlay now consumes it in the runtime source, and the
-catalog has been generated locally and cached. The linked browser build has
-reached user-reported intro playback, profile loading and race start; see
-[current progress](progress.md). Remaining emission stubs still limit compatibility.
+Stage the contents of your matching installation under `work/data/`, including
+`Cars`, `FrontEnd`, `Global`, `Tracks`, `Languages`, `fx`, `Sound`, `Movies`,
+`SNDSTREAMS` and `SpeechStreams`. The build guide describes the expected
+`Speed.exe` path and allowed symlink. Preserve the installation's filenames and
+directory structure. Sound-bank analysis reads `Sound/**/*.abk`.
 
-During later bring-up, the selected archive's `Sound`, `Movies`, `SNDSTREAMS`
-and `SpeechStreams` data directories were extracted locally into ignored
-`work/data/` to satisfy observed missing-file requests. Their 150 files and
-source archive are fingerprinted in `work/data-extraction.metadata.json`.
-Original archives and executables remain unchanged; these staged assets must
-remain local. The user subsequently reported working intro movies with sound;
-this does not establish compatibility with all media.
+The locally inspected inputs contained 106 `.abk` sound banks and 25 movie
+entries. These counts are observations, not a substitute for matching data or
+a complete asset compatibility check. Native Windows plugins, ASI mods and
+their patches are outside this build's supported input path.
+
+During bring-up, missing media directories were staged locally and their
+150 files fingerprinted in ignored `work/data-extraction.metadata.json`.
+Original archives and executables were left unchanged. All staged assets,
+catalogs and generated game code must remain local. User reports cover intro
+movies with sound, profile creation and loading, and starting a race; they do
+not establish compatibility with every asset or a completed race. See
+[current progress](progress.md).
 
 Upstream references: [loader checks](https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/android/app/src/main/cpp/guest_runtime.cpp),
 [abbreviated fingerprint](https://github.com/codepdbh/nfsu1-recompiled/blob/58d9d4f63d59c941031f91973ae48c2cdb1a42b1/README.md).
