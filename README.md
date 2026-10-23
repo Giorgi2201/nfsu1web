@@ -50,6 +50,8 @@ For the latest browser checks and what remains unverified, read
 [browser-testing.md](docs/browser-testing.md). Historical findings and
 diagnostics are in [progress.md](docs/progress.md); the original runtime
 integration checklist is in [runtime-profile.md](docs/runtime-profile.md).
+The [mod compatibility investigation](docs/mod-compatibility.md) records asset
+and plugin adaptation candidates, conflicts, permissions and priorities.
 
 The main project areas are `tools/` (catalog, emission, build and host
 utilities), `runtime/` (NFSU1-specific host code), `profiles/` (machine-readable
