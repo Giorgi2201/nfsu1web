@@ -1,6 +1,23 @@
-# Integration progress — 2026-10-22
+# Integration progress — 2026-10-23
 
 ## Current bring-up checkpoint
+
+### Startup movie controls
+
+The browser now exposes **Startup movies: Skippable / Original / Off**.
+Skippable is the default and adds Escape, Space, Enter and controller A/B/Start
+to the startup movie screens. The adapter hooks three verified NFSU1
+notification handlers and invokes the original guest handlers for normal
+screen transitions and player teardown. Story/tutorial handlers are untouched.
+Off finishes each startup screen on its first update, so a brief frame can
+appear. See [implementation and browser checks](movie-skipping.md).
+
+The focused synthetic native adapter smoke passes mode selection, guest stack
+and argument preservation, input baselining and controller disabling. The
+private Wasm module and browser bundles are rebuilt; startup/syntax and
+in-process server checks pass. Browser skip behavior and audio teardown remain
+pending user validation. No agent operated a browser. Restart the local server
+and reload the same origin to pick up the new module and settings; keep saves.
 
 ### First profile creation: date/time imports
 

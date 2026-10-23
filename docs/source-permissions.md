@@ -80,3 +80,10 @@ Microsoft Win32 API contracts (links in the source manifest). On Wasm, they
 reuse the existing pinned `runtime/web/tz.c` timezone adapter through
 `wasm_plat.h`; the same retained nfsu2-web MIT notice applies. Their focused
 smoke uses synthetic data, with no game bytes or generated game functions.
+
+The startup movie adapter reuses the notification-hook design and fresh-input
+baselining from th0mk's MIT-licensed `runtime/intro.c` at the same pinned
+revision (blob `652cff8089910618f033fdcdfe0908e26be8a076`). The retained
+MIT notice applies. NFSU1 interface addresses were verified locally; only
+handwritten host logic and interface metadata are committed. Original game
+inputs and generated functions are unchanged; linked outputs remain local.

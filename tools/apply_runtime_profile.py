@@ -206,11 +206,13 @@ void sub_00643a39(CPU *c){ c->eax = 0; POP32(c->eip); }
 void sub_00672630(CPU *c){ move_guest(c); }
 void sub_00678d30(CPU *c){ move_guest(c); }
 void overrides_install(void){
+    extern void nfsu1_intro_install(void);
+    nfsu1_intro_install();
     dispatch_patch(0x00643a39u, sub_00643a39);
     dispatch_patch(0x00672630u, sub_00672630);
     dispatch_patch(0x00678d30u, sub_00678d30);
 }
-void overrides_report(void){ /* No NFSU2 hooks are installed. */ }
+void overrides_report(void){ /* Only verified NFSU1 hooks are installed. */ }
 '''
 
 

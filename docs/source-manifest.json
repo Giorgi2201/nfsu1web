@@ -355,6 +355,16 @@
     "bundler_license_retained": "work/toolchain/web-bundler/node_modules/esbuild/LICENSE.md",
     "output_policy": "Private Wasm, game data, built page and build records stay ignored. No agent browser operation; user-reported browser observations are recorded separately in docs/progress.md."
   },
+  "startup_movie_controls": {
+    "date": "2026-10-23",
+    "upstream_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "source": "th0mk/nfsu2-web runtime/intro.c",
+    "git_blob_sha1": "652cff8089910618f033fdcdfe0908e26be8a076",
+    "reuse": "MIT-licensed notification adapter design and input baselining; NFSU1-specific handwritten implementation. Notice retained in patches/nfsu2-web.LICENSE.",
+    "evidence": "Local matching PC 1.4 executable and cached catalog; interface addresses in docs/movie-skipping.md.",
+    "output_policy": "Original executable and generated game functions unchanged. Local linked Wasm remains private and ignored.",
+    "validation": "Focused synthetic native adapter smoke, private Wasm relink, browser startup smoke/bundle/syntax and in-process server checks passed. Browser/game validation pending; no agent browser operation."
+  },
   "profile_datetime_imports": {
     "date": "2026-10-22",
     "implementation": "Original NFSU1 Win32 helpers for GetDateFormatA and GetTimeFormatA; English (US) formatting and bounded guest buffers, not full Windows NLS emulation.",

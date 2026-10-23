@@ -102,7 +102,8 @@ export CC OBJDUMP CFLAGS SHARDFLAGS OUT FULL MEMCHECK OBJCACHE HDRSUM CACHE_KEYS
 # nfsu1_win32: original NFSU1 USER32 HLE (synced from repo runtime/ before compile).
 cp -f "$ROOT/runtime/nfsu1_win32.c" "$UPSTREAM/runtime/nfsu1_win32.c"
 cp -f "$ROOT/runtime/nfsu1_diagnostics.c" "$UPSTREAM/runtime/nfsu1_diagnostics.c"
-RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
+cp -f "$ROOT/runtime/nfsu1_intro.c" "$UPSTREAM/runtime/nfsu1_intro.c"
+RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics nfsu1_intro com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
 WEB="$(cd runtime/web && ls *.c | sed 's/\.c$//')"
 ABK_OBJS=()
 if [ -f "$ABK_GEN/report.json" ]; then

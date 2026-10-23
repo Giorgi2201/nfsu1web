@@ -82,7 +82,7 @@ const context = {
   quitAt: null,
   refreshMeasured: Promise.resolve(),
   resolved: () => ({
-    env: { NFSFULL: '0', NFSU2_AUDIO_LATENCY: 'interactive', NFSU2_REGFILE: '/save/registry.txt', NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NOMOVIES: '1' },
+    env: { NFSFULL: '0', NFSU2_AUDIO_LATENCY: 'interactive', NFSU2_REGFILE: '/save/registry.txt', NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NOMOVIES: '1', NFSU1_INTRO: 'off', NFSU2_INTRO: 'original' },
     notes: [],
   }),
   saves: { async settled() {} },
@@ -123,5 +123,7 @@ assert.equal(toastCalls.length, 1, 'startup shows its generic hint');
 assert.equal(toastCalls[0].duration, 6000);
 assert.match(toastCalls[0].message, /F9 opens the menu/);
 assert.equal(startOptions.env.NFSU1_SAVEDIR, '/save/nfsu1');
+assert.equal(startOptions.env.NFSU1_INTRO, 'off');
+assert.equal(startOptions.env.NFSU2_INTRO, undefined);
 assert.equal(logLines.some(line => line.includes('first-run check')), true);
 console.log('Overlaid startGame startup smoke passed for a fresh profile. No browser was launched.');

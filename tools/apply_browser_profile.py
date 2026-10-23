@@ -44,6 +44,17 @@ def transform(path: str, source: str) -> str:
         return exact(source, "args: ['nfsu2', '/data/SPEED2.EXE']", "args: ['nfsu1', '/data/Speed.exe']")
 
     if path == "web/src/app/settings.ts":
+        source = exact(source, "env: 'NFSU2_INTRO'", "env: 'NFSU1_INTRO'")
+        source = exact(source,
+                       "# The movies at startup (EA and THX logos, the PSA, the intro): skippable =\n"
+                       "# Enter, Escape, Space, a left click or a controller's A, B or Start ends each\n"
+                       "# one; original = as in the game, where only the intro ends early; off = they\n"
+                       "# are not played.  [NFSU2_INTRO]",
+                       "# NFSU1 startup movies: skippable = Enter, Escape, Space or controller A/B/Start\n"
+                       "# ends each movie; original = the game's original skip behavior; off = finish\n"
+                       "# startup screens on their first update (a brief frame may appear). Story\n"
+                       "# movies keep their original behavior.  [NFSU1_INTRO]")
+        source = exact(source, "ALARM: '0', FIXMAT:", "NFSU1_INTRO: 'skippable', ALARM: '0', FIXMAT:")
         source = exact(source, "NFSU2_FNG_LOG: '1', NFSU2_STATUS_EVERY: '3600', NFSU2_AUDIO_STATUS: '0',",
                        "NFSU2_FNG_LOG: '0', NFSU2_STATUS_EVERY: '0', NFSU2_AUDIO_STATUS: '0',")
         return source
@@ -53,6 +64,7 @@ def transform(path: str, source: str) -> str:
         end = source.index("\n];", start) + 3
         replacement = '''const GROUPS: Group[] = [
   { title: 'Browser', items: [
+    { key: 'intro', label: 'Startup movies', help: 'Skippable: Enter, Esc, Space or controller A, B or Start ends each movie. Original: use the original game behavior. Off: finish startup screens immediately; a brief frame may appear. Story movies keep their original behavior.', c: { t: 'seg', opts: [['skippable', 'Skippable'], ['original', 'Original'], ['off', 'Off']] } },
     { key: 'fullscreen', label: 'Full screen on Play', help: 'Open the game canvas full screen when the browser allows it.', c: { t: 'switch' } },
     { key: 'audio_latency', label: 'Audio latency', help: 'Choose the browser audio output buffer.', c: { t: 'seg', opts: [['interactive', 'Low'], ['balanced', 'Balanced'], ['playback', 'Robust']] } },
   ] },
@@ -113,7 +125,7 @@ def transform(path: str, source: str) -> str:
   'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'SNDSYNC', 'NFSFULL', 'NFSRES', 'NFSMAXPIX',
   'NFSU2_PAD', 'NFSU2_PAD_DEADZONE', 'NFSU2_PAD_TRIGGER_DEADZONE', 'NFSU2_PAD_TRIGGER_CLICK', 'NFSU2_FF',
   'NFSU2_AUDIO_LATENCY', 'NFSU2_TZ', 'NFSU2_TZ_NAME',
-  'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
+  'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
   'NFSU2_AUTOSAVE', 'NFSU2_NET', 'NFSU2_ONLINE', 'NFSU2_ROAM', 'NFSU2_SEED_REGISTRY', 'NFSU2_FPS_COUNTER', 'NFSU2_PAD_FE_KEYS',
 ]);
 /** Pass only host contracts and explicitly supported bring-up diagnostics to the process. */

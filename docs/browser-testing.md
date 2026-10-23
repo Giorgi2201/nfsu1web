@@ -25,6 +25,9 @@ install read-only. Stop it with Ctrl+C. If the port is occupied, pass
 
 ## What to try
 
+For the **Startup movies** control, follow the focused
+[movie skip checks](movie-skipping.md#user-browser-check).
+
 For the date/time fix, stop and restart the local server, then reload the same
 address. Create a profile with a new unused name (for example `datefix1`) and
 press Enter. Confirm that the game continues without an unresolved import or
