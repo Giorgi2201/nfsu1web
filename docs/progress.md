@@ -2,6 +2,42 @@
 
 ## Current bring-up checkpoint
 
+### Drag loading: internal switch dispatch
+
+The user reports a drag-race loading abort at unresolved dispatch `0x00482f48`
+with `sub_00483080` on the stack. The private caller audit identifies the
+switch in its callee `sub_00482f00`: the selector is reloaded from an ESP spill,
+and the jump has no saved successor edges. Its three distinct case targets
+are already saved local blocks, but are not standalone dispatch entries.
+The previous guard-based table recovery missed this form and emitted an
+indirect tail dispatch into an internal block.
+
+`tools/catalog_bridge.py` now also recovers direct indexed tables whose
+contiguous words match the function's complete saved `jump_targets` set and
+whose arms all have saved local blocks. This conservative fallback needs no
+new analysis, executable changes or guessed callback bodies. The upstream
+emitter checks each live table word before entering its label and retains
+indirect dispatch for changed words and other indices. The same recovery
+applies to the saved aliases of this switch. Functions with multiple unrelated
+tables may still need separate recovery; this does not claim full switch coverage.
+
+The focused authored-byte smoke covers an ESP reload without a guard or
+successors, repeated table entries, missing blocks and incomplete tables.
+Existing split-guard and frame-spill checks and five catalog unit checks pass.
+An additional native execution of the synthetic lift passes all five table
+indices, an index beyond the recovered prefix and a changed live table word;
+the latter two reach the original indirect fallback. Its private harness is
+under `out/saved-switch-smoke/`.
+The full re-lift recovers seven additional guarded switch sites across five
+shards, including the reported owner and both aliases, with unchanged emission
+successes, failures, 675 abort stubs and unresolved direct targets. The selected
+private emission is `gen/nfsu1-saved-switch` via `gen/nfsu1-current`; lift and
+build logs use the `out/saved-switch-` prefix.
+The private Wasm link, browser bundle, stubbed startup, JavaScript syntax and
+in-process server checks pass. Restart the server and reload the same origin
+to retry the failing drag event with the repaired module; keep existing saves.
+Browser drag loading and race completion remain pending user validation.
+
 ### Startup movie controls
 
 The browser now exposes **Startup movies: Skippable / Original / Off**.

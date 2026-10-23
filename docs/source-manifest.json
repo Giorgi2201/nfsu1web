@@ -365,6 +365,15 @@
     "output_policy": "Original executable and generated game functions unchanged. Local linked Wasm remains private and ignored.",
     "validation": "Focused synthetic native adapter smoke, private Wasm relink, browser startup smoke/bundle/syntax and in-process server checks passed. Browser/game validation pending; no agent browser operation."
   },
+  "drag_loading_switch_recovery": {
+    "date": "2026-10-23",
+    "implementation": "Original catalog-adapter fallback for indexed tables matching saved jump targets and local blocks; no new discovery.",
+    "emitter_source": "th0mk/nfsu2-web tools/lift.py",
+    "upstream_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "git_blob_sha1": "abc0d23c368d5a66da97fe86804e5289222ab356",
+    "reuse": "Existing MIT guarded jump-table emission, retaining live word checks and indirect fallback; notice in patches/nfsu2-web.LICENSE.",
+    "output_policy": "Executable unchanged; real catalogs, re-emitted game functions and compiled modules remain private and ignored. Synthetic regression fixtures contain authored bytes."
+  },
   "profile_datetime_imports": {
     "date": "2026-10-22",
     "implementation": "Original NFSU1 Win32 helpers for GetDateFormatA and GetTimeFormatA; English (US) formatting and bounded guest buffers, not full Windows NLS emulation.",

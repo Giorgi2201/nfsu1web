@@ -87,3 +87,11 @@ revision (blob `652cff8089910618f033fdcdfe0908e26be8a076`). The retained
 MIT notice applies. NFSU1 interface addresses were verified locally; only
 handwritten host logic and interface metadata are committed. Original game
 inputs and generated functions are unchanged; linked outputs remain local.
+
+The drag-loading switch repair is original catalog-adapter logic using saved
+block and jump-target metadata. It continues to use the guarded jump-table
+emission in th0mk's MIT-licensed `tools/lift.py` at revision
+`31da468582c3de14fd6f4233831f62816e2df83d` (blob
+`abc0d23c368d5a66da97fe86804e5289222ab356`), with the same retained notice.
+Its regression fixtures are authored synthetic bytes. Re-emitted game bodies,
+catalogs and linked modules stay private and ignored; the executable is unchanged.

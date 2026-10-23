@@ -75,6 +75,26 @@ def stack_slot_fixture(case="positive"):
     return bytes(data), catalog, jt_site, targets
 
 
+def saved_table_fixture():
+    # An alias enters after a guard, reloads an ESP spill, and has no saved
+    # indirect successors. Only jump_targets records the known switch arms.
+    base, table = 0x1000, 0x1040
+    data = bytearray(b"\xcc" * 0x60)
+    dispatch = bytes.fromhex("8b4c2410ff248d") + struct.pack("<I", table)
+    data[:len(dispatch)] = dispatch
+    targets = [0x1020, 0x1021, 0x1022]
+    for target in targets:
+        data[target - base] = 0xc3
+    words = [targets[0]] * 3 + targets[1:]
+    data[table - base:table - base + 20] = struct.pack("<5I", *words)
+    catalog = {"image_base": base, "code_start": base, "code_end": base + len(data),
+               "functions": [{"address": base, "entry_kind": "alias",
+                              "blocks": [[base, base + len(dispatch), [], 0]] +
+                                        [[t, t + 1, [], 1] for t in targets],
+                              "calls_to": [], "jump_targets": targets}]}
+    return bytes(data), catalog, base + 4, words
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--upstream", type=Path, required=True)
@@ -118,6 +138,24 @@ def main():
             code, _ = lifter.lift(0x1000)
             assert "case 7u:" in code and "/* indirect tail call */" in code
         print(f"PASS: stack-slot {case}")
+
+    for case in ("saved arms", "missing saved block", "incomplete table"):
+        data, catalog, jump, words = saved_table_fixture()
+        if case == "missing saved block":
+            catalog["functions"][0]["blocks"].pop()
+        if case == "incomplete table":
+            data = bytearray(data)
+            data[0x50:0x54] = struct.pack("<I", 0x1030)
+        lifter = module.RawLifter(bytes(data), base=0x1000)
+        attach_catalog(lifter, catalog)
+        lifter.discover(0x1000)
+        assert (jump in lifter.jtab) == (case == "saved arms"), (case, lifter.jtab)
+        if case == "saved arms":
+            assert lifter.jtab[jump][2] == words
+            code, _ = lifter.lift(0x1000)
+            assert "case 4u: if (MR32(0x1050u) == 0x1022u) goto L_00001022;" in code
+            assert "DISPATCH_TAIL(c, MR32(c->ecx*4+0x1040u))" in code
+        print(f"PASS: alias with {case}")
 
 
 if __name__ == "__main__":

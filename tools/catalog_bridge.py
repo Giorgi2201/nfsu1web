@@ -274,6 +274,42 @@ def attach_catalog(lifter, catalog, route_catalog_tails=False,
                         else branch.operands[0].imm & 0xffffffff)
                 return slot, limit.imm & 0xffffffff, held
 
+            def saved_table(insns):
+                """Recover a table whose arms are explicitly saved in this CFG.
+
+                A selector may be spilled or enter through an alias without
+                its guard. No bound proof is needed for the upstream emitter's
+                guarded cases: each checks the live table word, and all other
+                indices/changed words retain the original indirect dispatch.
+                Never decode new blocks or infer targets from nearby code.
+                """
+                saved = set(function["jump_targets"])
+                if not saved or not saved <= blocks.keys():
+                    return None
+                jump = insns[-1]
+                if (jump.mnemonic != "jmp" or not jump.operands
+                        or jump.operands[0].type != X86_OP_MEM
+                        or jump.operands[0].size != 4):
+                    return None
+                mem = jump.operands[0].mem
+                if (mem.segment or mem.base or mem.index not in r32_names
+                        or mem.scale != 4):
+                    return None
+                table_address = mem.disp & 0xffffffff
+                targets = []
+                for index in range(1024):
+                    word = table_address + 4 * index
+                    if not (self.in_text(word) and self.in_text(word + 3)):
+                        break
+                    offset = word - self.TVA
+                    target = int.from_bytes(self.TDATA[offset:offset + 4], "little")
+                    if target not in saved:
+                        break
+                    targets.append(target)
+                if set(targets) != saved:
+                    return None
+                return mem.index, table_address, targets
+
             bounds = {}
             stack_bounds = {}
             for start, instructions in blocks.items():
@@ -321,6 +357,8 @@ def attach_catalog(lifter, catalog, route_catalog_tails=False,
                             and ops[0].type == X86_OP_REG and ops[0].reg in r32_names
                             and ops[0].size == 4 and stack_slot(ops[1]) == slot):
                         table = self._jt_table(instructions[1:], (ops[0].reg, limit))
+                if table is None:
+                    table = saved_table(instructions)
                 if table is None:
                     continue
                 # Keep the table when every arm is either a block of this
