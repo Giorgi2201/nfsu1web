@@ -19,20 +19,21 @@ done
 STATE="$UPSTREAM/.nfsu1-browser-profile"
 PATCH_ROOT="$ROOT/patches/nfsu2-web"
 
+# Reverse dry-runs give false "already applied" results with fuzz, so every
+# target is restored from its pristine backup before patching forward.
+restore_originals() {
+  local patch rel
+  while IFS= read -r -d '' patch; do
+    rel="${patch#"$PATCH_ROOT"/}"
+    rel="${rel%.patch}"
+    [[ -f "$STATE/$rel" ]] && cp "$STATE/$rel" "$UPSTREAM/$rel"
+  done < <(find "$PATCH_ROOT/web" -name '*.patch' -print0 | sort -z)
+}
+
 apply_patches() {
-  local direction="$1"
   local patch
   while IFS= read -r -d '' patch; do
-    if [[ "$direction" == apply ]]; then
-      if patch -p1 -d "$UPSTREAM" --dry-run -R -i "$patch" >/dev/null 2>&1; then
-        continue
-      fi
-      patch -p1 -d "$UPSTREAM" -N -i "$patch"
-    else
-      if patch -p1 -d "$UPSTREAM" --dry-run -R -i "$patch" >/dev/null 2>&1; then
-        patch -p1 -d "$UPSTREAM" -R -i "$patch"
-      fi
-    fi
+    patch -p1 -d "$UPSTREAM" -N --no-backup-if-mismatch -r - -i "$patch"
   done < <(find "$PATCH_ROOT/web" -name '*.patch' -print0 | sort -z)
 }
 
@@ -47,7 +48,7 @@ remove_host() {
 }
 
 if [[ "$REVERT" -eq 1 ]]; then
-  apply_patches revert
+  restore_originals
   remove_host
   rm -f "$STATE/state.json"
   echo "Reverted NFSU1 browser patches under $UPSTREAM"
@@ -65,7 +66,8 @@ while IFS= read -r -d '' patch; do
   fi
 done < <(find "$PATCH_ROOT/web" -name '*.patch' -print0 | sort -z)
 
-apply_patches apply
+restore_originals
+apply_patches
 copy_host
 python3 - <<PY
 import hashlib, json
