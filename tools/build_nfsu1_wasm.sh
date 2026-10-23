@@ -6,13 +6,25 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 UPSTREAM="${UPSTREAM:-$ROOT/work/upstream/nfsu2-web}"
 GEN="${GEN:-$ROOT/gen/nfsu1-current}"
 ABK_GEN="${ABK_GEN:-$ROOT/gen/nfsu1-abk}"
-WASI="${WASI:-$ROOT/work/toolchain/wasi-sdk-34.0-arm64-macos}"
 OBJCACHE="${OBJCACHE:-$ROOT/work/objcache}"
 OPT="${OPT:--O1}"
 J="${J:-$(sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)}"
 OUT="$UPSTREAM/out/web"
 
-[ -x "$WASI/bin/clang" ] || { echo "WASI clang missing: $WASI"; exit 1; }
+if [[ -z "${WASI:-}" ]]; then
+  case "$(uname -s)-$(uname -m)" in
+    Darwin-arm64) WASI_DIR="wasi-sdk-34.0-arm64-macos" ;;
+    Darwin-x86_64) WASI_DIR="wasi-sdk-34.0-x86_64-macos" ;;
+    Linux-x86_64) WASI_DIR="wasi-sdk-34.0-x86_64-linux" ;;
+    Linux-aarch64) WASI_DIR="wasi-sdk-34.0-arm64-linux" ;;
+    *)
+      echo "error: set WASI to a WASI SDK 34 root (unsupported host $(uname -s)-$(uname -m))" >&2
+      exit 1
+      ;;
+  esac
+  WASI="$ROOT/work/toolchain/$WASI_DIR"
+fi
+[ -x "$WASI/bin/clang" ] || { echo "WASI clang missing: $WASI (run ./build.sh or set WASI=)"; exit 1; }
 [ -f "$GEN/fntab.c" ] || { echo "missing $GEN/fntab.c (run lift_catalog.py --link-stubs)"; exit 1; }
 [ -f "$GEN/decls.h" ] || { echo "missing $GEN/decls.h"; exit 1; }
 

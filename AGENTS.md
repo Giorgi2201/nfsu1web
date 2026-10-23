@@ -7,8 +7,11 @@ This repository integrates PC NFS Underground 1 into the `nfsu2-web` browser run
 - `tools/catalog_bridge.py`: saved-catalog normalization and an optional upstream-lifter adapter.
 - `tools/run_lifter_smoke.py`: focused real-lifter/native compilation check; setup in `docs/building.md`.
 - `tools/fetch_upstreams.py`: pinned public source bootstrap into ignored `work/upstream/`.
-- `tools/build_nfsu1_wasm.sh`, `tools/build_nfsu1_browser.py` and `tools/serve_nfsu1.py`: local build and serving pipeline; setup in `docs/building.md`.
-- `runtime/`: handwritten NFSU1 host adapters and diagnostics; no emitted game functions.
+- `start.sh` and `server/`: Rust `nfsu1-server` for local loopback.
+- `patches/nfsu2-web/`: unified diffs applied by `tools/apply_*_profile.sh` (no string-replace Python).
+- `tools/build_nfsu1_wasm.sh` and `tools/build_nfsu1_browser.py`: local Wasm/browser build; setup in `docs/building.md`.
+- `tools/catalog.sh` / `tools/lift.sh`: thin wrappers around upstream Capstone/pefile Python.
+- `runtime/` / `browser/`: handwritten NFSU1 host adapters; no emitted game functions.
 - `profiles/`: NFSU1 configuration consumed by the runtime overlay.
 - `poc/guest_abi.mjs`: original synthetic WebAssembly ABI fixture; `poc/README.md` documents its limits.
 - `tests/`: Python catalog tests and Node.js Wasm tests.

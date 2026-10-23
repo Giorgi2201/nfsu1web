@@ -1,0 +1,31 @@
+--- a/runtime/cpu.h
++++ b/runtime/cpu.h
+@@ -1,6 +1,7 @@
+ /* NFSU2 native port - x86-32 CPU state and guest memory access (macOS ARM64) */
+ #ifndef NFSU2_CPU_H
+ #define NFSU2_CPU_H
++#include "nfsu1_profile.h"
+ #include <math.h>
+ #include <stdint.h>
+ #include <string.h>
+@@ -116,8 +117,7 @@
+  * into the dispatcher.  Everything else (COM, Win32, server.dll, generated
+  * code, misses, the addresses ICALL/EFXSTAT watch) takes dispatch_indirect /
+  * dispatch_tail as before. */
+-#define DISPATCH_TEXT_BASE 0x00401000u
+-#define DISPATCH_TEXT_SIZE 0x00381af1u
++/* Dispatch bounds come from nfsu1_profile.h. */
+ typedef void (*guest_fn_t)(struct CPU *);
+ extern guest_fn_t g_dtab[DISPATCH_TEXT_SIZE];
+ static inline guest_fn_t dispatch_fast(uint32_t a){
+@@ -359,8 +359,8 @@
+ static inline void cov_hit(uint32_t va){
+     if (__builtin_expect(g_prof_on, 0)){
+         g_last_fn = va;
+-        if (g_cov && va >= 0x00401000u && va < 0x00401000u + (3676913u))
+-            g_cov[va - 0x00401000u]++;
++        if (g_cov && va - DISPATCH_TEXT_BASE < DISPATCH_TEXT_SIZE)
++            g_cov[va - DISPATCH_TEXT_BASE]++;
+     }
+ }
+ void cov_report(const char *path);

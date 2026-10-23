@@ -13,8 +13,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const upstream = path.resolve(process.argv[2] ?? path.join(root, 'work/upstream/nfsu2-web'));
 const inputPath = path.join(upstream, 'web/src/input/index.ts');
 let source = await readFile(inputPath, 'utf8');
-if (!source.includes("import { translateKeyboardEvent }")) {
-  source = execFileSync('python3', ['-c', 'import sys; sys.path.insert(0, sys.argv[1]); from browser_keyboard_overlay import keyboard_input; print(keyboard_input(sys.stdin.read()))', path.join(root, 'tools')], { input: source, encoding: 'utf8' });
+if (!source.includes('import { translateKeyboardEvent }')) {
+  const { mkdtempSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(path.join(tmpdir(), 'nfsu1-kbd-'));
+  try {
+    const dest = path.join(dir, 'web/src/input');
+    execFileSync('mkdir', ['-p', dest]);
+    writeFileSync(path.join(dest, 'index.ts'), source);
+    execFileSync('patch', ['-p1', '-i', path.join(root, 'patches/nfsu2-web/web/src/input/index.ts.patch')], { cwd: dir });
+    source = readFileSync(path.join(dest, 'index.ts'), 'utf8');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 const require = createRequire(path.join(upstream, 'web/build.mjs'));
 const esbuild = require('esbuild');

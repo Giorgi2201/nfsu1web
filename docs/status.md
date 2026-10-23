@@ -33,10 +33,10 @@ coverage and optional HD gauges. Other mod candidates are in
 | Area | Location |
 | --- | --- |
 | Catalog caching and emission | `tools/prepare_game_catalog.py`, `catalog_bridge.py`, `lift_catalog.py` |
-| Runtime and browser overlays | `tools/apply_runtime_profile.py`, `apply_browser_profile.py` |
+| Runtime and browser overlays | `patches/nfsu2-web/**/*.patch`, `tools/apply_*_profile.sh` |
 | NFSU1 host adapters | `runtime/` |
 | Launcher and controls | `browser/` |
-| Build and local server | `tools/build_nfsu1_wasm.sh`, `build_nfsu1_browser.py`, `serve_nfsu1.py` |
+| Build and local server | `tools/build_nfsu1_wasm.sh`, `build_nfsu1_browser.py`, `server/` (`nfsu1-server`) |
 | Pinned source evidence | [source-manifest.json](source-manifest.json) |
 
 The integration targets the web runtime's `CPU *` ABI and reuses saved catalog

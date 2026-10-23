@@ -20,8 +20,9 @@ python3 tools/font_container_smoke.py
 # Actual frame encoder with synthetic GPU command objects:
 python3 tools/depth_state_smoke.py
 
-# HTTP routes, overlays, byte ranges and path protections:
-python3 tools/browser_server_smoke.py --in-process
+# HTTP routes, overlays, byte ranges and path protections (Rust nfsu1-server):
+cargo build --manifest-path server/Cargo.toml
+python3 tools/browser_server_smoke.py
 ```
 
 The upload/container checks require local emissions and prepared font assets.
@@ -35,7 +36,7 @@ Other focused checks live in `tools/*smoke*`; the filename identifies the area.
 
 ## Manual browser check
 
-After rebuilding, stop the old server, restart it and reload
+After rebuilding, stop the old server, restart with `./start.sh` and reload
 **http://127.0.0.1:8765/**. Add `--hd-fonts work/mods/hd-fonts` to enable fonts.
 Use the same origin to preserve saves.
 

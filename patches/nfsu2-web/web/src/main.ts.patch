@@ -1,0 +1,10 @@
+--- a/web/src/main.ts
++++ b/web/src/main.ts
+@@ -2,4 +2,7 @@
+ import './app/style.css';
+ import { boot } from './app/shell';
+ 
++import { mountMenu } from './app/menu';
++
++mountMenu();
+ void boot();

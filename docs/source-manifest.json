@@ -524,7 +524,7 @@
   "traffic_depth_investigation": {
     "date": "2026-10-23",
     "source": "runtime/com.c at pinned th0mk/nfsu2-web revision",
-    "adapter": "tools/traffic_depth_overlay.py",
+    "adapter": "patches/nfsu2-web/runtime/com.c.patch",
     "license": "MIT; patches/nfsu2-web.LICENSE",
     "status": "depth lifetime correction user-confirmed in game",
     "evidence": "User confirms traffic bodies/lights through walls on Maximum. Newest user log152534 has no depth size mismatches.",

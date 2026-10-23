@@ -1,19 +1,41 @@
 #!/usr/bin/env python3
-"""Focused HTTP smoke check for tools/serve_nfsu1.py (no browser involved)."""
+"""HTTP smoke for the Rust nfsu1-server (no browser)."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
-import io
 import json
+import os
+import subprocess
+import sys
 import tempfile
-import threading
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
-from serve_nfsu1 import Config, Handler, LocalServer
+ROOT = Path(__file__).resolve().parents[1]
+RELEASE = ROOT / "server/target/release/nfsu1-server"
+DEBUG = ROOT / "server/target/debug/nfsu1-server"
+
+
+def server_bin() -> Path:
+    env = os.environ.get("NFSU1_SERVER_BIN")
+    if env and Path(env).is_file():
+        return Path(env)
+    if RELEASE.is_file():
+        return RELEASE
+    if DEBUG.is_file():
+        return DEBUG
+    subprocess.run(
+        ["cargo", "build", "--manifest-path", str(ROOT / "server/Cargo.toml")],
+        check=True,
+        cwd=ROOT,
+    )
+    if not DEBUG.is_file():
+        raise SystemExit("nfsu1-server binary missing after cargo build")
+    return DEBUG
 
 
 def request(url: str, method: str = "GET", headers: dict | None = None):
@@ -24,131 +46,80 @@ def request(url: str, method: str = "GET", headers: dict | None = None):
         return response
 
 
-class MemorySocket:
-    """Small socket-shaped adapter for exercising BaseHTTPRequestHandler."""
-
-    def __init__(self, request_bytes: bytes):
-        self.input = io.BytesIO(request_bytes)
-        self.output = OutputBuffer()
-
-    def makefile(self, mode: str, *args, **kwargs):
-        return self.input if "r" in mode else self.output
-
-    def sendall(self, data: bytes):
-        self.output.write(data)
-
-
-class OutputBuffer(io.BytesIO):
-    def close(self):
-        # StreamRequestHandler closes its response stream after dispatch.
-        pass
-
-
-class MemoryServer:
-    server_name = "localhost"
-    server_port = 8765
-
-    def __init__(self, config):
-        self.config = config
-
-
-class QuietHandler(Handler):
-    def log_message(self, fmt, *args):
-        pass
-
-
-class MemoryResponse:
+class Resp:
     def __init__(self, status: int, headers: dict[str, str], body: bytes):
         self.status = status
-        self.headers = headers
+        self.headers = {k.lower(): v for k, v in headers.items()}
         self.body = body
 
     def read(self):
         return self.body
 
 
-def disconnected_client_smoke(config):
-    class ResetInput(io.BytesIO):
-        def readline(self, *args):
-            raise ConnectionResetError("client closed keep-alive connection")
-
-    class ClosedSocket(MemorySocket):
-        def sendall(self, data):
-            raise BrokenPipeError("client closed response connection")
-
-    wire = MemorySocket(b"")
-    wire.input = ResetInput()
-    QuietHandler(wire, ("127.0.0.1", 54321), MemoryServer(config))
-    wire = ClosedSocket(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
-    QuietHandler(wire, ("127.0.0.1", 54321), MemoryServer(config))
+def fetch(base: str, path: str, method="GET", headers=None):
+    raw = request(base + path, method, headers)
+    body = raw.read() if method != "HEAD" else b""
+    status = getattr(raw, "status", None) or raw.getcode()
+    headers_out = {k: v for k, v in raw.headers.items()}
+    return Resp(status, headers_out, body)
 
 
-def in_process_request(config, path: str, method="GET", headers=None):
-    headers = headers or {}
-    lines = [f"{method} {path} HTTP/1.1", "Host: localhost"]
-    lines.extend(f"{key}: {value}" for key, value in headers.items())
-    wire = MemorySocket(("\r\n".join(lines) + "\r\n\r\n").encode("ascii"))
-    QuietHandler(wire, ("127.0.0.1", 54321), MemoryServer(config))
-    raw = wire.output.getvalue()
-    head, _, body = raw.partition(b"\r\n\r\n")
-    response_lines = head.decode("iso-8859-1").split("\r\n")
-    status = int(response_lines[0].split()[1])
-    response_headers = {}
-    for line in response_lines[1:]:
-        if ":" in line:
-            key, value = line.split(":", 1)
-            response_headers[key.strip()] = value.strip()
-    return MemoryResponse(status, response_headers, body)
-
-
-def exercise(request_fn, config, root):
-    info_response = request_fn(config, "/game.json")
+def exercise(base: str, root: Path, module_hash: str):
+    info_response = fetch(base, "/game.json")
     info = json.loads(info_response.read())
-    assert info["rev"] == f"nfsu1-local-{hashlib.sha256((root / 'game.wasm').read_bytes()).hexdigest()[:12]}"
-    assert info["module"] == hashlib.sha256((root / "game.wasm").read_bytes()).hexdigest()
-    assert info_response.headers["Cache-Control"] == "no-store"
+    digest = hashlib.sha256((root / "game.wasm").read_bytes()).hexdigest()
+    assert info["rev"] == f"nfsu1-local-{digest[:12]}"
+    assert info["module"] == digest
+    assert info_response.headers["cache-control"] == "no-store"
 
-    page = request_fn(config, "/")
+    page = fetch(base, "/")
     assert page.status == 200 and b"local" in page.read()
-    assert page.headers["Cross-Origin-Opener-Policy"] == "same-origin"
-    assert page.headers["Cross-Origin-Embedder-Policy"] == "require-corp"
+    assert page.headers["cross-origin-opener-policy"] == "same-origin"
+    assert page.headers["cross-origin-embedder-policy"] == "require-corp"
 
-    module = request_fn(config, "/game.wasm", headers={"Range": "bytes=1-4"})
+    module = fetch(base, "/game.wasm", headers={"Range": "bytes=1-4"})
     assert module.status == 206 and module.read() == b"asm-"
-    assert module.headers["Content-Type"] == "application/wasm"
-    assert module.headers["Content-Range"].startswith("bytes 1-4/")
-    bare_module = request_fn(config, "/game.wasm")
-    assert bare_module.status == 200 and bare_module.headers["Cache-Control"] == "no-store"
-    good_hash = request_fn(config, f"/game.wasm?v={config.module_hash}")
+    assert module.headers["content-type"] == "application/wasm"
+    assert module.headers["content-range"].startswith("bytes 1-4/")
+    bare_module = fetch(base, "/game.wasm")
+    assert bare_module.status == 200 and bare_module.headers["cache-control"] == "no-store"
+    good_hash = fetch(base, f"/game.wasm?v={module_hash}")
     assert good_hash.status == 200 and good_hash.read() == (root / "game.wasm").read_bytes()
-    assert good_hash.headers["Cache-Control"] == "private, max-age=31536000, immutable"
-    stale_hash = request_fn(config, "/game.wasm?v=stale-module-hash")
+    assert good_hash.headers["cache-control"] == "private, max-age=31536000, immutable"
+    stale_hash = fetch(base, "/game.wasm?v=stale-module-hash")
     assert stale_hash.status == 409
-    (root / "game.wasm").write_bytes(b"rebuilt-module")
-    changed_hash = request_fn(config, f"/game.wasm?v={config.module_hash}")
-    assert changed_hash.status == 409
-    head = request_fn(config, "/game.wasm", method="HEAD")
-    assert head.status == 200 and int(head.headers["Content-Length"]) == (root / "game.wasm").stat().st_size
 
-    manifest_response = request_fn(config, "/data-manifest")
+    (root / "game.wasm").write_bytes(b"rebuilt-module")
+    changed_hash = fetch(base, f"/game.wasm?v={module_hash}")
+    assert changed_hash.status == 409
+    # Restore for later size checks against the running process stamp.
+    (root / "game.wasm").write_bytes(b"\0asm-test-module")
+
+    head = fetch(base, "/game.wasm", method="HEAD")
+    assert head.status == 200 and int(head.headers["content-length"]) == (root / "game.wasm").stat().st_size
+
+    health = fetch(base, "/healthz")
+    assert health.status == 200 and health.read() == b"ok\n"
+
+    manifest_response = fetch(base, "/data-manifest")
     manifest = json.loads(manifest_response.read())
     assert {entry["p"] for entry in manifest["files"]} == {"Cars", "Cars/car.bin"}
-    data_range = request_fn(config, "/data/Cars/car.bin", headers={"Range": "bytes=3-6"})
+    data_range = fetch(base, "/data/Cars/car.bin", headers={"Range": "bytes=3-6"})
     assert data_range.status == 206 and data_range.read() == b"3456"
 
-    invalid_range = request_fn(config, "/data/Cars/car.bin", headers={"Range": "bytes=999-"})
-    assert invalid_range.status == 416 and invalid_range.headers["Content-Range"] == "bytes */10"
-    escaped = request_fn(config, "/data/%2e%2e%2Fgame.wasm")
+    invalid_range = fetch(base, "/data/Cars/car.bin", headers={"Range": "bytes=999-"})
+    assert invalid_range.status == 416 and invalid_range.headers["content-range"] == "bytes */10"
+    escaped = fetch(base, "/data/%2e%2e%2Fgame.wasm")
     assert escaped.status == 400
-    malformed_escape = request_fn(config, "/data/%2e%2e%2")
+    malformed_escape = fetch(base, "/data/%2e%2e%2")
     assert malformed_escape.status == 400
-    symlink_escape = request_fn(config, "/data/escape.bin")
+    symlink_escape = fetch(base, "/data/escape.bin")
     assert symlink_escape.status == 404
-    missing = request_fn(config, "/missing.js")
+    missing = fetch(base, "/missing.js")
     assert missing.status == 404
 
 
-def font_overlay_smoke(root):
+def font_overlay_smoke(binary: Path, root: Path):
     data, overlay = root / "font-data", root / "fonts"
     files = []
     for name in ("GLOBAL/GLOBALA.BUN", "LANGUAGES/LANGUAGETEXTURES.BIN"):
@@ -157,34 +128,68 @@ def font_overlay_smoke(root):
         replacement.parent.mkdir(parents=True, exist_ok=True)
         source.write_bytes(b"original")
         replacement.write_bytes(b"HD fonts")
-        files.append({"path": name, "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
-                      "sha256": hashlib.sha256(replacement.read_bytes()).hexdigest()})
+        files.append({
+            "path": name,
+            "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "sha256": hashlib.sha256(replacement.read_bytes()).hexdigest(),
+        })
     (overlay / "manifest.json").write_text(json.dumps({"kind": "nfsu1-hd-fonts", "files": files}))
-    config = Config(root / "dist", root / "game.wasm", root / "game.json", data, overlay)
-    response = in_process_request(config, "/data/Global/GLOBALA.BUN", headers={"Range": "bytes=0-1"})
-    assert response.status == 206 and response.read() == b"HD"
-    entry = next(e for e in config.get_manifest()["files"] if e["p"] == files[0]["path"])
-    assert entry["s"] == 8 and entry["m"] != int((data / files[0]["path"]).stat().st_mtime)
-    assert (data / files[0]["path"]).read_bytes() == b"original"
-    plain = Config(root / "dist", root / "game.wasm", root / "game.json", data)
-    assert in_process_request(plain, "/data/GLOBAL/GLOBALA.BUN").read() == b"original"
-    (overlay / "data" / files[0]["path"]).write_bytes(b"tampered after server startup")
-    assert in_process_request(config, "/data/GLOBAL/GLOBALA.BUN").status == 409
+    wasm = root / "game.wasm"
+    meta = root / "game.json"
+    proc = subprocess.Popen(
+        [
+            str(binary),
+            "--dist", str(root / "dist"),
+            "--wasm", str(wasm),
+            "--metadata", str(meta),
+            "--data", str(data),
+            "--hd-fonts", str(overlay),
+            "--host", "127.0.0.1",
+            "--port", "0",
+            "--public",
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
     try:
-        Config(root / "dist", root / "game.wasm", root / "game.json", data, overlay)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("tampered font overlay accepted")
+        base = wait_for_url(proc)
+        response = fetch(base, "/data/Global/GLOBALA.BUN", headers={"Range": "bytes=0-1"})
+        assert response.status == 206 and response.read() == b"HD"
+        (overlay / "data" / files[0]["path"]).write_bytes(b"tampered after server startup")
+        assert fetch(base, "/data/GLOBAL/GLOBALA.BUN").status == 409
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
+def wait_for_url(proc: subprocess.Popen, timeout=10.0) -> str:
+    deadline = time.time() + timeout
+    buf = ""
+    while time.time() < deadline:
+        if proc.poll() is not None:
+            out = (proc.stdout.read() if proc.stdout else "") or buf
+            raise SystemExit(f"server exited early:\n{out}")
+        line = proc.stdout.readline() if proc.stdout else ""
+        if line:
+            buf += line
+            if "http://" in line:
+                # Serving NFSU1 build at http://127.0.0.1:PORT/
+                start = line.index("http://")
+                end = line.index("/", start + len("http://"))
+                return line[start:end]
+        time.sleep(0.05)
+    raise SystemExit(f"server did not print listen URL:\n{buf}")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--network", dest="mode", action="store_const", const="network", help="use a localhost socket (may be blocked by the sandbox)")
-    mode.add_argument("--in-process", dest="mode", action="store_const", const="in-process", help="exercise the HTTP handler without binding a socket (default)")
-    parser.set_defaults(mode="in-process")
-    args = parser.parse_args()
+    parser.add_argument("--in-process", action="store_true", help="ignored; Rust smoke always uses a socket")
+    parser.add_argument("--network", action="store_true", help="ignored; same as default")
+    parser.parse_args()
+    binary = server_bin()
+
     with tempfile.TemporaryDirectory(prefix="nfsu1-http-smoke-") as temporary:
         root = Path(temporary)
         dist = root / "dist"
@@ -192,7 +197,7 @@ def main() -> int:
         dist.mkdir()
         data.mkdir()
         (dist / "index.html").write_text("<h1>local</h1>", encoding="utf-8")
-        (dist / "app.js").write_text("ok", encoding="utf-8")
+        (dist / "main.js").write_text("ok", encoding="utf-8")
         (data / "Cars").mkdir()
         (data / "Cars" / "car.bin").write_bytes(b"0123456789")
         outside = root / "outside.bin"
@@ -200,34 +205,54 @@ def main() -> int:
         (data / "escape.bin").symlink_to(outside)
         wasm = root / "game.wasm"
         wasm.write_bytes(b"\0asm-test-module")
+        module_hash = hashlib.sha256(wasm.read_bytes()).hexdigest()
         metadata = root / "game.json"
-        metadata.write_text(json.dumps({"pages": 1, "maxPages": 2, "guestEnd": 65536, "size": wasm.stat().st_size,
-                                        "hdFonts": 1}), encoding="utf-8")
+        metadata.write_text(
+            json.dumps({
+                "pages": 1, "maxPages": 2, "guestEnd": 65536,
+                "size": wasm.stat().st_size, "hdFonts": 1,
+            }),
+            encoding="utf-8",
+        )
 
-        config = Config(dist, wasm, metadata, data)
-        font_overlay_smoke(root)
-        if args.mode == "in-process":
-            exercise(in_process_request, config, root)
-            disconnected_client_smoke(config)
-            print("In-process HTTP smoke passed: routes, ranges, headers, and path protections. No socket was bound.")
-            return 0
-
+        # Port 0: ask the OS. The server prints the bound URL.
+        # Use a high fixed port if binding 0 is awkward — prefer probing.
+        port = pick_port()
+        proc = subprocess.Popen(
+            [
+                str(binary),
+                "--dist", str(dist),
+                "--wasm", str(wasm),
+                "--metadata", str(metadata),
+                "--data", str(data),
+                "--host", "127.0.0.1",
+                "--port", str(port),
+                "--public",
+            ],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
         try:
-            server = LocalServer(("127.0.0.1", 0), config)
-        except OSError as exc:
-            print(f"Network smoke could not bind localhost: {exc}")
-            return 2
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        base = f"http://127.0.0.1:{server.server_address[1]}"
-        try:
-            exercise(lambda _config, path, method="GET", headers=None: request(base + path, method, headers), config, root)
-            print("Network HTTP smoke passed through a localhost socket.")
+            base = wait_for_url(proc)
+            exercise(base, root, module_hash)
+            font_overlay_smoke(binary, root)
+            print("Rust HTTP smoke passed: routes, ranges, headers, and path protections.")
             return 0
         finally:
-            server.shutdown()
-            server.server_close()
-            thread.join(timeout=5)
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+
+
+def pick_port() -> int:
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
 
 
 if __name__ == "__main__":

@@ -10,9 +10,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from depth_state_overlay import encoder
-
 ROOT = Path(__file__).resolve().parents[1]
+ENCODER_PATCH = ROOT / "patches/nfsu2-web/web/src/gpu/encoder.ts.patch"
 HARNESS = r'''
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
@@ -130,14 +129,21 @@ def main():
     args = parser.parse_args()
     upstream = args.upstream.resolve()
     source_path = upstream / "web/src/gpu/encoder.ts"
-    # Always start from the reversible overlay's pristine backup when available.
     backup = upstream / ".nfsu1-browser-profile/web/src/gpu/encoder.ts"
-    source = (backup if backup.is_file() else source_path).read_text()
-    if not args.original:
-        source = encoder(source)
+    pristine = (backup if backup.is_file() else source_path).read_text()
     esbuild = ROOT / "work/toolchain/web-bundler/node_modules/.bin/esbuild"
     with tempfile.TemporaryDirectory(prefix="nfsu1-depth-state-") as directory:
         temporary = Path(directory)
+        tree = temporary / "web/src/gpu"
+        tree.mkdir(parents=True)
+        target = tree / "encoder.ts"
+        target.write_text(pristine)
+        if not args.original:
+            subprocess.run(
+                ["patch", "-p1", "-i", str(ENCODER_PATCH)],
+                cwd=temporary, check=True,
+            )
+        source = target.read_text()
         bundle = temporary / "encoder.mjs"
         harness = temporary / "check.mjs"
         subprocess.run([str(esbuild), "--bundle", "--platform=node", "--format=esm", "--loader=ts",

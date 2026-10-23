@@ -1,0 +1,11 @@
+--- a/web/src/host/datacache.ts
++++ b/web/src/host/datacache.ts
+@@ -6,7 +6,7 @@
+ // A block's data is written before its byte in the map.
+ 
+ export const BLOCK = 1 << 20;
+-export const CACHE_DIR = 'cache';
++export const CACHE_DIR = 'cache-nfsu1';
+ /** where the server has the manifest and the install folder (web/server-rs/src/app/manifest.rs) */
+ export const MANIFEST_URL = '/data-manifest', DATA_BASE = '/data/';
+ 

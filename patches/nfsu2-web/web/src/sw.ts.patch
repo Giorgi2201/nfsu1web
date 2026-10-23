@@ -1,0 +1,20 @@
+--- a/web/src/sw.ts
++++ b/web/src/sw.ts
+@@ -25,7 +25,7 @@
+ declare const self: ServiceWorkerGlobalScope;
+ export {};
+ 
+-const CACHE = 'nfsu2-offline-2';
++const CACHE = 'nfsu1-offline-1';
+ const PAGE = '/', MODULE = '/game.wasm';
+ /** what a start needs, and the module; the page loads the first five itself before Play */
+ const KEPT = ['/', '/main.js', '/main.css', '/game.json', '/data-manifest',
+@@ -108,7 +108,7 @@
+ });
+ self.addEventListener('activate', e => {
+   e.waitUntil((async () => {
+-    for (const k of await caches.keys()) if (k.startsWith('nfsu2-offline-') && k !== CACHE) await caches.delete(k);
++    for (const k of await caches.keys()) if (k.startsWith('nfsu1-offline-') && k !== CACHE) await caches.delete(k);
+     await self.clients.claim();
+   })());
+ });

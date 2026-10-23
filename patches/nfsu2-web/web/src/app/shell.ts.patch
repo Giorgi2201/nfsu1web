@@ -1,0 +1,330 @@
+--- a/web/src/app/shell.ts
++++ b/web/src/app/shell.ts
+@@ -1,3 +1,4 @@
++import { toggleKeyboardAliases } from './keyboard';
+ // The start page and everything around a game run: the checks (only a
+ // problem is shown), loading the module with progress, the settings, saves
+ // and controls on the page, Play -> the game (in the window, or full screen
+@@ -42,7 +43,7 @@
+ const TEST_PARAMS = ['env', 'save', 'fresh', 'reg', 'script', 'artifacts', 'dumpscale', 'away'];
+ const addr = new URLSearchParams(location.search);
+ let q = new URLSearchParams();
+-let SAVE = 'save';
++let SAVE = 'save-nfsu1';
+ let ENVIRONMENT: Record<string, string> = {};
+ /** the test aids the page address gives (taken on a development server only); their names, for the start page */
+ function takeParams(dev: boolean): string[] {
+@@ -92,7 +93,7 @@
+  *  runs from the game data on this PC */
+ let offline = false;
+ /** the profile the running (or last) game saved last, when, and how often it saved one */
+-let saved: { name: string; at: number; count: number } | null = null;
++let saved: { at: number; count: number } | null = null;
+ 
+ // ------------------------------------------------------------- progress --
+ function setProgress(f: number) {
+@@ -158,8 +159,8 @@
+   }
+   if (pending) { if (phase !== 'exited') setPhase('boot', 'Loading', `${pending.label}: ${pending.detail}`); return; }
+   if (phase === 'exited') { updatePlay(); return; }
+-  setPhase('ready', 'Ready', offline ? 'Offline: the game runs from this PC, without free roam or Online. Press Play or Enter to start.'
+-    : 'Press Play or Enter to start.');
++  setPhase('ready', 'Ready', offline ? 'Offline. Press Launch game or Enter.'
++    : 'Press Launch game or Enter.');
+ }
+ 
+ function updatePlay() {
+@@ -206,7 +207,7 @@
+  * and nothing is written, so a later Play asks once free roam has room again.
+  * ASK_ROAM false: never asked, and free roam stays off until the player turns it on under Online.
+  */
+-const ASK_ROAM = true;
++const ASK_ROAM = false;
+ async function askRoam() {
+   const r = resolved();
+   if (!ASK_ROAM || r.source.NFSU2_ROAM || TEST_PARAMS.some(k => q.has(k)) || offline || /^(off|0|none)$/i.test(r.env.NFSU2_NET?.trim() ?? '')) return;
+@@ -284,7 +285,7 @@
+   $('#app').inert = true;             // the start page is behind the game: out of the focus order and screen readers
+   const canvas = stageCanvas();
+   untrack = trackCanvasSize(canvas);
+-  setPhase('starting', 'Starting', full ? 'Going full screen and starting the game.' : 'Starting the game.');
++  setPhase('starting', 'Starting game', full ? 'Going full screen and starting the experimental runtime.' : 'Starting the experimental runtime.');
+   let fsNote = '';
+   if (full) {
+     const fs = await enterFullscreen(stage);
+@@ -299,9 +300,22 @@
+   // the save overlay: registry seed (bundle.m app_seed_registry), test inputs
+   const host: Record<string, string> = {
+     HOME: '/save', NFSU2_DATA: '/data', NFSU2_SAVEDIR: '/save', NFSU2_REGFILE: '/save/registry.txt',
++    NFSU1_SAVEDIR: '/save/nfsu1', NFSU1_READONLY_DATA: '1',
+     NFSU2_WIDTH: String(size.w & ~1), NFSU2_HEIGHT: String(size.h & ~1), NFSU2_DISPLAY_HZ: String(displayHz),
+   };
+   const r = resolved(host);
++  // The runtime follows live device pixels through the upstream resize/reset path.
++  // Retired resolution choices and restored fixed overrides cannot pin the browser.
++  delete r.env.NFSRES;
++  r.env.NFSU1_DYNAMIC_RESOLUTION = '1';
++  if (r.env.NFSU1_WIDESCREEN === undefined) r.env.NFSU1_WIDESCREEN = '1';
++  log.add(`[app] graphics quality: ${r.env.NFSU1_GRAPHICS ?? 'max'}; render: automatic device pixels, widescreen=${r.env.NFSU1_WIDESCREEN}`);
++  // Preserve shared host options; filter unsupported game variables before startup.
++  Object.assign(r.env, {
++    NFSU2_AUTOSAVE: '0', NFSU2_NET: 'off', NFSU2_ONLINE: '0', NFSU2_ROAM: '0',
++    NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NFSU2_PAD_FE_KEYS: '0',
++    NFSU2_FNG_LOG: '0', NFSU2_STATUS_EVERY: '0', NFSU2_AUDIO_STATUS: '0',
++  });
+   // offline mode: the server does not answer.  The movies stream from it, so unless every one of them is in this
+   // browser they are off for this game (a movie the game could not read would stop it).
+   setReach(await serverAnswers(2000));
+@@ -317,7 +331,7 @@
+   // the log is for sharing when asking for help: it names neither the server (a private server's address) nor
+   // more of this browser than its major version and system (the audit's PRIV-5).  These session lines stay when
+   // a long game fills the log (logs.ts keep).
+-  log.keep(`=== NFSU2 web, ${new Date().toISOString()}, game ${loaded!.info.rev}, server ${serverKind()} ===`);
++  log.keep(`=== PC NFSU1 experimental browser bring-up, ${new Date().toISOString()}, game ${loaded!.info.rev}, server ${serverKind()} ===`);
+   log.keep(`[app] save folder: OPFS ${SAVE} (/save); canvas ${size.w}x${size.h} device pixels, display ${displayHz} Hz; ${browserBrief()}`);
+   for (const n of r.notes) log.keep(`[app] ${n}`);
+   const reg = r.env.NFSU2_REGFILE.replace(/^\/save\//, '');
+@@ -328,19 +342,7 @@
+     if (r.env.NFSU2_SEED_REGISTRY === '0') log.add('[app] no registry yet, the game will run its first-run check');
+     else { await writeFile(SAVE, reg, registryDefaults); log.add(`[app] first launch, registry seeded with the built-in defaults (/save/${reg})`); }
+   }
+-  // the game's Save option at Autosave, once per profile (settings.ini autosave, profile.ts); an input script
+-  // plays the game as it was recorded (on the Mac, where nothing changes the profiles) unless the page address
+-  // asks for autosave itself
+-  let autosaved: string[] = [];
+-  const scripted = !!q.get('script') && ENVIRONMENT.NFSU2_AUTOSAVE === undefined;
+-  if (scripted) log.add('[app] autosave: an input script drives this game, the profiles are left as they are');
+-  else if (r.env.NFSU2_AUTOSAVE !== '0') {
+-    try {
+-      const a = await turnOnAutosave(filesOf(SAVE), PROFILES_DIR);
+-      autosaved = a.turnedOn;
+-      for (const n of a.notes) log.add(`[app] autosave: ${n}`);
+-    } catch (e) { log.add(`[app] autosave: the profiles were not checked: ${e}`); }
+-  }
++  // NFSU1 overlay: never rewrite profile bytes using the NFSU2 save layout.
+   if (q.get('script')) {
+     await writeFile(SAVE, 'autotest-script.txt', await (await fetch(q.get('script')!, { cache: 'no-store' })).text());
+     if (!('NFSU2_INPUT_SCRIPT' in r.env)) r.env.NFSU2_INPUT_SCRIPT = '/save/autotest-script.txt';
+@@ -351,9 +353,8 @@
+   await download.pause();
+   // the server's virtual LAN: the game's own LAN races and Online mode (network = on, the default) and free
+   // roam all need it; only network = off stays off it (the game then shows its own network error)
+-  const net = !/^(off|0|none)$/i.test(r.env.NFSU2_NET?.trim() ?? '');
+-  const netName = net ? (r.env.NFSU2_ROAM_NAME?.trim() || 'Player') : null;
+-  hudWide = !/^(43|4:3)$/i.test(r.env.NFSU2_HUD?.trim() ?? '');
++  const netName = null; // no NFSU2 LAN, Online, or free-roam integration in this profile.
++  hudWide = true; // no NFSU2 HUD layout option is applied to the NFSU1 experiment.
+   fatal = null;
+   quitAt = null;
+   saved = null;
+@@ -363,7 +364,7 @@
+     // longer than the game), and a closure from this function would keep its
+     // scope, and with it this game, reachable
+     session = await GameSession.start({
+-      module: loaded!.module, info: loaded!.info, saveDir: SAVE, env: r.env, canvas, stage, audio, displayHz, netName, notice, netBack, onSaved,
++      module: loaded!.module, info: loaded!.info, saveDir: SAVE, env: browserEnv(r.env), canvas, stage, audio, displayHz, netName, notice, netBack, onSaved,
+       artifacts: q.get('artifacts') ?? undefined, dumpScale: q.get('dumpscale') ? +q.get('dumpscale')! : undefined,
+       toggleFullscreen, log: logLine, onFatal: stopFatal,
+     });
+@@ -376,7 +377,7 @@
+     download.resume();
+     return;
+   }
+-  setPhase('playing', 'Playing', '');
++  setPhase('playing', 'Game running', '');
+   document.body.dataset.phase = 'playing';
+   away = new AwayCheck(session, awayLimits(), awayLine, logLine);
+   fps.memory = session.proc.memory;
+@@ -384,8 +385,7 @@
+   const waitStatus = setInterval(() => { if (st.status) { fps.reader = st.status; clearInterval(waitStatus); } }, 100);
+   fps.set((r.env.NFSU2_FPS_COUNTER as FpsMode) in { off: 1, on: 1, detailed: 1 } ? r.env.NFSU2_FPS_COUNTER as FpsMode : 'off');
+   const hint = offlineNote + (fsNote || (full ? 'F9 opens the menu. Hold Esc to leave full screen.' : 'F9 opens the menu: full screen, controls, quit.'));
+-  if (autosaved.length) toast(`Autosave is now on for ${autosaved.join(', ')}: the game saves by itself (Options, Gameplay, Save). ${hint}`, 9000);
+-  else toast(hint, 6000);
++  toast(hint, 6000);
+   void st.exited.then(code => { clearInterval(waitStatus); onExit(st, code); });
+   // Chrome may keep the sound off until a click or a key press (its autoplay
+   // rule); a controller button does not count, so say what does
+@@ -396,6 +396,24 @@
+   }, 3000);
+ }
+ 
++const BROWSER_ENV = new Set([
++  'HOME', 'NFSU2_DATA', 'NFSU2_SAVEDIR', 'NFSU2_REGFILE', 'NFSU2_WIDTH', 'NFSU2_HEIGHT',
++  'NFSU2_DISPLAY_HZ', 'NFSU2_RENDERER', 'NFSU2_READONLY_DATA', 'NFSU1_SAVEDIR', 'NFSU1_READONLY_DATA',
++  'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'NOSOUND', 'NFSU2_BACKGROUND', 'SNDSYNC', 'NFSFULL', 'NFSMAXPIX',
++  'NFSU2_PAD', 'NFSU2_PAD_DEADZONE', 'NFSU2_PAD_TRIGGER_DEADZONE', 'NFSU2_PAD_TRIGGER_CLICK', 'NFSU2_FF',
++  'NFSU2_AUDIO_LATENCY', 'NFSU2_TZ', 'NFSU2_TZ_NAME',
++  'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'NFSU1_DEPTH_DIAGNOSTICS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
++  'NFSU2_AUTOSAVE', 'NFSU2_NET', 'NFSU2_ONLINE', 'NFSU2_ROAM', 'NFSU2_SEED_REGISTRY', 'NFSU2_FPS_COUNTER', 'NFSU2_PAD_FE_KEYS',
++]);
++/** Pass only host contracts and explicitly supported bring-up diagnostics to the process. */
++function browserEnv(input: Record<string, string>): Record<string, string> {
++  const out = Object.fromEntries(Object.entries(input).filter(([key]) => BROWSER_ENV.has(key)));
++  Object.assign(out, { NFSU2_AUTOSAVE: '0', NFSU2_NET: 'off', NFSU2_ONLINE: '0', NFSU2_ROAM: '0',
++    NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NFSU2_PAD_FE_KEYS: '0',
++    NFSU1_DYNAMIC_RESOLUTION: '1', NFSU1_SAVEDIR: '/save/nfsu1', NFSU1_READONLY_DATA: '1' });
++  return out;
++}
++
+ function logLine(s: string) { log.add(s); }
+ /** whether the server answered (the start page's /players, or the check at Play): offline mode when not */
+ function setReach(ok: boolean) {
+@@ -473,31 +491,24 @@
+   if (fatal) setPhase('exited', 'Did not start', `The game was stopped: ${fatal}. Download the log to see why; ` +
+     (firefoxVersion() !== null ? 'about:support, Graphics, shows what Firefox thinks of the graphics.' : 'chrome://gpu shows what Chrome thinks of the graphics.'));
+   else {
+-    const base = code === 0 ? `The game closed normally after ${mins}.` : code === -1 ? `The game was stopped after ${mins}.`
+-      : `The game stopped with error code ${code} after ${mins}.`;
+-    // what is kept: the game's last profile save, never a claim it did not make
++    const base = code === 0 ? `The runtime exited normally after ${mins}.` : code === -1 ? `The runtime was stopped after ${mins}.`
++      : `The runtime stopped with error code ${code} after ${mins}.`;
+     const sv = saved;
+-    setPhase('exited', code === 0 ? 'See you' : 'Stopped', !sv ? base : code === 0 ? `${base} Progress saved in this browser at ${when(sv.at)} (${sv.name}).`
+-      : `${base} Your progress up to the last save, at ${when(sv.at)} (${sv.name}), is kept.`);
+-    if (!sv) void newestProfile().then(p => {
+-      const sub = $('#status-sub');
+-      if (phase === 'exited' && !session && sub.textContent === base)
+-        sub.textContent = `${base} ${p ? `Nothing was saved during this game; the last save is from ${when(p.mtime)} (${p.name}).` : 'No profile is saved in this browser yet.'}`;
+-    });
++    setPhase('exited', code === 0 ? 'Game closed' : 'Stopped', !sv
++      ? `${base} No file writes were reported.`
++      : `${base} ${sv.count} file write(s) were reported during this experiment at ${when(sv.at)}.`);
+   }
+   void saves.refresh();               // new or changed profiles
+   showNewer();                        // the note on the log, now that there is one
+   void checkNewer();
+ }
+ 
+-/** the game finished writing a file of the save folder: a profile is the player's progress */
++/** The host reported a closed file in the isolated save mount; its format is unknown. */
+ function onSaved(path: string) {
+-  const p = path.split('/');
+-  if (p.length !== 3 || p[0] !== PROFILES_DIR || p[2].toLowerCase() !== p[1].toLowerCase()) return;
+-  saved = { name: p[1], at: Date.now(), count: (saved?.count ?? 0) + 1 };
+-  log.add(`[app] the game saved profile ${p[1]} (${saved.count} this game)`);
+-  if (session) toast(`Progress saved (${p[1]}).`, 2500);
+-  if ($<HTMLDialogElement>('#menu').open) $('#menu-save').textContent = `Last saved at ${when(saved.at)} (${saved.name}).`;
++  saved = { at: Date.now(), count: (saved?.count ?? 0) + 1 };
++  log.add(`[app] a file was written in isolated browser storage (${saved.count} reported this experiment)`);
++  if (session) toast('A file was written to isolated browser storage.', 3000);
++  if ($<HTMLDialogElement>('#menu').open) $('#menu-save').textContent = `File writes reported: ${saved.count}.`;
+ }
+ /** the newest profile in this browser (listProfiles sorts by time), or null */
+ async function newestProfile() { return (await listProfiles(SAVE).catch(() => []))[0] ?? null; }
+@@ -519,7 +530,7 @@
+ /** the controls sheet of the start page, in a dialog (F9, Controls, while the game runs) */
+ function openHelp() {
+   const body = $('#help-body');
+-  if (!body.firstChild) body.append(...[...$('#keys').childNodes].map(n => n.cloneNode(true)));
++  body.replaceChildren(...[...$('#keys').childNodes].map(n => n.cloneNode(true)));
+   $<HTMLDialogElement>('#help').showModal();
+ }
+ 
+@@ -579,16 +590,9 @@
+   const m = $<HTMLDialogElement>('#menu');
+   if (m.open) { m.close(); return; }
+   m.querySelector<HTMLButtonElement>('[data-act="fullscreen"]')!.textContent = isFullscreen() ? 'Leave full screen' : 'Full screen';
+-  m.querySelector<HTMLButtonElement>('[data-act="fps"]')!.textContent = `Frame-rate counter: ${fps.mode}`;
+   m.querySelector<HTMLButtonElement>('[data-act="quit"]')!.textContent = quitLabel();
+   const line = $('#menu-save');
+-  if (saved) line.textContent = `Last saved at ${when(saved.at)} (${saved.name}).`;
+-  else {
+-    line.textContent = 'Nothing saved during this game yet.';
+-    void newestProfile().then(p => {
+-      if (!saved && m.open) line.textContent = p ? `Nothing saved during this game yet. Last save: ${when(p.mtime)} (${p.name}).` : 'No profile is saved in this browser yet.';
+-    });
+-  }
++  line.textContent = saved ? `File writes reported: ${saved.count}.` : 'No file writes reported during this experiment.';
+   $('#stage').classList.add('cursor');
+   m.showModal();
+ }
+@@ -600,26 +604,13 @@
+       m.close();
+       toggleFullscreen();
+       break;
+-    case 'fps': fps.cycle(); m.querySelector<HTMLButtonElement>('[data-act="fps"]')!.textContent = `Frame-rate counter: ${fps.mode}`; break;
+     case 'help': m.close(); openHelp(); break;
+     case 'log': downloadLog(); break;
+     case 'quit': {
+       m.close();
+       const s = session;
+       if (!s) break;
+-      const stage = quitStage(s);
+-      if (stage === 0) {
+-        if (s.requestQuit()) { quitAt = { s, t: performance.now(), forced: false }; toast('Quitting: the game saves and closes.', 5000); break; }
+-      } else if (stage === 1) {
+-        // the game's own second-request rule: open save files are finished, then it exits
+-        if (await confirmBox('Close the game now?', 'The game has not closed yet (a loading screen ignores Quit). Closing now finishes any save in progress first.', 'Close now', true, 'quit') && session === s) {
+-          if (s.requestQuit()) { quitAt = { s, t: performance.now(), forced: true }; toast('Closing the game.', 4000); break; }
+-        } else break;
+-      }
+-      // the game cannot be asked (any more), or it did not close when asked twice
+-      if (await confirmBox('Stop the game now?', s.canQuit()
+-          ? 'The game did not close when asked. Stopping it ends it at once: progress since it last saved is lost.'
+-          : 'The game cannot be asked to quit, so it is stopped at once. Progress since it last saved is lost.', 'Stop the game', true, 'quit') && session === s) s.terminate();
++      if (await confirmBox('Stop game?', 'The game will stop immediately. Progress since your last in-game save will be lost.', 'Stop game', true, 'quit') && session === s) s.terminate();
+       break;
+     }
+   }
+@@ -640,10 +631,7 @@
+   if (!quitAt || quitAt.s !== s) return 0;
+   return quitAt.forced && performance.now() - quitAt.t > STOP_AFTER_MS ? 2 : 1;
+ }
+-function quitLabel(): string {
+-  if (!session) return 'Quit game';
+-  return ['Quit game', 'Close the game now', 'Stop the game'][quitStage(session)];
+-}
++function quitLabel(): string { return 'Stop game'; }
+ 
+ // ------------------------------------------------------------- helpers --
+ function confirmBox(title: string, body: Node | string, ok: string, danger = false, about = '', cancel = 'Cancel'): Promise<boolean> {
+@@ -657,7 +645,7 @@
+   d.showModal();
+   return new Promise(res => d.addEventListener('close', () => res(d.returnValue === 'ok'), { once: true }));
+ }
+-function downloadLog() { downloadBlob(log.text(), `nfsu2-${stamp()}.log`, 'text/plain'); }
++function downloadLog() { downloadBlob(log.text(), `nfsu1-${stamp()}.log`, 'text/plain'); }
+ 
+ // --------------------------------------------------------- game module --
+ // A failed download (Wi-Fi drop, the server restarting, the module not built
+@@ -824,7 +812,7 @@
+   const asked = TEST_PARAMS.some(k => addr.has(k));
+   const dev = asked && await devServer();
+   const given = takeParams(dev);
+-  instance = claimInstance(`nfsu2-saves:${SAVE}`);
++  instance = claimInstance(`nfsu1-saves:${SAVE}`);
+   fps = new FpsOverlay($('#fps'));
+   // made here once: a closure made per game (in startGame) would keep that game's scope reachable
+   fps.extra = () => session?.stats() ?? {};
+@@ -834,7 +822,7 @@
+     readOnly: () => !instance.owner, say: pageToast,
+   }, $('#online'));
+   // who plays on this server now (Online): only while no game runs here
+-  players = watchPlayers(line => settings.setStatus(line), () => !session && !starting, setReach);
++  players = null; // NFSU2-only player directory and online controls are disabled.
+   window.addEventListener('online', () => players?.now());
+   window.addEventListener('resize', placeNotices);
+   download = new Predownload(s => saves.showData(s), logLine);
+@@ -849,13 +837,17 @@
+   $('#menu').addEventListener('click', e => { const a = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-act]'); if (a) void menuAction(a.dataset.act!); });
+   $('#menu').addEventListener('close', () => { $('#stage').classList.remove('cursor'); $('#stage').querySelector('canvas')?.focus(); });
+ 
+-  // F8 / F9 belong to the page while the game runs (the game binds neither,
+-  // Chrome reserves neither); caught first, so the game never sees them.
++  // F9 opens the page menu while the runtime runs.
+   window.addEventListener('keydown', e => {
+-    if (session && (e.code === 'F8' || e.code === 'F9')) {
++    if (session && e.code === 'F10') {
+       e.preventDefault(); e.stopImmediatePropagation();
++      if (!e.repeat) toast(`Keyboard mappings ${toggleKeyboardAliases() ? 'on' : 'off — original keys for typing'}. F10 toggles.`, 3500);
++      return;
++    }
++    if (session && e.code === 'F9') {
++      e.preventDefault(); e.stopImmediatePropagation();
+       if (e.repeat) return;
+-      if (e.code === 'F8') toast(`Frame-rate counter: ${fps.cycle()}`, 1500); else openMenu();
++      openMenu();
+       return;
+     }
+     // Enter plays only when nothing else has the focus (or Play itself does): a

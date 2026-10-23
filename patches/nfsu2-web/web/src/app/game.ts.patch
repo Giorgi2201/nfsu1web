@@ -1,0 +1,11 @@
+--- a/web/src/app/game.ts
++++ b/web/src/app/game.ts
+@@ -59,7 +59,7 @@
+     s.proc = await startProcess({
+       module: o.module,
+       initialPages: o.info.pages || undefined,
+-      cfg: { args: ['nfsu2', '/data/SPEED2.EXE'], env: o.env, dataBase: DATA_BASE, manifestUrl: MANIFEST_URL, saveDir: o.saveDir },
++      cfg: { args: ['nfsu1', '/data/Speed.exe'], env: o.env, dataBase: DATA_BASE, manifestUrl: MANIFEST_URL, saveDir: o.saveDir },
+       onLog: (line, fd, t) => o.log(`${tid(t, fd)} ${line}`),
+       onSaved: o.onSaved,
+       onNote: o.log,

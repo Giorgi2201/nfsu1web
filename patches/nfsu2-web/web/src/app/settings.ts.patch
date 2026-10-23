@@ -1,0 +1,70 @@
+--- a/web/src/app/settings.ts
++++ b/web/src/app/settings.ts
+@@ -48,13 +48,17 @@
+   // app
+   { key: 'game_folder', env: 'NFSU2_DATA', kind: 'path', scope: 'mac' },
+   { key: 'movies', env: 'NOMOVIES', kind: 'boolInv', scope: 'web' },
+-  { key: 'intro', env: 'NFSU2_INTRO', kind: 'enum', vals: 'skippable|original|off', scope: 'web' },
++  { key: 'intro', env: 'NFSU1_INTRO', kind: 'enum', vals: 'skippable|original|off', scope: 'web' },
+   { key: 'sound', env: 'NOSOUND', kind: 'boolInv', scope: 'web' },
+   { key: 'background', env: 'NFSU2_BACKGROUND', kind: 'enum', vals: 'pause|run', scope: 'web' },
+   { key: 'quit_grace', env: 'NFSU2_QUIT_GRACE', kind: 'num', scope: 'web' },
+   { key: 'seed_registry', env: 'NFSU2_SEED_REGISTRY', kind: 'bool', scope: 'web' },
+   // stall report in the log
+   { key: 'watchdog', env: 'NFSU2_WATCHDOG', kind: 'num', scope: 'web' },
++  // NFSU1 graphics quality; resolution follows the live canvas.
++  { key: 'graphics_quality', env: 'NFSU1_GRAPHICS', kind: 'enum', vals: 'game|low|medium|high|max', scope: 'web' },
++  // Legacy setting is accepted on restore but no longer controls rendering.
++  { key: 'render_resolution', env: 'NFSU1_RESOLUTION', kind: 'enum', vals: 'game|window|800x600|1280x960|1600x1200|1920x1440|2560x1920', scope: 'web' },
+   // display
+   { key: 'fullscreen', env: 'NFSFULL', kind: 'bool', scope: 'web' },
+   { key: 'native_resolution', env: 'NFSNATIVE', kind: 'bool', scope: 'web' },
+@@ -154,10 +158,10 @@
+ # Intro, story and FMV movies.  [NOMOVIES, inverted]
+ #movies = on
+ 
+-# The movies at startup (EA and THX logos, the PSA, the intro): skippable =
+-# Enter, Escape, Space, a left click or a controller's A, B or Start ends each
+-# one; original = as in the game, where only the intro ends early; off = they
+-# are not played.  [NFSU2_INTRO]
++# NFSU1 startup movies: skippable = Enter, Escape, Space or controller A/B/Start
++# ends each movie; original = the game's original skip behavior; off = finish
++# startup screens on their first update (a brief frame may appear). Story
++# movies keep their original behavior.  [NFSU1_INTRO]
+ #intro = skippable
+ 
+ # Sound output.  [NOSOUND, inverted]
+@@ -192,6 +196,15 @@
+ # [NFSU2_WATCHDOG]
+ #watchdog = 15
+ 
++# ---- NFSU1 graphics ------------------------------------------------------
++
++# Game uses the graphics options saved in the game. Other presets apply at
++# launch; Maximum enables the mapped original effects. [NFSU1_GRAPHICS]
++#graphics_quality = max
++# Render resolution automatically follows the window and full-screen size
++# at device pixel density. Widescreen FOV/HUD hooks run by default; set
++# NFSU1_WIDESCREEN=0 to letterbox to the saved guest aspect instead.
++
+ # ---- Display -------------------------------------------------------------
+ 
+ # Play in the browser window (off), or go full screen when you press Play
+@@ -349,7 +362,7 @@
+ // set the autotest "quit" command and the forced-quit path would only raise
+ // a flag nobody reads (autotest.c do_quit, lifecycle.c leave).
+ export const APP_DEFAULTS: Readonly<Record<string, string>> = {
+-  ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
++  NFSU1_GRAPHICS: 'max', NFSU1_INTRO: 'skippable', ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
+   NFSU2_READONLY_DATA: '1',
+   // the browser's: play in the window unless settings.ini asks for full screen
+   NFSFULL: '0',
+@@ -361,7 +374,7 @@
+   // for the log players send after a crash: a line per front-end screen change, and every 3600 frames (a minute
+   // at 60 fps) a [status] line with the guest heap, address space and frame times (runtime/autotest.c), but not
+   // the sound's own status every 5 s that NFSU2_STATUS_EVERY also turns on (runtime/web/audio_web.c)
+-  NFSU2_FNG_LOG: '1', NFSU2_STATUS_EVERY: '3600', NFSU2_AUDIO_STATUS: '0',
++  NFSU2_FNG_LOG: '0', NFSU2_STATUS_EVERY: '0', NFSU2_AUDIO_STATUS: '0',
+ };
+ 
+ // The mounts are fixed in the browser (web/src/host/io-worker.ts), so

@@ -1,0 +1,268 @@
+--- a/web/index.html
++++ b/web/index.html
+@@ -5,143 +5,82 @@
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <meta name="color-scheme" content="dark">
+ <meta name="theme-color" content="#0d0d0d">
+-<title>Underground 2 Revived</title>
+-<meta name="description" content="Play Need for Speed: Underground 2 (2004) in Chrome and Firefox with WebGPU graphics, Web Audio, up to 120 fps widescreen, controller support, free roam and Online races with friends. Fan project, not affiliated with Electronic Arts.">
+-<meta name="keywords" content="Need for Speed Underground 2, NFSU2, Underground 2 browser, play NFSU2 online, WebAssembly, WebGPU, free roam multiplayer, racing game">
+-<meta name="application-name" content="Underground 2 Revived">
++<title>NFS Underground | Browser Edition</title>
++<meta name="description" content="Experimental PC Need for Speed: Underground 1 browser build. Compatibility remains under testing. Fan project, not affiliated with Electronic Arts.">
++<meta name="keywords" content="Need for Speed Underground 1, NFSU1, browser runtime integration research, WebAssembly">
++<meta name="application-name" content="NFS Underground | Browser Edition">
+ <meta name="robots" content="index, follow">
+-<meta name="google-adsense-account" content="ca-pub-5817610257612647">
+ <meta property="og:type" content="website">
+-<meta property="og:site_name" content="Underground 2 Revived">
++<meta property="og:site_name" content="NFS Underground | Browser Edition">
+ <meta property="og:locale" content="en_US">
+-<meta property="og:title" content="Underground 2 Revived">
+-<meta property="og:description" content="Play Need for Speed: Underground 2 (2004) in Chrome and Firefox with WebGPU graphics, Web Audio, up to 120 fps widescreen, controller support, free roam and Online races with friends. Fan project, not affiliated with Electronic Arts.">
++<meta property="og:title" content="NFS Underground | Browser Edition">
++<meta property="og:description" content="Experimental PC Need for Speed: Underground 1 browser build. Compatibility remains under testing. Fan project, not affiliated with Electronic Arts.">
+ <meta name="twitter:card" content="summary">
+-<meta name="twitter:title" content="Underground 2 Revived">
+-<meta name="twitter:description" content="Play Need for Speed: Underground 2 (2004) in Chrome and Firefox with WebGPU graphics, Web Audio, up to 120 fps widescreen, controller support, free roam and Online races with friends. Fan project, not affiliated with Electronic Arts.">
++<meta name="twitter:title" content="NFS Underground | Browser Edition">
++<meta name="twitter:description" content="Experimental PC Need for Speed: Underground 1 browser build. Compatibility remains under testing. Fan project, not affiliated with Electronic Arts.">
+ <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171717'/%3E%3Crect x='5' y='5' width='22' height='22' rx='6' fill='%23404038' stroke='%23c8f088' stroke-width='2'/%3E%3C/svg%3E">
+ <link rel="stylesheet" href="/main.css">
+ <script type="application/ld+json">
+ {
+   "@context": "https://schema.org",
+-  "@type": ["VideoGame", "WebApplication"],
+-  "name": "Underground 2 Revived",
+-  "alternateName": ["Need for Speed: Underground 2 in the browser", "NFSU2", "Need for Speed Underground 2"],
+-  "description": "Need for Speed: Underground 2 (2004), recompiled to WebAssembly to run in Chrome and Firefox with WebGPU graphics, Web Audio, up to 120 fps widescreen, Xbox and PlayStation controller support, free roam and Online multiplayer.",
+-  "applicationCategory": "GameApplication",
+-  "genre": "Racing",
+-  "gamePlatform": "Web browser",
+-  "operatingSystem": "Windows, macOS",
+-  "playMode": ["SinglePlayer", "MultiPlayer", "CoOp"]
++  "@type": "WebApplication",
++  "name": "NFS Underground | Browser Edition",
++  "alternateName": ["Need for Speed: Underground 1 browser-runtime research", "NFSU1"],
++  "description": "Experimental PC NFS Underground 1 browser build. Compatibility remains under testing.",
++  "applicationCategory": "DeveloperApplication"
+ }
+ </script>
+ <script type="module" src="/main.js"></script>
+ </head>
+ <body data-phase="boot">
+ 
+-<main class="app" id="app">
++<main class="app underground-menu" id="app">
++  <a class="skip-menu" href="#menu-content">Skip to content</a>
+   <header class="top">
+     <div class="top-row">
+-      <h1>Underground 2 Revived</h1>
+-      <div class="top-end">
+-        <p class="hint">Fan project. Not affiliated with or endorsed by Electronic Arts.</p>
+-        <a class="btn" href="https://discord.gg/25zXmQ2Ua9" target="_blank" rel="noopener noreferrer"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>Discord</a>
+-      </div>
++      <h1 class="wordmark"><span class="wordmark-small">Need for Speed</span><span class="wordmark-name">Underground</span><span class="wordmark-edition">Browser edition <i aria-hidden="true">/</i> 01</span></h1>
++      <div class="build-tag"><span class="signal-dot" aria-hidden="true"></span> PC edition <span class="build-separator">/</span> Experimental</div>
+     </div>
+-    <div class="bar" id="progress" role="progressbar" aria-label="Game loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+-      <div class="bar-fill" id="progress-fill"></div>
+-    </div>
++    <div class="bar" id="progress" role="progressbar" aria-label="Game loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar-fill" id="progress-fill"></div></div>
+   </header>
+ 
+-  <div class="side">
+-    <section class="panel hero" aria-label="Play">
++  <aside class="menu-rail">
++    <p class="eyebrow rail-caption">Main menu</p>
++    <nav class="screen-nav" aria-label="Main menu">
++      <button type="button" data-screen="play" aria-current="page" aria-controls="screen-play"><span class="nav-index">01</span><span>Play</span><span class="nav-arrow" aria-hidden="true">›</span></button>
++      <button type="button" data-screen="options" aria-controls="screen-options"><span class="nav-index">02</span><span>Options</span><span class="nav-arrow" aria-hidden="true">›</span></button>
++      <button type="button" data-screen="controls" aria-controls="screen-controls"><span class="nav-index">03</span><span>Controls</span><span class="nav-arrow" aria-hidden="true">›</span></button>
++      <button type="button" data-screen="storage" aria-controls="screen-storage"><span class="nav-index">04</span><span>Game data</span><span class="nav-arrow" aria-hidden="true">›</span></button>
++      <button type="button" data-screen="about" aria-controls="screen-about"><span class="nav-index">05</span><span>About</span><span class="nav-arrow" aria-hidden="true">›</span></button>
++    </nav>
++  </aside>
++
++  <div class="menu-content" id="menu-content" tabindex="-1">
++    <div class="menu-screen" id="screen-play" data-menu-screen="play">
++      <section class="panel hero" aria-label="Experimental PC NFS Underground 1 bring-up">
++      <p class="msg warn">Experimental PC NFS Underground 1 browser build. Full game compatibility is still under testing.</p>
+       <p class="status" id="status" role="status">Loading</p>
+       <p class="status-sub" id="status-sub">Loading the game.</p>
+       <div class="row">
+-        <button type="button" class="play" id="play" disabled>Play <kbd>Enter</kbd></button>
++        <button type="button" class="play" id="play" disabled>Launch game <kbd>Enter</kbd></button>
+         <button type="button" class="btn" id="retry" hidden>Retry</button>
+         <button type="button" class="btn" id="reload" hidden>Reload</button>
+         <button type="button" class="text-btn" id="log-btn" hidden>Download log</button>
+       </div>
+-      <p class="msg" id="report" hidden>Help get it fixed: download the log and post it in <a href="https://discord.gg/SSHm5g43gh"target="_blank" rel="noopener noreferrer">#bug-reports on our Discord</a>, with what you were doing when it happened.</p>
++      <p class="msg" id="report" hidden>Download the log and share it with the test results.</p>
+       <p class="msg" id="newer" aria-live="polite" hidden></p>
+       <ul class="problems" id="problems" aria-live="polite"></ul>
+       <p class="msg warn" id="override" hidden></p>
+     </section>
++      <div class="screen-strip"><span><kbd>Enter</kbd> Start</span><span><kbd>F9</kbd> Menu while playing</span></div>
++    </div>
+ 
+-    <section class="panel" id="controls" aria-labelledby="controls-title">
+-      <h2 id="controls-title">Controls</h2>
+-      <div id="keys">
+-        <h3>Driving</h3>
+-        <dl class="keys">
+-          <div><dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Throttle, brake and reverse</dd></div>
+-          <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Steer (or W S A D)</dd></div>
+-          <div><dt><kbd>Alt</kbd></dt><dd>Nitrous</dd></div>
+-          <div><dt><kbd>Space</kbd></dt><dd>Handbrake</dd></div>
+-          <div><dt><kbd>Shift</kbd> <kbd>Ctrl</kbd></dt><dd>Shift up, shift down (manual)</dd></div>
+-          <div><dt><kbd>C</kbd> <kbd>B</kbd></dt><dd>Change camera, look back</dd></div>
+-          <div><dt><kbd>R</kbd></dt><dd>Respawn</dd></div>
+-          <div><dt><kbd>H</kbd> <kbd>J</kbd></dt><dd>Hydraulics (hold, then the arrows)</dd></div>
+-          <div><dt><kbd>N</kbd></dt><dd>Horn (with other players)</dd></div>
+-          <div><dt><kbd>Enter</kbd></dt><dd>Start an event, take an outrun</dd></div>
+-          <div><dt><kbd>M</kbd> <kbd>Tab</kbd></dt><dd>Map, messages</dd></div>
+-          <div><dt><kbd>Esc</kbd> <kbd>P</kbd></dt><dd>Pause</dd></div>
+-        </dl>
+-        <h3>This page</h3>
+-        <dl class="keys">
+-          <div><dt><kbd>F9</kbd></dt><dd>Menu: full screen, controls, log, quit</dd></div>
+-          <div><dt><kbd>F8</kbd></dt><dd>Frame-rate counter</dd></div>
+-          <div><dt><kbd>F12</kbd></dt><dd>Screenshot, saved with your profiles</dd></div>
+-          <div><dt>Hold <kbd>Esc</kbd></dt><dd>Leave full screen</dd></div>
+-        </dl>
+-        <p class="hint">In menus: arrow keys and Enter, Esc goes back. Change keys in the game's Options, Controls. Xbox and PlayStation controllers work too.</p>
+-      </div>
+-    </section>
+-
+-    <section class="panel" id="changes" aria-labelledby="changes-title">
+-      <h2 id="changes-title">Changes from the original</h2>
+-      <ul class="changes">
+-        <li>The PC game's own code, recompiled to run in Chrome and Firefox, with WebGPU for the graphics and Web Audio for the sound.</li>
+-        <li>Up to 120 fps, widescreen at your screen's resolution.</li>
+-        <li>The original look, with the game's graphics settings at their highest.</li>
+-        <li>Startup movies skip with one press.</li>
+-        <li>Free roam and Online mode with friends on this server, no EA account needed.</li>
+-        <li>A horn to honk at the other players, in free roam and in races.</li>
+-        <li>Xbox and PlayStation controllers, with rumble.</li>
+-        <li>The game pauses when its tab is in the background, except in LAN and Online play.</li>
+-        <li>Autosave for every profile, and a note each time the game saves.</li>
+-        <li>Saves stay in this browser, with zip backups. Profiles from the PC game come in too.</li>
+-      </ul>
+-    </section>
+-  </div>
+-
+-  <div class="content">
+-    <section class="panel" id="saves" aria-labelledby="saves-title">
+-      <h2 id="saves-title">Saves</h2>
+-      <ul class="profiles" id="profiles" aria-label="Profiles in this browser"></ul>
+-      <p class="hint">Quit from the game's main menu, or <kbd>F9</kbd> then Quit game, so a save in progress is never cut short.</p>
+-      <h3>Backup</h3>
+-      <p class="hint">One zip with your profiles, the game's options, settings.ini and F12 screenshots. Restoring a backup replaces all of them in this browser.
+-        Profiles from the PC game restore too, beside the ones here: zip the folder <code>%LOCALAPPDATA%\NFS Underground 2</code>, or pick a profile's own file in it.</p>
+-      <div class="row">
+-        <button type="button" class="btn" id="export">Download a backup</button>
+-        <label class="btn file-btn">Restore a backup<input type="file" id="import"></label>
+-      </div>
+-      <p class="msg" id="saves-msg" role="status"></p>
+-      <p class="msg warn" id="storage-note" hidden></p>
+-    </section>
+-
+-    <section class="panel" id="online" aria-labelledby="online-title">
+-      <h2 id="online-title">Online</h2>
+-      <p class="hint" id="online-note" hidden></p>
+-      <div id="online-body"></div>
+-    </section>
+-
+-    <section class="panel" id="settings" aria-labelledby="settings-title">
++    <div class="menu-screen" id="screen-options" data-menu-screen="options" hidden>
++      <section class="panel" id="settings" aria-labelledby="settings-title">
+       <h2 id="settings-title">Settings</h2>
+-      <p class="hint" id="settings-note">Saved in this browser. Changes apply the next time you press Play.</p>
++      <p class="hint" id="settings-note">Saved automatically in this browser. Changes apply at your next launch.</p>
+       <div id="settings-body"></div>
+-      <details class="raw" id="settings-raw">
++      <details class="raw" id="settings-raw" hidden>
+         <summary>Edit settings.ini as text</summary>
+         <textarea id="settings-text" spellcheck="false" rows="20" wrap="off" aria-label="settings.ini"></textarea>
+         <div class="row">
+@@ -150,8 +89,23 @@
+         </div>
+       </details>
+     </section>
++      <p class="screen-note">For transmission, difficulty and the music / effects mix, use Options inside the game.</p>
++    </div>
+ 
+-    <section class="panel" id="game-data" aria-labelledby="game-data-title">
++    <div class="menu-screen" id="screen-controls" data-menu-screen="controls" hidden>
++      <section class="panel" id="controls" aria-labelledby="controls-title">
++        <h2 id="controls-title">Keyboard controls</h2>
++        <div id="keys">
++          <p class="hint">Set the game’s driving actions in its Options → Controls menu. Browser key mappings below let your physical keys send different keys to the game.</p>
++          <dl class="keys"><div><dt><kbd>F10</kbd></dt><dd>Toggle keyboard mappings for text entry</dd></div><div><dt><kbd>F9</kbd></dt><dd>Open the browser game menu</dd></div><div><dt><kbd>Enter</kbd></dt><dd>Start from this page</dd></div></dl>
++          <p class="hint">Hold Escape to leave fullscreen when the browser keyboard lock is active. Browser shortcuts may be unavailable to the game outside fullscreen.</p>
++        </div>
++        <div id="keyboard-controls"></div>
++      </section>
++    </div>
++
++    <div class="menu-screen" id="screen-storage" data-menu-screen="storage" hidden>
++      <section class="panel" id="game-data" aria-labelledby="game-data-title">
+       <h2 id="game-data-title">Game data on this PC</h2>
+       <p class="hint" id="cache-info">Counting…</p>
+       <div class="bar" id="data-bar" role="progressbar" aria-label="Game data preload" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+@@ -163,13 +117,42 @@
+       </div>
+       <p class="msg" id="data-msg" role="status"></p>
+     </section>
+-  </div>
++      <p class="screen-note">Game data is cached in this browser. Clearing browser site data can also remove your local settings and saves.</p>
++    </div>
+ 
+-  <footer class="foot">
+-    <p class="hint">Contact for rights holders: <a href="mailto:legal@nfsu2.xyz">legal@nfsu2.xyz</a></p>
+-  </footer>
++    <div class="menu-screen" id="screen-about" data-menu-screen="about" hidden>
++      <section class="panel about-panel" aria-labelledby="about-title">
++        <h2 id="about-title">Underground, in your browser</h2>
++        <p>The PC edition of Need for Speed: Underground, adapted to a browser runtime with WebAssembly, WebGPU graphics and Web Audio.</p>
++        <div class="about-specs"><div><span class="eyebrow">Display</span><p>Automatic resolution<br>Widescreen layout</p></div><div><span class="eyebrow">Input</span><p>Keyboard mappings<br>Controller support</p></div></div>
++        <p class="hint">This is an experimental local build. Intro playback, profile persistence and a race start have been reported; full game compatibility remains under testing.</p>
++        <p class="hint">Fan project. Not affiliated with or endorsed by Electronic Arts. Original game files are required and stay local.</p>
++      </section>
++    </div>
++  </div>
++  <div hidden><section class="panel" id="saves" aria-labelledby="saves-title" hidden>
++      <h2 id="saves-title">Saves</h2>
++      <ul class="profiles" id="profiles" aria-label="Profiles in this browser"></ul>
++      <p class="hint">Quit from the game's main menu, or <kbd>F9</kbd> then Quit game, so a save in progress is never cut short.</p>
++      <h3>Backup</h3>
++      <p class="hint">One zip with your profiles, the game's options, settings.ini and F12 screenshots. Restoring a backup replaces all of them in this browser.
++        Profiles from the PC game restore too, beside the ones here: zip the folder <code>%LOCALAPPDATA%\NFS Underground 2</code>, or pick a profile's own file in it.</p>
++      <div class="row">
++        <button type="button" class="btn" id="export">Download a backup</button>
++        <label class="btn file-btn">Restore a backup<input type="file" id="import"></label>
++      </div>
++      <p class="msg" id="saves-msg" role="status"></p>
++      <p class="msg warn" id="storage-note" hidden></p>
++    </section>
++<section class="panel" id="online" aria-labelledby="online-title" hidden>
++      <h2 id="online-title">Online</h2>
++      <p class="hint" id="online-note" hidden></p>
++      <div id="online-body"></div>
++    </section></div>
++  <footer class="foot"><p>Need for Speed: Underground <span aria-hidden="true">/</span> Experimental browser build</p><p>Fan project · Not affiliated with Electronic Arts</p></footer>
+ </main>
+ 
++
+ <div class="stage" id="stage" hidden>
+   <div class="hud-fps" id="fps" hidden></div>
+   <div class="toast" id="toast" hidden></div>
+@@ -194,7 +177,6 @@
+   <div class="menu-actions">
+     <button type="button" class="btn selected" data-act="resume">Back to the game</button>
+     <button type="button" class="btn" data-act="fullscreen">Full screen</button>
+-    <button type="button" class="btn" data-act="fps">Frame-rate counter: off</button>
+     <button type="button" class="btn" data-act="help">Controls</button>
+     <button type="button" class="btn" data-act="log">Download log</button>
+     <button type="button" class="btn danger" data-act="quit">Quit game</button>

@@ -1,0 +1,69 @@
+--- a/web/src/gpu/encoder.ts
++++ b/web/src/gpu/encoder.ts
+@@ -368,7 +368,7 @@
+       fragment: { module: fmod, entryPoint: pq ? undefined : 'fs_ff', targets: [{ format: 'bgra8unorm', blend: bs, writeMask: mask }],
+         constants: { ALPHA_FUNC: alphaFunc(nd ? 0 : 1) } },
+       primitive: { topology: 'triangle-list', frontFace: 'cw', cullMode: cull === 1 ? 'none' : cull === 2 ? 'front' : 'back' },
+-      depthStencil: { format: 'depth32float', depthWriteEnabled: (dm & 2) !== 0, depthCompare: (dm & 1) ? CMP[(dm >> 2) & 7] : 'always' },
++      depthStencil: { format: 'depth32float', depthWriteEnabled: (dm & 3) === 3, depthCompare: (dm & 1) ? CMP[(dm >> 2) & 7] : 'always' },
+     };
+   }
+ 
+@@ -527,7 +527,7 @@
+     const lastPF = new Float32Array(8);
+ 
+     let pass: GPURenderPassEncoder | null = null;
+-    let curT = -1, curZ = -1, realZ = false, passKey = -2, passCube = -1;
++    let curT = -1, curZ = -1, realZ = false, passNeedsDepth = false, passKey = -2, passCube = -1;
+     let screenTouched = false;
+     const touched = new Set<number>();
+     let clearArgb = u32[fw + F.clearArgb];
+@@ -539,7 +539,8 @@
+     let draws = 0, passes = 0, skipped = 0;
+     const endPass = () => { if (pass) { pass.end(); pass = null; } };
+ 
+-    const openPass = (target: number, zid: number): GPURenderPassEncoder | null => {
++    const openPass = (target: number, zid: number, depthNeeded: boolean): GPURenderPassEncoder | null => {
++      passNeedsDepth = depthNeeded;
+       let view: GPUTextureView, w: number, h: number, key: number;
+       if (!target) { view = this.screenView!; w = bbW; h = bbH; key = -1; passCube = -1; }
+       else {
+@@ -551,14 +552,18 @@
+       passKey = target ? (target & 0xFFFF) : -1;
+       const first = key === -1 ? !screenTouched : !touched.has(key);
+       let zv: GPUTextureView | undefined, zclear = false, zval = 1;
+-      if (zid && zid < 64) {
++      // Z-disabled effects must not resize or clear the bound scene depth.
++      if (depthNeeded && zid && zid < 64) {
+         let z = this.zTex[zid];
+         if (!z || z.width !== w || z.height !== h) {
+           if (!z || zid === 1) {
+             if (z) this.destroyLater.push(z);
+             z = this.zTex[zid] = dev.createTexture({ label: `z${zid} ${w}x${h}`, size: [w, h], format: 'depth32float', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+             this.zView[zid] = z.createView(); zclear = true;
+-          } else { z = undefined; this.zMismatch++; }
++          } else {
++            if (this.zMismatch < 8) this.log(`[gpu] depth size mismatch: zid=${zid} depth=${z.width}x${z.height} target=${w}x${h} targetId=${target}; depth disabled for this pass`);
++            z = undefined; this.zMismatch++;
++          }
+         }
+         if (z) { zv = this.zView[zid]; if (this.zpend[zid]) { zclear = true; zval = this.zpendV[zid]; this.zpend[zid] = 0; } }
+       }
+@@ -612,11 +617,14 @@
+           if (pass && curZ === zid) { endPass(); curT = -1; }
+         }
+       }
+-      const zsplit = zid !== curZ && !(pass && kind !== Kind.Clear && (depth & 3) === 0);
+-      if (curT === -1 || target !== curT || zsplit) {
++      const needsDepth = kind === Kind.Clear ? (u32[w + D.clrFlags] & 2) !== 0 : (depth & 1) !== 0;
++      const zsplit = zid !== curZ && !(pass && kind !== Kind.Clear && !needsDepth);
++      // A pass opened with scratch depth must acquire the real surface
++      // before a later depth-enabled draw on the same colour target.
++      if (curT === -1 || target !== curT || zsplit || (needsDepth && !passNeedsDepth)) {
+         endPass();
+         curT = target; curZ = zid;
+-        pass = openPass(target, zid);
++        pass = openPass(target, zid, needsDepth);
+       }
+       if (kind === Kind.Clear) continue;
+       const count = u32[w + D.count];

@@ -1,0 +1,33 @@
+--- a/runtime/web/vsemu_wgsl.inc
++++ b/runtime/web/vsemu_wgsl.inc
+@@ -590,8 +590,9 @@
+         case O_NRM:  w = snprintf(ex, WEX, "vec4f(select(normalize((%s).xyz), vec3f(0.0), length((%s).xyz) == 0.0), 1.0)", s0, s0); break;
+         case O_SGN:  w = snprintf(ex, WEX, "sign(%s)", s0); break;
+         case O_M4x4: case O_M4x3: case O_M3x3: case O_M3x4: case O_M3x2: {
+-            /* m?x? dst, src0, src1: rows are consecutive registers from src1
+-             * (as on the Mac: K.c rows ignore def and relative addressing) */
++            /* Resolve every consecutive matrix row as a source operand.
++             * Skinning uses c[a0.x + row]; fixed c[row] collapses all bones
++             * onto bone zero. Keep relative addressing and def resolution. */
+             int rows = (y->op==O_M4x4) ? 4 : (y->op==O_M4x3 ? 3 :
+                        (y->op==O_M3x3 ? 3 : (y->op==O_M3x4 ? 4 : 2)));
+             int vec3 = (y->op==O_M3x3 || y->op==O_M3x4 || y->op==O_M3x2);
+@@ -599,14 +600,10 @@
+             WBuf eb; wb_init(&eb, ex, WEX);
+             wb_put(&eb, "vec4f(");
+             for (int rr = 0; rr < rows; rr++){
+-                unsigned tok2 = y->src[1];
+-                int ty2 = RT(tok2), nn2 = RN(tok2) + rr;
+-                if (ty2 == R_CONST2) nn2 += 2048; else if (ty2 == R_CONST3) nn2 += 4096;
+-                else if (ty2 == R_CONST4) nn2 += 6144;
+-                char row[48];
+-                if (ty2 == R_TEMP){ x.r |= 1u << (nn2 & 31); snprintf(row, sizeof row, "r%d", nn2 & 31); }
+-                else if (ty2 == R_INPUT){ x.v |= 1u << (nn2 & 15); snprintf(row, sizeof row, "v%d", nn2 & 15); }
+-                else snprintf(row, sizeof row, "K.c[kb + %du]", (nn2 & 255) + 1);
++                unsigned base = y->src[1];
++                unsigned tok2 = (base & ~0x7FFu) | ((RN(base) + rr) & 0x7FFu);
++                char row[512];
++                w_src(&x, row, sizeof row, tok2, y->rel[1]);
+                 wb_put(&eb, "%sdot((%s)%s, (%s)%s)", rr ? ", " : "", s0, sw2, row, sw2);
+             }
+             for (int rr = rows; rr < 4; rr++) wb_put(&eb, ", %s", rr == 3 ? "1.0" : "0.0");

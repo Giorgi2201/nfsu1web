@@ -1,0 +1,119 @@
+--- a/runtime/dispatch.c
++++ b/runtime/dispatch.c
+@@ -24,8 +24,7 @@
+  * dispatch_indirect, which finds them here. */
+ static int g_diag;
+ static int diag_watched(uint32_t a){
+-    extern int g_efx_stat;
+-    return (g_icall_want && a == g_icall_want) || (g_efx_stat && a - 0x650000u < 0x40000u);
++    return g_icall_want && a == g_icall_want;
+ }
+ static guest_fn diag_fn(uint32_t a){
+     uint32_t lo = 0, hi = g_fn_count;
+@@ -48,9 +47,9 @@
+     if (g_dtab_ready) return;
+     g_dtab_ready = 1;
+     g_backtrace_fn = (void(*)(struct CPU*,int))guest_backtrace;
+-    { extern int g_efx_stat; const char *e = getenv("ICALL");
++    { const char *e = getenv("ICALL");
+       g_icall_want = e ? (uint32_t)strtoul(e,0,0) : 0;
+-      g_diag = g_icall_want || g_efx_stat; }
++      g_diag = g_icall_want != 0; }
+     uint32_t dup = 0, oob = 0;
+     for (uint32_t i = 0; i < g_fn_count; i++){
+         uint32_t a = g_fn_addr[i];
+@@ -58,6 +57,7 @@
+         if (g_dtab[a - TEXT_BASE]) dup++;
+         g_dtab[a - TEXT_BASE] = g_fn_ptr[i];
+     }
++    if (dup || oob){ fprintf(stderr, "NFSU1 invalid dispatch catalog\n"); abort(); }
+     patch_apply();
+     fprintf(stderr, "dispatch: %u functions registered (%u duplicates, %u out of range), table %.1f MB\n",
+             g_fn_count, dup, oob, TEXT_SIZE*(double)sizeof(guest_fn)/1048576.0);
+@@ -166,13 +166,7 @@
+         if (win32_call(c, addr - 0xF0000000u) < 0) g_guest_exited = 1;
+         return;
+     }
+-    /* EFXSTAT: inventory of the D3DX effect vtable calls (d3dx_hle.c) */
+-    { extern int g_efx_stat; extern void efx_stat_note(CPU *c, uint32_t addr);
+-      if (g_efx_stat && addr - 0x650000u < 0x40000u) efx_stat_note(c, addr); }
+-    /* with EFXSTAT the effect methods are not in the table: their calls into
+-     * D3DX may change an effect (d3dx_hle.c, stage 9's epoch) */
+-    { extern uint32_t g_fx_epoch;
+-      if (addr - 0x650000u < 0x40000u && addr != 0x0066acd2u && addr != 0x0066ac17u && addr != 0x0065adcbu) g_fx_epoch++; }
++    /* NFSU2 effect-address diagnostics and epoch writes disabled. */
+     uint32_t off = addr - TEXT_BASE;
+     if (off < TEXT_SIZE){
+         guest_fn f = g_dtab[off];
+@@ -189,49 +183,24 @@
+         if (!f) f = module_fn_at(addr);
+         if (f){ g_stat_indirect_ok++; f(c); return; }
+     }
+-    /* No lifted counterpart.  The game may have generated code at this
+-     * address AT RUN TIME (NFSU2's material pipeline does this heavily).
+-     * Try a small x86 interpreter; on an unknown instruction it returns
+-     * safely (restores esp) and falls through to the diagnosis below. */
+-    { static int gx = -1;
+-      if (gx < 0){ const char *e = getenv("GENEXEC"); gx = (e && *e=='0') ? 0 : 1; }
+-      if (gx && mem_is_committed(addr) && run_generated(c, addr)){
+-          g_stat_indirect_ok++; return;
+-      } }
+-
++#ifdef NFSU1_HAS_ABK
++    { extern int nfsu1_abk_dispatch(CPU *, uint32_t);
++      if (nfsu1_abk_dispatch(c, addr)) return; }
++#endif
+     g_stat_indirect_miss++;
+-    /* Caller: the return address is ALREADY ON THE STACK (before POP32).
+-     * g_watch_prev_ip used to be used, but that is only filled when the
+-     * instruction trace is on, so the report always showed 0x00000000. */
+-    { uint32_t ret = MR32(c->esp);
+-      if (g_miss_n < MISS_MAX){ g_miss_from[g_miss_n]=ret; g_miss[g_miss_n++]=addr; }
+-      static int shown = 0;
+-      if (shown < 5){ shown++;
+-          fprintf(stderr, "\n  [UNRESOLVED INDIRECT CALL] target=0x%08x  return=0x%08x\n"
+-                  "      eax=%08x ecx=%08x edx=%08x ebx=%08x esi=%08x edi=%08x\n"
+-                  "      arg1=%08x arg2=%08x arg3=%08x\n",
+-                  addr, ret, c->eax, c->ecx, c->edx, c->ebx, c->esi, c->edi,
+-                  MR32(c->esp+4), MR32(c->esp+8), MR32(c->esp+12));
+-          /* The bytes at the target: did the game generate CODE at run time
+-           * (a thunk), or is the pointer bad?  The quickest way to tell. */
+-          if (mem_is_committed(addr+15)){
+-              fprintf(stderr, "      96 bytes at the target:\n       ");
+-              for (int q = 0; q < 96; q++){
+-                  if (q && !(q & 15)) fprintf(stderr, "\n       ");
+-                  fprintf(stderr, " %02x", MR8(addr+q));
+-              }
+-              fprintf(stderr, "\n");
+-          } else fprintf(stderr, "      target NOT COMMITTED (not data, a garbage pointer)\n");
+-          guest_backtrace(c, 12);
+-      } }
+-    POP32(c->eip);            /* drop the return address, swallow the call */
++    fprintf(stderr, "NFSU1 unresolved dispatch: target=%08x eip=%08x esp=%08x\n",
++            addr, c->eip, c->esp);
++    { extern void nfsu1_diagnostics_dispatch(CPU *, uint32_t);
++      nfsu1_diagnostics_dispatch(c, addr); }
++    /* No interpreter fallback and no fabricated guest return value. */
++    abort();
+ }
+ 
+ void unsupported_insn(CPU *c, uint32_t addr, const char *mn){
+-    (void)c; (void)mn;
+     g_stat_unsupported++;
+-    { extern void autotest_note_trap(uint32_t, const char*); autotest_note_trap(addr, mn); }
+-    if (g_unsup_n < MISS_MAX) g_unsup[g_unsup_n++] = addr;
++    fprintf(stderr, "NFSU1 unsupported instruction: %08x %s eip=%08x\n",
++            addr, mn ? mn : "?", c->eip);
++    abort();
+ }
+ 
+ void cpuid_shim(CPU *c){
+@@ -261,7 +230,7 @@
+     fprintf(stderr,"  indirect calls resolved  : %llu\n", (unsigned long long)g_stat_indirect_ok);
+     fprintf(stderr,"  indirect calls unresolved: %llu\n", (unsigned long long)g_stat_indirect_miss);
+     fprintf(stderr,"  unsupported instructions : %llu\n", (unsigned long long)g_stat_unsupported);
+-    genexec_report();
++    /* Generic generated-code interpretation is disabled for NFSU1. */
+     if (g_miss_n){ fprintf(stderr,"  unresolved indirect calls (target <- calling instruction):\n");
+         int shown=0;
+         for(int i=0;i<g_miss_n && shown<12;i++){

@@ -45,6 +45,9 @@ guest_*.o
 *.so
 *.log
 
+# Rust server build artifacts (keep Cargo.lock tracked).
+/server/target/
+
 # Dependencies, editor/OS files and local secrets.
 __pycache__/
 *.py[cod]

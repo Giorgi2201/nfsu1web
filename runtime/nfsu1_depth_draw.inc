@@ -1,12 +1,3 @@
-"""Bounded draw evidence for the NFSU1 traffic occlusion investigation.
-
-Adds logging only to the pinned MIT-licensed COM adapter. The first occurrence
-of each draw-state combination samples one vertex with the CPU shader reference;
-no game shader code, vertex buffers, or matrices are dumped. The draw itself is
-unchanged. Set NFSU1_DEPTH_DIAGNOSTICS=0 to disable the diagnostic.
-"""
-
-HELPER = r'''
 /* NFSU1: bounded evidence for traffic/world depth comparisons. This samples
  * the CPU reference; it does not change GPU draws or their constants. */
 static void nfsu1_depth_draw(uint32_t vp, uint32_t stride, const VSConst *vsk,
@@ -86,17 +77,3 @@ static void nfsu1_depth_draw(uint32_t vp, uint32_t stride, const VSConst *vsk,
     fputc('\n', stderr);
     if (count == CAP) fprintf(stderr, "[nfsu1 depth] unique-state log limit reached\n");
 }
-
-'''
-
-
-def com(source):
-    anchor = "static uint64_t g_dip_ix = 0, g_dip_ixfb[6];\n"
-    if source.count(anchor) != 1:
-        raise ValueError("expected one pinned indexed draw declaration")
-    source = source.replace(anchor, anchor + HELPER, 1)
-    anchor = "    /* ---------------- GPU vertex shader (GPUVS) ----------------"
-    if source.count(anchor) != 1:
-        raise ValueError("expected one pinned GPU vertex draw branch")
-    call = "    nfsu1_depth_draw(vp, stride, vsk, prog, el, nel, p_off, p_type);\n\n"
-    return source.replace(anchor, call + anchor, 1)

@@ -1,0 +1,182 @@
+--- a/runtime/com.c
++++ b/runtime/com.c
+@@ -323,7 +323,7 @@
+ }
+ static int g_cur_row = -1;             /* the game's active row (-1 = unknown) */
+ static int g_row4_on = 1;              /* is the 4K row selectable (see modes_refresh) */
+-static int modemap_on(void){ return !ENVC("NOWIDE"); }
++static int modemap_on(void){ return 0; } /* NFSU1: no NFSU2 menu writes. */
+ /* The rows are derived from the VIEW's (window / full screen) aspect:
+  * "1080p" = 1080 lines at the view's aspect.  So the drawable fills the
+  * window without bars, and the resolution only changes the quality.  The
+@@ -1290,7 +1290,7 @@
+  * Reset MUST use the same rule: Reset used to pass the raw value through,
+  * so changing the resolution in game silently undid the correction. */
+ static void res_pick(uint32_t gw, uint32_t gh, uint32_t *dw, uint32_t *dh){
+-    static int rdone = 0, pinned = 0;
++    static int rdone = 0, pinned = 1; /* NFSU1: native size unless NFSRES is explicit. */
+     static uint32_t rw = 0, rh = 0;
+     *dw = gw; *dh = gh;
+     /* The cursor must be in the space the game BELIEVES in, not on the drawable. */
+@@ -1316,6 +1316,10 @@
+             metal_native_size(bw, bh, &nw, &nh);
+             if (nw > bw || nh > bh){ aw = nw; ah = nh; } }
+     }
++    /* Follow the live canvas and arm the upstream device-reset watcher.
++     * Widescreen uses the full canvas; letterbox when NFSU1_WIDESCREEN=0. */
++    { extern int nfsu1_graphics_size(uint32_t, uint32_t, uint32_t *, uint32_t *);
++      nfsu1_graphics_size(gw, gh, &aw, &ah); }
+     if (!aw || !ah){
+         /* No override: device = what the game asked for.  Values left over
+          * from an earlier CreateDevice must not go stale after a Reset
+@@ -1326,9 +1330,18 @@
+         return;
+     }
+     g_req_w = gw; g_req_h = gh;
+-    /* The game keeps drawing for its own aspect; we compensate for the
+-     * difference in clip space.  If the aspect is kept exactly, this
+-     * factor stays 1.0. */
++    { extern int nfsu1_widescreen_active(void);
++      if (nfsu1_widescreen_active()){
++        g_aspfix = 1.f;
++        *dw = aw; *dh = ah;
++        ws_set_mapping(1.f);
++        { void metal_set_ui_aspect(float, float); metal_set_ui_aspect(1.f, 1.f); }
++        fprintf(stderr,"com: device resolution %ux%u -> %ux%u (nfsu1 widescreen)\n",
++                gw, gh, aw, ah);
++        return;
++      }
++    }
++    /* Letterbox path: game aspect vs device aspect in clip space. */
+     if (gw && gh){
+         float ga = (float)gw / (float)gh, da = (float)aw / (float)ah;
+         g_aspfix = ga / da;
+@@ -1336,8 +1349,6 @@
+         if (ov && *ov) g_aspfix = (float)atof(ov);
+     }
+     *dw = aw; *dh = ah;
+-    /* widescreen.c decides what the renderer and the game hooks do with
+-     * the ratio; the mouse maps onto the 4:3 HUD the same way. */
+     ws_set_mapping(g_aspfix);
+     { void metal_set_ui_aspect(float, float); metal_set_ui_aspect(ws_ui_x(), ws_ui_y()); }
+     fprintf(stderr,"com: device resolution %ux%u -> %ux%u (aspfix=%.4f)\n",
+@@ -1566,6 +1577,87 @@
+  * it returns 0 and the caller falls back to the old (index expansion) path. */
+ static struct { uint32_t n, vbo, ibo, isz; int32_t base; uint64_t gh; } g_ix;
+ static uint64_t g_dip_ix = 0, g_dip_ixfb[6];
++
++/* NFSU1: bounded evidence for traffic/world depth comparisons. This samples
++ * the CPU reference; it does not change GPU draws or their constants. */
++static void nfsu1_depth_draw(uint32_t vp, uint32_t stride, const VSConst *vsk,
++                             const VSProg *prog, const DElem *el, int nel,
++                             int position_offset, int position_type){
++    enum { CAP = 192 };
++    static int enabled = -1;
++    static uint32_t seen[CAP][10];
++    static unsigned count;
++    if (enabled < 0){
++        const char *setting = getenv("NFSU1_DEPTH_DIAGNOSTICS");
++        enabled = !setting || strcmp(setting, "0");
++    }
++    if (!enabled || count == CAP) return;
++    uint32_t caller = 0;
++    if (g_com_cpu && mem_is_committed(g_com_cpu->esp + 3u))
++        caller = MR32(g_com_cpu->esp);
++    uint32_t key[10] = {g_cur_rt, g_cur_zid, g_cur_vs, (uint32_t)g_cur_ps_id,
++                      g_rs[7], g_rs[14], g_rs[23], g_cur_fvf, g_rs[27], caller};
++    for (unsigned i = 0; i < count; i++)
++        if (!memcmp(seen[i], key, sizeof key)) return;
++    memcpy(seen[count++], key, sizeof key);
++    fprintf(stderr, "[nfsu1 depth] frame=%u caller=%08x rt=%u zid=%u vs=%u ps=%d z=%u write=%u cmp=%u blend=%u fvf=%08x stride=%u indexed=%u",
++            g_present_no, caller, g_cur_rt, g_cur_zid, g_cur_vs, g_cur_ps_id,
++            g_rs[7], g_rs[14], g_rs[23], g_rs[27], g_cur_fvf, stride, g_ix.n != 0);
++    if (g_ix.n){
++        /* The indexed caller has already validated the mirrored index span.
++         * Recover the corresponding original guest vertex, without expanding
++         * or modifying the actual geometry submitted to the GPU. */
++        const uint8_t *metal_pool_cpu(void);
++        const uint8_t *pool = metal_pool_cpu();
++        if (pool && g_ss_vb && mem_is_committed(g_ss_vb + 11u)){
++            uint32_t index = 0;
++            memcpy(&index, pool + g_ix.ibo, g_ix.isz);
++            int64_t vertex = (int64_t)index + g_ix.base;
++            uint64_t offset = vertex >= 0 ? (uint64_t)g_ss_off +
++                (uint64_t)vertex * stride : UINT64_MAX;
++            if (offset <= MR32(g_ss_vb + 4u) &&
++                stride <= (uint64_t)MR32(g_ss_vb + 4u) - offset)
++                vp = MR32(g_ss_vb + 8u) + (uint32_t)offset;
++        }
++    }
++    if (vp && stride && mem_is_committed(vp) && mem_is_committed(vp + stride - 1u)){
++        float pos[4] = {0, 0, 0, 1};
++        int sampled = 0;
++        static const uint8_t type_bytes[] = {4,8,12,16,4,4,4,8,4,4,8,4,8,4,4,4,8,0};
++        int safe = nel >= 0 && nel <= 16;
++        for (int k = 0; safe && k < nel; k++)
++            if (el[k].reg < 0 || el[k].reg >= 16 || el[k].type >= sizeof type_bytes ||
++                !type_bytes[el[k].type] || el[k].off + type_bytes[el[k].type] > stride)
++                safe = 0;
++        if (prog && nel && safe){
++            float inputs[16][4];
++            for (unsigned i = 0; i < 16; i++){
++                inputs[i][0] = inputs[i][1] = inputs[i][2] = 0.f;
++                inputs[i][3] = 1.f;
++            }
++            for (int k = 0; k < nel; k++)
++                decl_fetch(vp + el[k].off, el[k].type, inputs[el[k].reg]);
++            VSOut output;
++            if (vs_run(prog, vsk, (const float (*)[4])inputs, &output)){
++                memcpy(pos, output.pos, sizeof pos);
++                sampled = 1;
++            }
++        } else if (!prog && position_type >= 0 && position_type < (int)sizeof type_bytes &&
++                   position_offset >= 0 && type_bytes[position_type] &&
++                   (uint32_t)position_offset + type_bytes[position_type] <= stride){
++            decl_fetch(vp + (unsigned)position_offset, (unsigned)position_type, pos);
++            if (position_type != 3) pos[3] = 1.f;
++            sampled = 1;
++        }
++        if (sampled)
++            fprintf(stderr, " cpu-clip=(%.7g,%.7g,%.9g,%.9g) z/w=%.9g",
++                    (double)pos[0], (double)pos[1], (double)pos[2], (double)pos[3],
++                    pos[3] != 0.f ? (double)pos[2] / pos[3] : 0.0);
++    }
++    fputc('\n', stderr);
++    if (count == CAP) fprintf(stderr, "[nfsu1 depth] unique-state log limit reached\n");
++}
++
+ static int draw_up(uint32_t pt, uint32_t nv, uint32_t vp, uint32_t stride){
+     uint64_t _t0 = now_ns();
+     static TVert tv[4096];
+@@ -1642,6 +1734,8 @@
+     const DElem *el = dcc[dci].el; int nel = dcc[dci].nel;
+     int p_off = dcc[dci].p_off, p_type = dcc[dci].p_type, c_off = dcc[dci].c_off,
+         c_type = dcc[dci].c_type, t_off = dcc[dci].t_off, t_type = dcc[dci].t_type;
++
++    nfsu1_depth_draw(vp, stride, vsk, prog, el, nel, p_off, p_type);
+ 
+     /* ---------------- GPU vertex shader (GPUVS) ----------------
+      * Measured: ~45% of the run time was in the CPU vs_run interpreter,
+@@ -2285,7 +2379,12 @@
+                            MR32(pm)   = ml[0];
+                            MR32(pm+4) = ml[1];
+                            MR32(pm+8) = 60;
+-                           MR32(pm+12)= fmt; }
++                           MR32(pm+12)= fmt;
++                           if (g_com_trace) fprintf(stderr,
++                               "[nfsu1 modes] index=%u output=%08x %ux%u format=%u\n",
++                               mode, pm, MR32(pm), MR32(pm+4), fmt);
++                           if (g_com_trace){ void nfsu1_diagnostics_words(void);
++                               nfsu1_diagnostics_words(); } }
+                    r=0; } }
+         else if (MID(GetAdapterDisplayMode)){
+             uint32_t pm=A(c,2);
+@@ -4729,7 +4828,7 @@
+ }
+ 
+ static void fill_caps(uint32_t p){
+-    mem_commit(p,0x150); memset(g_mem+p,0,0x150);
++    mem_commit(p,0x130); memset(g_mem+p,0,0x130); /* sizeof(D3DCAPS9) */
+     MR32(p+0x00)=1; MR32(p+0x08)=0x00020000; MR32(p+0x0C)=0x00000002;
+     MR32(p+0x10)=0x00000020; MR32(p+0x14)=0x80000001; MR32(p+0x18)=1;
+     MR32(p+0x1C)=0x001BBEF0; MR32(p+0x20)=0x0000033F; MR32(p+0x24)=0x0F730191;

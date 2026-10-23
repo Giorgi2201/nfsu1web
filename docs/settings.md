@@ -38,8 +38,8 @@ Extract the archive locally, preserving its `Textures` folder:
 
 ```sh
 python3 tools/prepare_hd_fonts.py --mod /path/to/extracted-hd-fonts
-python3 tools/serve_nfsu1.py --hd-fonts work/mods/hd-fonts --check
-python3 tools/serve_nfsu1.py --hd-fonts work/mods/hd-fonts
+./start.sh --hd-fonts work/mods/hd-fonts --check
+./start.sh --hd-fonts work/mods/hd-fonts
 ```
 
 Preparation reads `work/data` and writes two replacement containers and a hash

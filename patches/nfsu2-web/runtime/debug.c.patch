@@ -1,0 +1,11 @@
+--- a/runtime/debug.c
++++ b/runtime/debug.c
+@@ -93,6 +93,8 @@
+ static uint32_t g_rec_n = 0, g_rec_esp0 = 0;
+ void guest_hook(CPU *c, uint32_t ip){
+     g_hook_hits++;
++    { extern int nfsu1_ws_hook(CPU *, uint32_t);
++      if (nfsu1_ws_hook(c, ip)) return; }
+     { int ws_hook(CPU *, uint32_t); if (ws_hook(c, ip)) return; }
+     { int roam_hook(CPU *, uint32_t); if (roam_hook(c, ip)) return; }
+     if (ip == 0x0065ae25u){

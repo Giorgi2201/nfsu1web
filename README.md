@@ -20,23 +20,19 @@ You'll need your own legally obtained PC game files and the exact
 [supported executable](docs/building.md#private-game-inputs). Game files and prebuilt game
 modules are not included.
 
-Follow the **[build and run guide](docs/building.md)** for the full setup.
-The current build has been tested on Apple Silicon macOS and requires:
-
-- Python 3.10+, Node.js/npm and WASI SDK 34.
-- A browser with WebGPU and the WebAssembly features checked at startup.
-- Enough memory for the game's 1 GiB initial shared memory, plus the browser,
-  GPU and game data.
-
-Once you've built it:
+**Build:** copy your PC install (including `Speed.exe`) into `work/data/`, then:
 
 ```sh
-python3 tools/serve_nfsu1.py
+./build.sh
+./start.sh
 ```
 
-Open **http://127.0.0.1:8765/** and click **Launch game**. Keep the server
-running while you play. Use the same address each time to keep your saved
-profile available.
+Open **http://127.0.0.1:8765/** and click **Launch game**. Details:
+[docs/building.md](docs/building.md).
+
+Needs Python, Node, and Rust installed on the machine once; `./build.sh`
+fetches the WASI SDK and other bits under `work/` when missing. Use a browser
+with WebGPU. Keep the same address so your saved profile stays available.
 
 The browser host includes graphics presets, automatic resolution, widescreen
 hooks, startup movie controls and optional local HD fonts. See

@@ -1,0 +1,30 @@
+--- a/runtime/web/gpu_web.c
++++ b/runtime/web/gpu_web.c
+@@ -727,8 +727,14 @@
+         const char *ew = getenv("NFSU2_WIDTH"), *eh = getenv("NFSU2_HEIGHT");
+         vw = ew && *ew ? (unsigned)atoi(ew) : 1280u; vh = eh && *eh ? (unsigned)atoi(eh) : 720u;
+     }
+-    if (vw < 320u || vh < 240u || vw > 8192u || vh > 8192u){ vw = 1280u; vh = 720u; }
+-    *w = vw & ~1u; *h = vh & ~1u;
++    if (vw < 320u || vh < 240u){ vw = 1280u; vh = 720u; }
++    if (vw > 8192u || vh > 8192u){
++        double scale = 8192.0 / fmax((double)vw, (double)vh);
++        vw = (unsigned)((double)vw * scale);
++        vh = (unsigned)((double)vh * scale);
++    }
++    *w = vw >= 2u ? vw & ~1u : 2u;
++    *h = vh >= 2u ? vh & ~1u : 2u;
+ }
+ /* the view size the game last chose its device size from (CreateDevice and
+  * Reset read it through res_pick) */
+@@ -746,8 +752,8 @@
+ static void view_follow(void){
+     static unsigned seen_w, seen_h; static double since = 0, asked = 0;
+     if (!g_ctl || ald(&g_ctl->attached) != GW_ATTACHED || !g_view_used_w) return;
+-    unsigned w = g_ctl->view_w & ~1u, h = g_ctl->view_h & ~1u;
+-    if (w < 320u || h < 240u || (w == g_view_used_w && h == g_view_used_h)) { seen_w = w; seen_h = h; return; }
++    unsigned w, h; view_wh(&w, &h);
++    if (w == g_view_used_w && h == g_view_used_h) { seen_w = w; seen_h = h; return; }
+     double t = now_ms();
+     if (w != seen_w || h != seen_h){ seen_w = w; seen_h = h; since = t; return; }
+     if (t - since < 250.0 || (asked && t - asked < 2000.0)) return;

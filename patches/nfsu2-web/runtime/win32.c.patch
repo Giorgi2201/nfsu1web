@@ -1,0 +1,69 @@
+--- a/runtime/win32.c
++++ b/runtime/win32.c
+@@ -27,7 +27,8 @@
+ /* One import index space for SPEED2.EXE and the lifted DLLs (module.c):
+  * the exe's g_imp first, then server.dll's g_srv_imp.  IAT slot values are
+  * IMP_MAGIC + index into this table. */
+-extern const ImpEnt g_srv_imp[]; extern const uint32_t g_srv_imp_count;
++static const ImpEnt g_srv_imp[1];
++static const uint32_t g_srv_imp_count = 0;
+ static ImpEnt *g_imps; static uint32_t g_nimps;
+ #include "module.h"
+ int modheap_owns(uint32_t h); uint32_t modheap_create(void); int modheap_destroy(uint32_t h);
+@@ -37,6 +38,7 @@
+ void mem_commit(uint32_t,uint32_t);
+ void guest_backtrace(CPU*,int);
+ int win32_ext_call(CPU*, const char*, uint32_t*);
++int nfsu1_win32_call(CPU*, const char*, uint32_t*);
+ void guest_fair_yield(void);
+ int fileio_call(CPU*, const char*, uint32_t*);
+ void fileio_report(void);
+@@ -381,7 +383,7 @@
+     const char *b = nm;
+     for (const char *q = nm; *q; q++) if (*q == '\\' || *q == '/') b = q + 1;
+     size_t l = strlen(b);
+-    if (!strcasecmp(b, "speed2.exe") || !strcasecmp(b, "speed2")) return 1;
++    if (!strcasecmp(b, "speed.exe") || !strcasecmp(b, "speed")) return 1;
+     for (uint32_t i = 0; i < g_nimps; i++){            /* the exe's and server.dll's imports */
+         const char *d = g_imps[i].dll; size_t dl = strlen(d);
+         if (!strcasecmp(b, d)) return 1;
+@@ -464,7 +466,7 @@
+ static uint32_t real_ms(void){ return (uint32_t)(real_us() / 1000ull) + 1000u; }
+ 
+ int win32_call(CPU *c, uint32_t idx){
+-    if (idx >= g_nimps) return 0;
++    if (idx >= g_nimps){ fprintf(stderr, "NFSU1 invalid import token: %u\n", idx); abort(); }
+     const ImpEnt *e = &g_imps[idx];
+     { void win32_thread_term_check(CPU*); win32_thread_term_check(c); }   /* TerminateThread */
+     int prev_mod = tl_imp_mod; tl_imp_mod = idx >= g_imp_count;
+@@ -611,7 +613,7 @@
+         { static uint32_t seen = 0; if (f < 32u && !(seen & (1u << f))){ seen |= 1u << f;
+             fprintf(stderr,"[hle] IsProcessorFeaturePresent(%u) -> %u (from 0x%08x)\n", f, r, c->eip); } } }
+     else if (!strcmp(n,"GetModuleFileNameA")){ uint32_t p=ARG(c,1),sz=ARG(c,2);
+-        const char*s="C:\\\\NFSU2\\\\SPEED2.EXE"; char ms[300];
++        const char*s="C:\\\\NFSU1\\\\Speed.exe"; char ms[300];
+         if (module_file_name(ARG(c,0), ms, sizeof ms)) s = ms;   /* server.dll: C:\NFSU2\server.dll */
+         uint32_t l=(uint32_t)strlen(s);
+         if(p&&sz){ if(l>=sz) l=sz-1; memcpy(g_mem+p,s,l); MR8(p+l)=0; } r=l; }
+@@ -753,9 +755,10 @@
+     else if (winsock_call(c, e->dll, n, &r)) { /* ws2_32, netapi32: winsock.c */ }
+     else if (fileio_call(c, n, &r)) { /* file I/O */ }
+     else if (win32_ext_call(c, n, &r)) { /* second-round layer */ }
++    else if (nfsu1_win32_call(c, n, &r)) { /* NFSU1 bring-up HLE */ }
+     else { handled = 0; g_win32_unimpl++; stat_[idx].unimpl++;
+-           { extern void autotest_note_unimpl(const char*,const char*,uint32_t);
+-             autotest_note_unimpl(e->dll, n, c->eip); }
++           fprintf(stderr, "NFSU1 unresolved import: %s!%s eip=%08x\n", e->dll, n, c->eip);
++           abort();
+            if (unimpl_first==0xffffffffu){ unimpl_first=idx; unimpl_name=n; } }
+ 
+     if (g_bt_on && (!strcmp(n,"GetModuleFileNameA")||!strcmp(n,"ExitProcess")||!strcmp(n,"RaiseException")))
+@@ -789,7 +792,7 @@
+     struct timespec ts; clock_gettime(CLOCK_MONOTONIC,&ts);
+     tick0 = (uint64_t)ts.tv_sec*1000 + ts.tv_nsec/1000000;
+     g_cmdline = gheap_alloc(1, 64, 1);
+-    strcpy((char*)(g_mem+g_cmdline), "SPEED2.EXE");
++    strcpy((char*)(g_mem+g_cmdline), NFSU1_EXE_NAME);
+     /* fill the IAT with magic addresses */
+     for (uint32_t i=0;i<g_imp_count;i++) MR32(g_imp[i].iat) = IMP_MAGIC + i;
+     com_init();

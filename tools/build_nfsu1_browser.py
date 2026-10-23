@@ -43,7 +43,7 @@ def main():
     if not package.is_file():
         parser.error(f"browser dependencies do not contain esbuild: {modules}")
     version = json.loads(package.read_text())["version"]
-    subprocess.run([sys.executable, str(ROOT / "tools/apply_browser_profile.py"),
+    subprocess.run(["bash", str(ROOT / "tools/apply_browser_profile.sh"),
                     "--upstream", str(upstream)], check=True)
     subprocess.run(["node", str(ROOT / "tools/browser_startup_smoke.mjs"), str(upstream)], check=True)
     subprocess.run(["node", str(ROOT / "tools/keyboard_smoke.mjs"), str(upstream)], check=True)
@@ -69,11 +69,22 @@ def main():
     for name in ASSETS:
         if name.endswith(".js"):
             subprocess.run(["node", "--check", str(dist / name)], check=True)
+    server = ROOT / "server/target/release/nfsu1-server"
+    if not server.is_file():
+        server = ROOT / "server/target/debug/nfsu1-server"
+    if not server.is_file():
+        subprocess.run(
+            ["cargo", "build", "--release", "--manifest-path", str(ROOT / "server/Cargo.toml")],
+            check=True,
+            cwd=ROOT,
+        )
+        server = ROOT / "server/target/release/nfsu1-server"
     subprocess.run([
-        sys.executable, str(ROOT / "tools/serve_nfsu1.py"), "--check",
+        str(server), "--check",
         "--dist", str(dist), "--wasm", str(upstream / "out/web/nfsu1.wasm"),
         "--metadata", str(upstream / "out/web/nfsu1.json"),
-    ], check=True)
+        "--data", str(ROOT / "work/data"),
+    ], check=True, cwd=ROOT)
     sources = [web / "index.html", web / "build.mjs"] + sorted((web / "src").rglob("*"))
     state = json.loads((upstream / ".nfsu1-browser-profile/state.json").read_text())
     report = {
@@ -82,13 +93,12 @@ def main():
         "esbuild_version": version,
         "esbuild_package_sha256": digest(package),
         "source_maps": "retained in dist-dev without public map URL advertisements",
-        "overlay_sha256": digest(ROOT / "tools/apply_browser_profile.py"),
+        "overlay_script_sha256": digest(ROOT / "tools/apply_browser_profile.sh"),
         "menu_sources": {str(p.relative_to(ROOT)): digest(p) for p in sorted((ROOT / "browser").glob("*")) if p.is_file()},
-        "keyboard_overlay_sha256": digest(ROOT / "tools/browser_keyboard_overlay.py"),
         "keyboard_smoke_sha256": digest(ROOT / "tools/keyboard_smoke.mjs"),
         "builder_sha256": digest(Path(__file__)),
         "startup_smoke_sha256": digest(ROOT / "tools/browser_startup_smoke.mjs"),
-        "server_sha256": digest(ROOT / "tools/serve_nfsu1.py"),
+        "server_cargo_sha256": digest(ROOT / "server/Cargo.toml"),
         "wasm_sha256": digest(upstream / "out/web/nfsu1.wasm"),
         "sources": {str(p.relative_to(web)): digest(p) for p in sources if p.is_file()},
         "assets": {name: {"bytes": (dist / name).stat().st_size,
@@ -99,7 +109,7 @@ def main():
     args.report.write_text(json.dumps(report, indent=2) + "\n")
     print(f"Browser host bundled with esbuild {version}: {dist}")
     print(f"Build record: {args.report}")
-    print("Start locally: python3 tools/serve_nfsu1.py")
+    print("Start locally: ./server/target/release/nfsu1-server")
     print("User test URL: http://127.0.0.1:8765/")
 
 

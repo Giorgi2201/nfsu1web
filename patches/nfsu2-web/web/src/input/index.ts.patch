@@ -1,0 +1,111 @@
+--- a/web/src/input/index.ts
++++ b/web/src/input/index.ts
+@@ -25,6 +25,7 @@
+ import type { GameProcess } from '../host/process';
+ import { HostKind } from '../host/abi';
+ import { CODES, cp1252, isMeta, keyChars, keyVk } from './keymap';
++import { translateKeyboardEvent } from '../app/keyboard';
+ import { PadPoller } from './gamepad';
+ import { SynthDriver } from './synth';
+ import {
+@@ -115,8 +116,15 @@
+   let lastUse = performance.now();
+   const onUse = () => { lastUse = performance.now(); };
+ 
++  // Track physical sources independently: WASD and arrows can hold the same game key.
++  const heldSources = new Map<string, { code: string; vk: number }>();
++  const heldTargets = new Map<number, number>();
++
+   // ---- the event ring -------------------------------------------------------
+   function push(type: number, dik = 0, vk = 0, flags = 0, chars: number[] = [], a = 0, b = 0) {
++    if (type === IEV_RELEASE_ALL || (type === IEV_FOCUS && !a)) {
++      heldSources.clear(); heldTargets.clear();
++    }
+     if (!h || !u8 || !i32) return;
+     const w = Atomics.load(h, IM_EV_W), r = Atomics.load(h, IM_EV_R);
+     if (((w - r) >>> 0) >= INPUT_EV_N) { Atomics.add(h, IM_EV_DROP, 1); dropped.n++; return; }
+@@ -148,7 +156,11 @@
+   const vkOf = (code: string, e: KeyboardEvent, vk: number) => keyVk(code, e, vk, layout);
+   const charsOf = (code: string, e: KeyboardEvent) => keyChars(code, e, mac, layout);
+   function onKeyDown(e: KeyboardEvent) {
+-    if (detached || ignored(e) || e.isComposing || e.keyCode === 229) return;
++    if (detached || e.isComposing || e.keyCode === 229) return;
++    if (ignored(e)) {
++      if (heldSources.size) push(IEV_RELEASE_ALL, 0, 0, 0, [], 0, IREASON_PAGE);
++      return;
++    }
+     if (isMeta(e.code) || e.key === 'Meta') {
+       if (!e.repeat) push(IEV_RELEASE_ALL, 0, 0, 0, [], 0, IREASON_META);
+       return;
+@@ -158,12 +170,22 @@
+       if (mac && e.code === 'KeyF' && !e.repeat) { e.preventDefault(); if (opts.toggleFullscreen) opts.toggleFullscreen(); else void api.toggleFullscreen(); }
+       return;
+     }
+-    const k = CODES[e.code];
++    const held = heldSources.get(e.code);
++    const code = held?.code ?? translateKeyboardEvent(e) ?? e.code;
++    const k = CODES[code];
+     if (!k) return;
+     if (!pass.has(e.code)) e.preventDefault();
+     if (mac && e.code === 'CapsLock') { push(IEV_KEY_TAP, k.dik, k.vk, flagsOf(e)); return; }
+-    const { chars, dead, sys } = charsOf(e.code, e);
+-    push(IEV_KEY_DOWN, k.dik, vkOf(e.code, e, k.vk), flagsOf(e) | (e.repeat ? IKF_REPEAT : 0) | (dead ? IKF_DEAD : 0), chars, 0, sys);
++    const remapped = code !== e.code;
++    const vk = held?.vk ?? (remapped ? k.vk : vkOf(code, e, k.vk));
++    if (!held) {
++      const count = heldTargets.get(k.dik) ?? 0;
++      heldSources.set(e.code, { code, vk });
++      heldTargets.set(k.dik, count + 1);
++      if (count) return; // another physical key already holds this destination
++    }
++    const { chars, dead, sys } = remapped ? { chars: [], dead: false, sys: 0 } : charsOf(code, e);
++    push(IEV_KEY_DOWN, k.dik, vk, flagsOf(e) | (e.repeat ? IKF_REPEAT : 0) | (dead ? IKF_DEAD : 0), chars, 0, sys);
+   }
+   function onKeyUp(e: KeyboardEvent) {
+     // every release goes to the game, even one aimed at the page's own UI:
+@@ -171,11 +193,20 @@
+     // ignores releases of keys the game does not hold)
+     if (detached) return;
+     if (isMeta(e.code) || e.key === 'Meta') return;
+-    const k = CODES[e.code];
+-    if (!k) return;
+-    if (!pass.has(e.code) && !ignored(e)) e.preventDefault();   // also keeps Alt from opening a menu bar
+-    if (mac && e.code === 'CapsLock') { push(IEV_KEY_TAP, k.dik, k.vk, flagsOf(e)); return; }
+-    push(IEV_KEY_UP, k.dik, k.vk, flagsOf(e));
++    if (!pass.has(e.code) && !ignored(e)) e.preventDefault();
++    if (mac && e.code === 'CapsLock') {
++      const k = CODES[e.code];
++      if (k) push(IEV_KEY_TAP, k.dik, k.vk, flagsOf(e));
++      return;
++    }
++    const held = heldSources.get(e.code);
++    if (!held) return; // a capture or a release-all may have consumed its keydown
++    heldSources.delete(e.code);
++    const k = CODES[held.code];
++    const count = (heldTargets.get(k.dik) ?? 1) - 1;
++    if (count) { heldTargets.set(k.dik, count); return; }
++    heldTargets.delete(k.dik);
++    push(IEV_KEY_UP, k.dik, held.vk, flagsOf(e));
+   }
+ 
+   // ---- mouse -------------------------------------------------------------------
+@@ -329,6 +360,8 @@
+       detached = true; quitPending = 0; cancelAnimationFrame(raf); clearInterval(timer);
+       pads?.dispose(); pads = null; synth = null;
+       h = null; u8 = null; i32 = null; synF32 = null;     // no view of the old process's memory stays reachable
++      removeEventListener('nfsu1-keyboard-change', onKeyboardChange);
++      document.removeEventListener('focusin', onUiFocus, { capture: true });
+       kbTarget.removeEventListener('keydown', onKeyDown as EventListener, { capture: true });
+       kbTarget.removeEventListener('keyup', onKeyUp as EventListener, { capture: true });
+       for (const [t, f] of listeners) element.removeEventListener(t, f);
+@@ -340,6 +373,10 @@
+     },
+   };
+ 
++  const onKeyboardChange = () => api.releaseAll();
++  const onUiFocus = (e: Event) => { if (ignored(e) && heldSources.size) api.releaseAll(); };
++  addEventListener('nfsu1-keyboard-change', onKeyboardChange);
++  document.addEventListener('focusin', onUiFocus, { capture: true });
+   kbTarget.addEventListener('keydown', onKeyDown as EventListener, { capture: true });
+   kbTarget.addEventListener('keyup', onKeyUp as EventListener, { capture: true });
+   const listeners: [string, EventListener][] = [

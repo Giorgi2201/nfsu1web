@@ -1,0 +1,28 @@
+--- a/runtime/dinput_pad.c
++++ b/runtime/dinput_pad.c
+@@ -269,7 +269,6 @@
+      * "Press a button" prompt, which only a pad button ends. */
+     static int seen = 0;
+     if (mode == MODE_HOTPLUG || !seen){
+-        if (mem_is_committed(0x8364e8u)) MR32(0x8364e8u) = mode == MODE_HOTPLUG || !s.connected;
+         if (!s.connected) return 0;
+     }
+     seen = 1;
+@@ -377,7 +376,7 @@
+     uint32_t press = buttons & ~d->fe_prev, rel = d->fe_prev & ~buttons;
+     d->fe_prev = buttons;
+     if (!on || !mem_is_committed(0x8654a7u)) return;
+-    int fe = MR32(0x8654a4u) == 3u;
++    int fe = 0; /* NFSU2 GameFlow is not present in NFSU1. */
+     fe_key(&d->fe_down[0], !!(press & 1u << PAD_A), !!(rel & 1u << PAD_A), fe, 0x0D, 0x1C, 0x0D);
+     fe_key(&d->fe_down[1], !!(press & 1u << PAD_B), !!(rel & 1u << PAD_B), fe, 0x1B, 0x01, 0x1B);
+     fe_key(&d->fe_down[2], !!(press & 1u << PAD_BACK), !!(rel & 1u << PAD_BACK), fe, 'Q', 0x10, 'q');
+@@ -602,6 +601,8 @@
+ static int g_jhn;
+ static float g_jolt_age, g_jolt_logt;   /* world seconds since this car appeared; since the last speed line */
+ static void ff_jolt(void){
++    g_jolt = 0.f; g_jolt_car = 0;
++    return; /* NFSU2 physics globals are not present in NFSU1. */
+     uint32_t pl = mem_is_committed(0x8900acu + 3u) ? MR32(0x8900acu) : 0u;
+     uint32_t car = pl && mem_is_committed(pl + 7u) ? MR32(pl + 4u) : 0u;
+     float dt = MRF32(0x865154u);

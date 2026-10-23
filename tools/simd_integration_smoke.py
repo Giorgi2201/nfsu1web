@@ -222,7 +222,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--upstream", type=Path, required=True)
     parser.add_argument("--image", type=Path,
-                        default=Path("work/analysis/Speed.analysis.exe"))
+                        default=Path("work/data/Speed.exe"))
     parser.add_argument("--catalog", type=Path,
                         default=Path("work/analysis/catalog.json"))
     parser.add_argument("--profile", type=Path,
