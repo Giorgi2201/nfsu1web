@@ -11,11 +11,13 @@ use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
 use crate::config::{Config, FileStamp};
+use crate::lan::LanSwitch;
 use crate::paths::{decoded_parts, resolve_under, RequestError};
 
 #[derive(Clone)]
 pub struct AppState {
     pub config: Arc<Config>,
+    pub lan: LanSwitch,
 }
 
 pub async fn handle(

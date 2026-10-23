@@ -1,6 +1,8 @@
 mod config;
 mod handlers;
+mod lan;
 mod manifest;
+mod online;
 mod paths;
 
 use std::env;
@@ -13,6 +15,7 @@ use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 use handlers::{handle, AppState};
+use lan::LanSwitch;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -116,10 +119,14 @@ async fn main() -> ExitCode {
     }
 
     let fonts = !config.font_files.is_empty();
+    let lan = LanSwitch::new();
     let state = AppState {
         config: Arc::new(config),
+        lan: lan.clone(),
     };
     let app = Router::new()
+        .route("/lan", get(lan::lan_ws))
+        .route("/players", get(lan::players).head(lan::players))
         .fallback(get(handle).head(handle))
         .with_state(state);
 

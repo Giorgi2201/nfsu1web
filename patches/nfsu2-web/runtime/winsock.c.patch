@@ -1,0 +1,47 @@
+--- a/runtime/winsock.c
++++ b/runtime/winsock.c
+@@ -286,9 +286,9 @@
+ static int ws_harness(void){ return nfsu2_test_run(); }
+ 
+ /* ---- online: the server's own stand-in at 10.77.0.1 (see the top) ---- */
+-#define ONLINE_HOST_VA 0x7FBDBCu                  /* SPEED2.EXE v1.2 NA: LobbyConnect's host, 0x588630 */
+-#define ONLINE_HOST    "pcnfs05.ea.com"
+-#define ONLINE_LOBBY   20922u                     /* its lobby's port (nfsu2-online PORT_LOBBY) */
++#define ONLINE_HOST_VA 0x006f1f40u                /* Speed.exe 1.4: LobbyConnect host "ps2nfs04.ea.com" */
++#define ONLINE_HOST    "ps2nfs04.ea.com"
++#define ONLINE_LOBBY   10901u                     /* nfsuserver ListeningSocket; 10900 redirects here */
+ void online_lobby_read(uint32_t link, const uint8_t *p, int n);   /* online.c: the persona the server gave */
+ static int g_online;
+ static int env_off(const char *v){
+@@ -296,16 +296,14 @@
+ }
+ /* the lobby host string without its '*' (no SSL): guest data, at run time; the file is never touched */
+ static void online_patch(void){
+-    static const char secure[16] = "*" ONLINE_HOST, plain[16] = ONLINE_HOST;
++    static const char plain[16] = ONLINE_HOST;
+     if (!gok(ONLINE_HOST_VA, 16)) return;                  /* not the game (a test harness) */
+-    if (!memcmp(g_mem + ONLINE_HOST_VA, plain, 16)) return;
+-    if (memcmp(g_mem + ONLINE_HOST_VA, secure, 16)){
+-        ws_log("online: the lobby host at 0x%08x is not \"*%s\" (another game version?): online stays off", ONLINE_HOST_VA, ONLINE_HOST);
++    /* NFSU1 already stores the plain hostname (no leading '*'). */
++    if (memcmp(g_mem + ONLINE_HOST_VA, plain, 15) != 0 || g_mem[ONLINE_HOST_VA + 15] != 0){
++        ws_log("online: the lobby host at 0x%08x is not \"%s\" (unexpected build?): online stays off", ONLINE_HOST_VA, ONLINE_HOST);
+         g_online = 0; return;
+     }
+-    memcpy(g_mem + ONLINE_HOST_VA, plain, 16);
+-    ws_log("online: on (NFSU2_ONLINE): the lobby link is plain TCP to %s:20920, which is the server's own host 10.77.0.1",
+-           ONLINE_HOST);
++    ws_log("online: on (NFSU2_ONLINE): lobby DNS %s -> 10.77.0.1, TCP 10900/10901", ONLINE_HOST);
+ }
+ static void ws_config(void){
+     if (g_initted) return;
+@@ -1470,8 +1468,7 @@
+             if (g_deny_strong && (got > 0 || s->type != 1)) deny_heard(ip);
+             if (pf && s->type != 1) ga_out(pf, pfl, ip, port);
+             /* what the online host's lobby says, as the game reads it (not a peek) */
+-            if (!e && got > 0 && !(fl & 2u) && s->type == 1 && g_online && s->raddr == mkip(10, 77, 0, 1) && s->rport == ONLINE_LOBBY)
+-                online_lobby_read(s->conn_id ? s->conn_id : h, g_mem + buf, got);
++            /* NFSU1: do not call online_lobby_read (SPEED2 persona fields). */
+             if (e) FAIL(e);
+             return (uint32_t)got;
+         }

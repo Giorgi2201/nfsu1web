@@ -14,6 +14,14 @@ established.
 - Four optional HD font atlases used in menus and race text. Gauges remain stock.
 - Scene depth survives smaller depth-disabled effect passes; the user confirmed
   traffic no longer appears through walls.
+- Same-origin virtual LAN (`/lan`) plus Online lobby at `10.77.0.1`
+  (`ps2nfs04.ea.com` → DNS map, TCP 10900/10901; full nfsuserver command
+  surface in [online-protocol.md](online-protocol.md)). Stats/news/rankings
+  are hardcoded. Free-roam stays off. In-room Send Challenge FE
+  (`EVENT_HANDLER` still on HUD). Challenge invite must not use `F=EP5` (that
+  painted `GAME=`/`PARAMS=` as purple DMs). Race enter does D3D `DEVICELOST`→
+  Reset (e.g. 876x600) via canvas watcher — if the race then returns to lobby,
+  grab a fresh Downloads log after restart.
 
 The font importer retains the language pack's streaming table and produces
 JDLZ streams accepted by the game's decoder. The renderer preserves persistent

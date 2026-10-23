@@ -52,7 +52,7 @@
 +  { title: 'Browser', items: [
 +    { key: 'intro', label: 'Startup movies', help: 'Skippable: Enter, Esc, Space or controller A, B or Start ends each movie. Original: use the original game behavior. Off: finish startup screens immediately; a brief frame may appear. Story movies keep their original behavior.', c: { t: 'seg', opts: [['skippable', 'Skippable'], ['original', 'Original'], ['off', 'Off']] } },
 +    { key: 'fullscreen', label: 'Full screen on Play', help: 'Open the game canvas full screen when the browser allows it.', c: { t: 'switch' } },
-+    { key: 'background', label: 'When the tab is in the background', help: 'Pause freezes the game and its audio when you switch away. Keep running continues the game.', c: { t: 'seg', opts: [['pause', 'Pause'], ['run', 'Keep running']] } },
++    { key: 'background', label: 'When the tab is in the background', help: 'Online/LAN: use Keep running (default). Pause freezes a hidden tab and the other player drops the race; host audio can loop the start sting.', c: { t: 'seg', opts: [['pause', 'Pause'], ['run', 'Keep running']] } },
    ] },
 -  { title: 'Controller', items: [
 -    { key: 'rumble', label: 'Rumble', help: 'On controllers that have it: crashes, hard landings and the game\'s own force feedback.', c: { t: 'switch' } },

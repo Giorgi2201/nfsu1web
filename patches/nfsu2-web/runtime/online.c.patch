@@ -1,0 +1,10 @@
+--- a/runtime/online.c
++++ b/runtime/online.c
+@@ -227,6 +227,7 @@
+ static char g_body[256];
+ static int g_body_n;
+ void online_lobby_read(uint32_t link, const uint8_t *p, int n){
++    (void)link; (void)p; (void)n; return; /* NFSU1: SPEED2 persona rewrite disabled */
+     if (link != g_link){ g_link = link; g_hdr_n = 0; g_left = 0; g_keep = 0; }
+     while (n > 0){
+         if (!g_left){

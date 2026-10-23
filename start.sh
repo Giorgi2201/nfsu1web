@@ -39,12 +39,26 @@ while [[ $# -gt 0 ]]; do
 done
 
 SERVER_BIN="$ROOT/server/target/release/nfsu1-server"
-if [[ "$NO_BUILD" -eq 0 ]]; then
-  if [[ ! -x "$SERVER_BIN" ]] || [[ server/src -nt "$SERVER_BIN" ]] || \
-     [[ server/Cargo.toml -nt "$SERVER_BIN" ]]; then
-    echo "Building nfsu1-server…"
-    cargo build --release --manifest-path "$ROOT/server/Cargo.toml"
+# Directory mtime does not update on file edits (APFS); compare .rs / Cargo files.
+needs_server_build() {
+  [[ ! -x "$SERVER_BIN" ]] && return 0
+  [[ server/Cargo.toml -nt "$SERVER_BIN" ]] && return 0
+  [[ -f server/Cargo.lock && server/Cargo.lock -nt "$SERVER_BIN" ]] && return 0
+  local newer
+  newer="$(find server/src -type f \( -name '*.rs' -o -name '*.toml' \) -newer "$SERVER_BIN" -print -quit 2>/dev/null || true)"
+  [[ -n "$newer" ]]
+}
+if [[ "$NO_BUILD" -eq 0 ]] && needs_server_build; then
+  echo "Building nfsu1-server…"
+  if ! command -v cargo >/dev/null 2>&1; then
+    # rustup often isn't on non-login PATH (Finder, some IDE terminals).
+    [[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
   fi
+  if ! command -v cargo >/dev/null 2>&1; then
+    echo "error: cargo not found (install Rust, or open a shell where \`cargo -V\` works)" >&2
+    exit 1
+  fi
+  cargo build --release --manifest-path "$ROOT/server/Cargo.toml"
 fi
 [[ -x "$SERVER_BIN" ]] || { echo "error: missing $SERVER_BIN (run without --no-build)" >&2; exit 1; }
 

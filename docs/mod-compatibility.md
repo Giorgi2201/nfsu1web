@@ -47,9 +47,9 @@ support: the font importer handles two specific game containers only.
   saves. Both touch GLOBALB; Monte Carlo also touches the fonts' GLOBALA
   container, so combine records rather than overwrite files.
 - Addon cars and extended customization need additional guest hooks/table
-  handling. RTX Remix/RTGI need substantial renderer work. Online play needs
-  an NFSU1 browser transport and server interoperability; upstream NFSU2
-  networking does not establish support.
+  handling. RTX Remix/RTGI need substantial renderer work. A same-origin
+  virtual-LAN switch (`/lan`) is in `nfsu1-server`; game Online/LAN races and
+  community-server interoperability remain separate milestones.
 
 ## Local assets and attribution
 
