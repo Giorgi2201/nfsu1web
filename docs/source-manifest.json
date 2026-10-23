@@ -387,7 +387,7 @@
       }
     },
     "bundler_license_retained": "work/toolchain/web-bundler/node_modules/esbuild/LICENSE.md",
-    "output_policy": "Private Wasm, game data, built page and build records stay ignored. No agent browser operation; user-reported browser observations are recorded separately in docs/progress.md.",
+    "output_policy": "Private Wasm, game data, built page and build records stay ignored. No agent browser operation; user-reported browser observations are recorded separately in docs/status.md.",
     "menu_redesign": "Original browser/menu.html, menu.css, menu.ts and keyboard.ts; no game art or fonts copied. Physical-key aliases adapt the pinned upstream DirectInput/Windows key event bridge. Audio, lifecycle and controller options reuse existing host contracts; NFSU2-only game patches remain disabled."
   },
   "startup_movie_controls": {
@@ -396,7 +396,7 @@
     "source": "th0mk/nfsu2-web runtime/intro.c",
     "git_blob_sha1": "652cff8089910618f033fdcdfe0908e26be8a076",
     "reuse": "MIT-licensed notification adapter design and input baselining; NFSU1-specific handwritten implementation. Notice retained in patches/nfsu2-web.LICENSE.",
-    "evidence": "Local matching PC 1.4 executable and cached catalog; interface addresses in docs/movie-skipping.md.",
+    "evidence": "Local matching PC 1.4 executable and cached catalog; interface addresses in runtime/nfsu1_intro.c.",
     "output_policy": "Original executable and generated game functions unchanged. Local linked Wasm remains private and ignored.",
     "validation": "Focused synthetic native adapter smoke, private Wasm relink, browser startup smoke/bundle/syntax and in-process server checks passed. Browser/game validation pending; no agent browser operation."
   },
@@ -425,7 +425,7 @@
     "date": "2026-10-23",
     "implementation": "Original NFSU1 presets after capability setup/profile load via Wasm LLD wrappers. Automatic resolution fits live canvas device pixels while preserving guest aspect, using the pinned browser settings and GPU device-reset host.",
     "runtime_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
-    "evidence": "Read-only matching PC 1.4 settings descriptor table at 0x700ec0, original four-level preset routine at 0x410ed0, capability limits at 0x701040 and config loader at 0x41c680. Exact mapping documented in docs/graphics.md.",
+    "evidence": "Read-only matching PC 1.4 settings descriptor table at 0x700ec0, original four-level preset routine at 0x410ed0, capability limits at 0x701040 and config loader at 0x41c680. Exact mapping in runtime/nfsu1_graphics.c.",
     "reuse": "No additional third-party source copied. Existing browser shell excerpts remain covered by patches/nfsu2-web.LICENSE; attribution to th0mk and the existing PC analysis pipeline by codepdbh/sp00nz is retained.",
     "output_policy": "Original game inputs unchanged. Emitted routines, local mapping comparison harness and linked game module remain ignored and private.",
     "limitations": "Effect correctness/performance and live resize recovery require user browser checks. Widescreen FOV/HUD hooks are ported but need browser validation; smaller post-processing buffers retain original game sizing.",
@@ -461,5 +461,76 @@
     "original_contributions": "MIT; copyright 2026 Yurii Smetanka",
     "third_party_terms": "NOTICE.md and docs/source-permissions.md; PC project permission is not relicensed as MIT",
     "widescreen_notice": "patches/WidescreenFixesPack.LICENSE"
+  },
+  "hd_fonts": {
+    "date": "2026-10-23",
+    "scaling_source": {
+      "repository": "AeroWidescreen/NFSHDContentSupport",
+      "commit": "877a8f0fb817d5bab05c862d261860ed422441fe",
+      "path": "SOURCE/NFSU/dllmain.cpp",
+      "blob_sha": "6534741da7739e9f3ddbe5ea21d683bb0068cb10",
+      "license": "GPL-3.0",
+      "license_file": "patches/NFSHDContentSupport.LICENSE",
+      "license_blob_sha": "e62ec04cdeece724caeeeeaeb6ae1f6af1bb6b9a"
+    },
+    "artwork": {
+      "author": "Raze",
+      "page": "https://nfsmods.xyz/mod/6370",
+      "archive": "13d395-MOD.7z",
+      "archive_sha256": "5bd93c75bb15a130ca8cf69ee17dc9c4c13bdc96edb2e7299218a0abecd88d79",
+      "scope": "four DDS font atlases only, no gauges",
+      "distribution": "optional private local import, no artwork bundled"
+    },
+    "format_references": [
+      {
+        "repository": "xan1242/xnfstpktool",
+        "commit": "bfd46d4e71df7a23db4f4e43c51aa37db2839fee",
+        "license": "MIT",
+        "scope": "TPK v4 OldTextureInfo and pixel format layout; independent parser/writer"
+      },
+      {
+        "url": "https://github.com/MWisBest/OpenNFSTools/blob/master/LibNFS/Compression/JDLZ.cs",
+        "scope": "JDLZ format reference; independent reader"
+      }
+    ],
+    "implementation": "Sparse local overlay of GLOBALA.BUN and LANGUAGETEXTURES.BIN; four scoped PC 1.4 font dimension operands; original game inputs preserved.",
+    "validation": "Native scaling, actual game JDLZ/header/stream/upload, pixel preservation and HTTP checks pass. User confirmed restored menu/race text with the HD overlay.",
+    "upload_correction": {
+      "font_operands_version": 2,
+      "operand_sites": [
+        "0x00407eb5",
+        "0x00407f3d"
+      ],
+      "scope": "Preserve top mip levels of exactly four 4x font atlases; retain original WorldLOD mip policy for all other textures.",
+      "validation": "Actual emitted uploader run with synthetic COM resources verifies creation dimensions, mip count and every copied pixel byte; previous emission fails."
+    },
+    "language_streaming_correction": {
+      "cause": "Initial raw conversion removed table required by actual header-first language loader; only GLOBALA message font reached upload in user log.",
+      "implementation": "Preserve compressed stream table and five unrelated compressed textures; literal-only JDLZ encoding for three imported language fonts.",
+      "validation": "Actual emitted language header, stream linking, JDLZ codec and D3D upload execute with synthetic file/heap/COM:8textures,3HDfonts,43exact mip copies. Old raw pack fails header; first literal stream fails actual codec. Current streams match independent decoding, preserve output guards, and include terminal flag lookahead. User confirmed restored text after the correction."
+    },
+    "user_validation": "User confirmed text is restored with the HD overlay; covers selected menu and race font atlases. Gauges remain stock."
+  },
+  "depth_state_correction": {
+    "date": "2026-10-23",
+    "repository": "th0mk/nfsu2-web",
+    "commit": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "path": "web/src/gpu/encoder.ts",
+    "blob_sha": "399a04f2db47df9ea7ef93a10f29807f2da19dcb",
+    "license": "MIT; patches/nfsu2-web.LICENSE",
+    "implementation": "Disable depth writes when ZENABLE is false and preserve persistent scene depth during smaller depth-disabled effect passes. Reopen scratch-only passes when depth is enabled; retain explicit clears.",
+    "validation": "Actual pipeline/frame encoder checks pass correction and fail pinned original. User confirmed corrected traffic occlusion in game."
+  },
+  "traffic_depth_investigation": {
+    "date": "2026-10-23",
+    "source": "runtime/com.c at pinned th0mk/nfsu2-web revision",
+    "adapter": "tools/traffic_depth_overlay.py",
+    "license": "MIT; patches/nfsu2-web.LICENSE",
+    "status": "depth lifetime correction user-confirmed in game",
+    "evidence": "User confirms traffic bodies/lights through walls on Maximum. Newest user log152534 has no depth size mismatches.",
+    "implementation": "At most192 unique caller/state records with render/depth target,shader IDs,depth states,FVF and CPU-reference clip/depth sample; no traffic rendering override.",
+    "fix": "Do not acquire/resize persistent depth for depth-disabled effect passes. Use scratch depth and reopen when real depth becomes necessary; retain explicit depth clears.",
+    "validation": "Actual bundled frame encoder with synthetic GPU command objects and depth pixel: wall->smallerZoffeffect->farthercar. Pinned original loses scene depth and fails; correction preserves depth for implicit/explicit surfaces, handles same-target Z enable and explicit clears. No actual GPU/browser execution.",
+    "user_validation": "User confirmed traffic occlusion is now correct after the scene-depth preservation fix."
   }
 }

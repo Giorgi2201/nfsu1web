@@ -1,151 +1,88 @@
 # Source, licenses and permission record
 
-Inspected on 2026-10-21. This records repository evidence and the user's supplied
-authorization; it does not treat public visibility as a license.
+This records inspected license evidence and the user's supplied authorization.
+[Source manifest](source-manifest.json) and [upstream pins](../profiles/upstreams.json)
+contain exact revisions, file hashes and interface references. Public visibility
+alone is not permission to reuse source or artwork.
 
-| Repository/component | Published evidence at inspected revision | Handling in this workspace |
-| --- | --- | --- |
-| `codepdbh/nfsu1-recompiled` | No root LICENSE/COPYING file found in the recursive tree. `ports/dxvk_android/DXVK-LICENSE` applies to DXVK, not automatically to the project. | User reports personal maintainer permission, conditioned on attribution. Original analysis scripts copied into ignored `work/upstream/` and executed to generate the cached local catalog. |
-| `th0mk/nfsu2-web` | [MIT](https://github.com/th0mk/nfsu2-web/blob/31da468582c3de14fd6f4233831f62816e2df83d/LICENSE), copyright 2026 th0mk; portions copyright 2026 Talha Müderrisoğlu. | Selected emitter/runtime/browser source snapshot downloaded into ignored `work/` with its full license retained, used by focused checks and the experimental local game build. |
-| `antoxa2584x/nfsu1-sw` game-specific root sources | No root LICENSE/COPYING file found in the recursive tree. | User reports personal maintainer permission, conditioned on attribution. No source copied. |
-| Vendored `xboxrecomp/` | [MIT](https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/xboxrecomp/LICENSE), copyright 2026 sp00nz, with explicit [third-party exceptions](https://github.com/antoxa2584x/nfsu1-sw/blob/d597e08f88e3f415eb44366b22e75054f2dfd15d/xboxrecomp/NOTICE). | Not vendored here. Do not assume the MIT file covers the whole repository. |
-| xemu-derived MCPX APU and NV2A register files inside xboxrecomp | `NOTICE` lists LGPL-2.1-or-later components and copyrights; license text shipped in `LICENSES/`. | Not reused. A future browser APU port needs its own third-party compliance review. |
-| pcrecomp analysis modules | [MIT license](https://github.com/sp00nznet/pcrecomp/blob/8c92919a99aaf9e129af5787776bca84863468cc/LICENSE) verified at `8c92919a99aaf9e129af5787776bca84863468cc`. | Selected PE/disassembly modules and license copied into ignored `work/upstream/pcrecomp/` for catalog generation. Legacy native-runtime/lift32 patch chains remain outside this reuse. |
-| Source-built Capstone 5.0.7 | [BSD-style LICENSE.TXT](https://github.com/capstone-engine/capstone/blob/52c66920fc7bfa15fd9626dfd9f646c698aaa99b/LICENSE.TXT) and LLVM component license, both retained locally. | Public source downloaded into ignored `work/toolchain/capstone/`; full x86 native build used for synthetic lifting. |
-| pefile 2024.8.26 | [MIT](https://github.com/erocarrera/pefile/blob/4b3b1e2e568a88d4f1897d694d684f23d9e270c4/LICENSE), copyright Ero Carrera. | Public source and license downloaded into ignored `work/toolchain/pefile/`. |
+## Authorization and attribution
 
-The user stated during this session: “i contacted maintainers personally, they
-okay if we mention them in any work we might do”. We accept that as user-reported
-permission for the requested work. No maintainer correspondence was independently
-examined, and no broader permission terms or rights to third-party/game content
-are inferred. There is no additional approval gate for continuing this work.
+The user reported: “i contacted maintainers personally, they okay if we mention
+them in any work we might do”. This authorizes the requested repository reuse
+with attribution; no additional approval gate applies. Correspondence was not
+independently examined. This permission does not replace third-party licenses
+or grant rights to game content or independently authored mod artwork.
 
-Credit **codepdbh**, **th0mk**, **antoxa2584x**, **sp00nz/sp00nznet**, and
-**Talha Müderrisoğlu** where their projects or components contribute. Preserve
-file-specific notices on future copies. Personal maintainer permission does not
-replace third-party license terms.
+| Source | Evidence and reuse |
+| --- | --- |
+| `codepdbh/nfsu1-recompiled` | No root license found; user-reported maintainer permission with attribution. Revision `58d9d4f63d59c941031f91973ae48c2cdb1a42b1` supplies analysis, ABK analysis/matching, widescreen source, HUD data and hooks. |
+| `th0mk/nfsu2-web` | MIT, copyright 2026 th0mk; portions copyright 2026 Talha Müderrisoğlu. Revision `31da468582c3de14fd6f4233831f62816e2df83d` supplies the emitter, runtime and browser host. Notice: [nfsu2-web.LICENSE](../patches/nfsu2-web.LICENSE). |
+| `sp00nznet/pcrecomp` | MIT at `8c92919a99aaf9e129af5787776bca84863468cc`; selected PE/disassembly modules support local catalog generation. Notice: [pcrecomp.LICENSE](../patches/pcrecomp.LICENSE). Legacy native-runtime/lift32 patch chains are not reused. |
+| `antoxa2584x/nfsu1-sw` | No game-specific root license found; user-reported permission with attribution. No source copied. Its separately MIT-licensed `xboxrecomp/` at `d597e08f88e3f415eb44366b22e75054f2dfd15d` does not license the whole repository. xemu-derived LGPL APU/NV2A components are not reused. |
+| Capstone 5.0.7 | Source build at `52c66920fc7bfa15fd9626dfd9f646c698aaa99b`; BSD-style and LLVM component notices retained in ignored `work/toolchain/capstone/`. |
+| pefile 2024.8.26 | MIT, Ero Carrera, at `4b3b1e2e568a88d4f1897d694d684f23d9e270c4`; source and license retained in ignored `work/toolchain/pefile/`. |
+| esbuild 0.27.4 | MIT; isolated npm packages, license, lockfile and package integrities retained in ignored `work/toolchain/web-bundler/`. |
 
-Deliverable adapters and fixtures were newly written; the runtime overlay also
-contains anchored upstream excerpts under the retained
-`patches/nfsu2-web.LICENSE` notice. A selected MIT-licensed web emitter/runtime source snapshot and its
-license were also downloaded into ignored `work/upstream/nfsu2-web/` for the
-compiled synthetic smoke; those source files are not vendored in deliverables.
-See [toolchain provenance](toolchain.md). No upstream license is represented as
-licensing original game content.
-The 2026-10-22 bring-up additions use that same pinned runtime revision:
-the original startup observer uses the CPU registry declarations from
-`win32_ext.c` and the existing `guest_backtrace` helper; the anchored COM overlay
-corrects the `D3DCAPS9` write boundary and disables NFSU2 menu-address writes.
-The source manifest records these interfaces and the Microsoft ABI references.
-The retained MIT notice covers upstream excerpts; no game instructions are
-included in these additions or the synthetic capability-boundary check.
-The focused callback repair tool invokes the same pinned pcrecomp disassembler
-and uses the PC project's mov/push code-seed probe rule only for newly required
-callbacks. These sources remain under ignored `work/` with the notices described
-above; the augmented catalog and emitted callbacks remain private local output.
-The browser bring-up reuses th0mk's MIT-licensed page and generic WebGPU,
-audio, input and WASI worker host at the same pinned revision. Seven browser
-files are transformed by a reversible overlay; their canonical Git blobs and
-the additional `dinput_pad.c` runtime pin are recorded in the manifest. Original
-source notices and the retained MIT license cover those excerpts. The local
-loopback server and build wrapper are original integration tooling. The isolated
-esbuild 0.27.4 npm packages retain their MIT license, lockfile and package
-integrities under ignored `work/toolchain/web-bundler/`; no upstream package or
-lockfile is changed. Built page assets and game modules remain local and ignored.
-The sound-bank pipeline also invokes codepdbh's pinned `scripts/abk_module.py`
-and adapts the content-matching approach in `src/runtime/abk_code.c` to the web
-runtime's `CPU *` ABI. Both original files are retained under ignored `work/`
-at revision `58d9d4f63d59c941031f91973ae48c2cdb1a42b1`, with blob hashes in the
-manifest. This reuse is covered by the same user-reported maintainer permission
-with attribution. All bank instruction bytes, derived module/catalog/matching
-tables, emitted routines and compiled game modules remain private local output.
-Do not commit original executables, XBE files, assets, real analysis catalogs,
-sound-bank instruction bytes, game-derived C, or modules compiled from that C.
-The ignore rules provide basic protection, not a substitute for reviewing files.
+Credit **codepdbh**, **th0mk**, **Talha Müderrisoğlu**, **sp00nz/sp00nznet** and
+**antoxa2584x** where their work contributes. Preserve file-specific notices.
 
-The 2026-10-23 graphics adapter is original host code. Its NFSU1 names, value
-addresses and preset ranges were verified read-only against the matching local
-image and cached emission; no game instructions are included in the adapter.
-The website selectors extend th0mk's existing MIT settings panel at the same
-pinned revision, with its notices retained. Private comparison harnesses and
-linked modules stay ignored. No additional third-party source was copied.
-Automatic resolution also uses th0mk's pinned `runtime/web/gpu_web.c`
-(`87d7fa6fa240bd861c05cb6c6992a37aa4000b80`), already present in the source
-snapshot. Its live view sizing and device-reset watcher are reused with a
-consistent bounded-size comparison. The original MIT notice remains retained.
+## Runtime and browser adaptations
 
-NFSU1 widescreen host hooks in `runtime/nfsu1_widescreen.c` port the pinned
-PC project's `src/runtime/widescreen.c` / `widescreen_hud.inc` /
-`config/hooks.txt` (revision `58d9d4f63d59c941031f91973ae48c2cdb1a42b1`) to the web `CPU *` ABI. Patch
-semantics come from ThirteenAG's [NFSUnderground.WidescreenFix](https://github.com/ThirteenAG/WidescreenFixesPack/tree/708f7528fb8b54c79d4ac3c6071ea7ccc01ae162/source/NFSUnderground.WidescreenFix)
-(MIT). Preserve that MIT notice on redistribution of the adapter. No ASI
-binary or game instructions are included.
+Reversible overlays adapt the pinned MIT runtime/browser sources for the
+`CPU *` ABI, COM boundaries, graphics/resizing, input, saves, date/time,
+startup movies, shader skinning and depth-state handling. Browser settings
+and the original `browser/` menu reuse the host's existing interfaces without
+copied game artwork or fonts. The source manifest identifies individual reused
+files and blobs, including `intro.c`, `tz.c`, `gpu_web.c`, `vsemu_wgsl.inc`,
+`encoder.ts`, `com.c` and the emitter's guarded jump-table implementation.
+Retained MIT notices cover anchored excerpts and adapted source. Bounded COM
+draw diagnostics are original adapter logic using existing runtime accessors.
 
-## Repository packaging
+The NFSU1 widescreen port comes through the pinned PC project. Its patch
+semantics derive from ThirteenAG's MIT WidescreenFixesPack; retain
+[WidescreenFixesPack.LICENSE](../patches/WidescreenFixesPack.LICENSE).
+The license/HUD/frontend reference pin is
+`708f7528fb8b54c79d4ac3c6071ea7ccc01ae162`; it does not establish which
+ThirteenAG revision the PC port originally used.
 
-`tools/fetch_upstreams.py` materializes the public text sources listed in
-`profiles/upstreams.json`, at the fixed revisions above, under ignored
-`work/upstream/`. Every file is checked against its Git blob hash before writing;
-existing files are not overwritten. Offline checks accept canonical originals
-retained by the reversible overlays. Full upstream repositories are neither
-vendored nor added as submodules. `NOTICE.md` summarizes attribution and
-`patches/` retains the nfsu2-web and pcrecomp MIT notices. The PC project's
-reported permission is recorded as reported permission, without assigning it
-a license it did not publish.
+## HD fonts
 
-The profile-creation date/time helpers are original code using the documented
-Microsoft Win32 API contracts (links in the source manifest). On Wasm, they
-reuse the existing pinned `runtime/web/tz.c` timezone adapter through
-`wasm_plat.h`; the same retained nfsu2-web MIT notice applies. Their focused
-smoke uses synthetic data, with no game bytes or generated game functions.
+`runtime/nfsu1_fonts.c` and `tools/font_operands.py` adapt Aero_'s
+NFSHDContentSupport under **GPL-3.0-only**, separately from this project's MIT
+contributions. Source commit: `877a8f0fb817d5bab05c862d261860ed422441fe`;
+`SOURCE/NFSU/dllmain.cpp` blob: `6534741da7739e9f3ddbe5ea21d683bb0068cb10`.
+The full license is [NFSHDContentSupport.LICENSE](../patches/NFSHDContentSupport.LICENSE),
+upstream blob `e62ec04cdeece724caeeeeaeb6ae1f6af1bb6b9a`. The adapter scopes
+logical dimensions and mip selection to four imported font hashes. No ASI
+binaries or game functions are included.
 
-The startup movie adapter reuses the notification-hook design and fresh-input
-baselining from th0mk's MIT-licensed `runtime/intro.c` at the same pinned
-revision (blob `652cff8089910618f033fdcdfe0908e26be8a076`). The retained
-MIT notice applies. NFSU1 interface addresses were verified locally; only
-handwritten host logic and interface metadata are committed. Original game
-inputs and generated functions are unchanged; linked outputs remain local.
+Raze's NFSU-HD FONTS archive `13d395-MOD.7z` supplies optional DDS artwork
+for private local import. Artwork and prepared containers stay ignored under
+`work/mods/`; original inputs remain unchanged. No artwork redistribution
+permission or combined game-derived Wasm distribution permission is inferred.
+The original preparer uses the documented PC TPK layout from xan1242's MIT
+`xnfstpktool` at `bfd46d4e71df7a23db4f4e43c51aa37db2839fee` and JDLZ format
+references recorded in the manifest. It preserves compressed streaming tables
+and untouched textures, using an original literal-only JDLZ encoder for fonts.
 
-The drag-loading switch repair is original catalog-adapter logic using saved
-block and jump-target metadata. It continues to use the guarded jump-table
-emission in th0mk's MIT-licensed `tools/lift.py` at revision
-`31da468582c3de14fd6f4233831f62816e2df83d` (blob
-`abc0d23c368d5a66da97fe86804e5289222ab356`), with the same retained notice.
-Its regression fixtures are authored synthetic bytes. Re-emitted game bodies,
-catalogs and linked modules stay private and ignored; the executable is unchanged.
+## Packaging and distribution
 
-The widescreen layout correction scopes the port's HUD constants to verified
-PC 1.4 projection operands and preserves shared FE quad extents. It is
-original adapter logic; the inherited crop was removed after comparison with
-ThirteenAG's `source/NFSUnderground.WidescreenFix/Frontend.ixx` and local
-read-only instruction inspection. Existing attribution and notices apply.
-No original game bytes or generated functions are included in tracked files.
+Original contributions by Yurii Smetanka are MIT under [LICENSE](../LICENSE),
+subject to the distinct third-party terms above. [NOTICE.md](../NOTICE.md)
+summarizes credits. The root license grants no sublicense to upstream or game
+material; GPL font adaptations retain their own terms.
 
-The character-skinning correction overlays th0mk's MIT-licensed
-`runtime/web/vsemu_wgsl.inc` at the pinned runtime revision
-`31da468582c3de14fd6f4233831f62816e2df83d` (blob
-`443f747f89b0d994bd8dcc3b8d518f75c605e541`). It reuses that translator's
-source-operand helper for consecutive matrix rows. The retained
-`patches/nfsu2-web.LICENSE` applies. Real effect/shader inspection outputs
-remain ignored and private; regression shader data is authored synthetically.
+This is an independent, unofficial compatibility experiment, without EA
+authorization, affiliation or endorsement. Need for Speed and associated marks
+belong to their respective owners. Use your own legally obtained game inputs;
+maintainer permission does not authorize distribution of EA or third-party content.
 
-## Publication license and widescreen notice
+`tools/fetch_upstreams.py` downloads pinned public text sources into ignored
+`work/upstream/`, checks Git blob hashes and preserves originals for reversible
+overlays. Full repositories are neither vendored nor submodules. Synthetic
+fixtures contain authored data. Checks that extract actual emitted functions
+keep those bodies in temporary or ignored local files.
 
-The browser menu redesign and key-binding panel are original HTML, CSS and
-TypeScript in `browser/`, with no copied game artwork or fonts. The reversible
-overlay extends th0mk's pinned MIT-licensed `web/src/main.ts`,
-`web/src/app/style.css` and `web/src/input/index.ts`, using the original input
-mailbox and DirectInput/Windows key translation. Their pinned blob hashes are
-recorded in the source manifest; `patches/nfsu2-web.LICENSE` remains applicable.
-The settings audit reuses existing shared audio, lifecycle and controller
-contracts, without applying NFSU2-specific gameplay or profile patches.
-
-Original contributions by Yurii Smetanka are MIT-licensed under the root
-[LICENSE](../LICENSE). This grants no new rights to third-party or game material.
-The full ThirteenAG MIT notice is retained in
-[patches/WidescreenFixesPack.LICENSE](../patches/WidescreenFixesPack.LICENSE).
-The publication audit pinned its license, HUD data and frontend reference at
-`708f7528fb8b54c79d4ac3c6071ea7ccc01ae162`; hashes are in the manifest.
-The actual port is sourced through the separately pinned PC project; the
-reference pin does not establish which ThirteenAG revision that port used.
-See [rights and distribution boundaries](rights.md) for remaining limitations.
+Do not commit game executables/assets, real catalogs, bank instruction bytes,
+game-derived C or compiled game modules. Review ignored artifacts before sharing;
+ignore rules alone do not establish permission or prevent accidental disclosure.

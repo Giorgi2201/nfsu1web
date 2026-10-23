@@ -38,6 +38,7 @@ printf '%s\n' \
 printf '%s\n' '#ifndef DECLS_H' '#define DECLS_H' '#include "cpu.h"' '#endif' \
   > "$UPSTREAM/gen/server/decls.h"
 echo "nfsu1-bringup" > "$UPSTREAM/gen/all/web-lift.txt"
+cp -f "$ROOT/runtime/nfsu1_fonts.h" "$UPSTREAM/runtime/nfsu1_fonts.h"
 
 cd "$UPSTREAM"
 CC="$WASI/bin/clang"
@@ -104,10 +105,11 @@ cp -f "$ROOT/runtime/nfsu1_win32.c" "$UPSTREAM/runtime/nfsu1_win32.c"
 cp -f "$ROOT/runtime/nfsu1_diagnostics.c" "$UPSTREAM/runtime/nfsu1_diagnostics.c"
 cp -f "$ROOT/runtime/nfsu1_intro.c" "$UPSTREAM/runtime/nfsu1_intro.c"
 cp -f "$ROOT/runtime/nfsu1_graphics.c" "$UPSTREAM/runtime/nfsu1_graphics.c"
+cp -f "$ROOT/runtime/nfsu1_fonts.c" "$UPSTREAM/runtime/nfsu1_fonts.c"
 cp -f "$ROOT/runtime/nfsu1_widescreen.c" "$UPSTREAM/runtime/nfsu1_widescreen.c"
 cp -f "$ROOT/runtime/nfsu1_widescreen.h" "$UPSTREAM/runtime/nfsu1_widescreen.h"
 cp -f "$ROOT/runtime/widescreen_hud.inc" "$UPSTREAM/runtime/widescreen_hud.inc"
-RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics nfsu1_intro nfsu1_graphics nfsu1_widescreen com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
+RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics nfsu1_intro nfsu1_graphics nfsu1_fonts nfsu1_widescreen com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
 # Widescreen requires mid-block guest_hook sites in the selected emission.
 python3 - <<'PY'
 import json, pathlib, re, sys
@@ -115,6 +117,8 @@ report = pathlib.Path("gen/all/lift-report.json")
 if not report.is_file():
     sys.exit("missing gen/all/lift-report.json; re-lift with --hooks-file")
 data = json.loads(report.read_text())
+if data.get("font_operands_version") != 2 or len(data.get("font_operand_sites", [])) != 6:
+    sys.exit("re-lift with current lift_catalog.py: scoped HD font operands required")
 if data.get("widescreen_operands_version") != 1:
     sys.exit("re-lift with current lift_catalog.py: scoped HUD operands required")
 hooks = data.get("hooks") or []
@@ -122,6 +126,11 @@ emitted = data.get("hooks_emitted")
 if emitted != len(hooks) or len(hooks) < 54:
     sys.exit(f"incomplete widescreen hooks in lift report: emitted={emitted} listed={len(hooks)}")
 text = "\n".join(p.read_text() for p in sorted(pathlib.Path("gen/all").glob("shard_*.c")))
+if any(f"nfsu1_font_dimension(c->{reg}, {axis}u)" not in text
+       for reg in ("ecx", "edx") for axis in (0, 1)):
+    sys.exit("incomplete HD font dimension accessors in selected emission")
+if "nfsu1_font_mip_reduction(c->esi)" not in text:
+    sys.exit("missing HD font upload mip policy")
 missing = [va for va in hooks
            if f"guest_hook(c, 0x{int(va, 16):x}u)" not in text]
 if missing:
@@ -222,6 +231,6 @@ if [ ! -f "$OUT/nfsu1.wasm" ]; then
   echo "link FAILED:"; grep -E "error" "$OUT/link.log" | head -80; exit 1
 fi
 SIZE=$(wc -c < "$OUT/nfsu1.wasm" | tr -d ' ')
-printf '{"pages":%d,"maxPages":65536,"guestEnd":%d,"size":%d,"opt":"%s","lift":"nfsu1-bringup"}\n' \
+printf '{"pages":%d,"maxPages":65536,"guestEnd":%d,"size":%d,"opt":"%s","lift":"nfsu1-bringup","hdFonts":1}\n' \
   "$PAGES" "$GUEST_END" "$SIZE" "$OPT" > "$OUT/nfsu1.json"
 echo "link OK: $OUT/nfsu1.wasm ($(( SIZE / 1048576 )) MB)"

@@ -139,6 +139,8 @@ def main():
     lifter = module.Lifter(str(args.image.resolve()), comments=False, hooks=hook_vas)
     from widescreen_operands import attach as attach_widescreen_operands, SITES
     hud_operands = attach_widescreen_operands(lifter) if hook_vas else set()
+    from font_operands import attach as attach_font_operands, SITES as FONT_SITES, MIP_SITES
+    font_operands = attach_font_operands(lifter)
     structural = profile["identity"]["structural_values"]
     import pefile
     pe = pefile.PE(data=image)
@@ -194,6 +196,7 @@ def main():
               "ready_for_runtime_build": False, "link_stubs": args.link_stubs}
     report["cooperative_yield_entries"] = sorted(cooperative_yield_entries)
     report["widescreen_operands_version"] = 1 if hook_vas else 0
+    report["font_operands_version"] = 2
     report["hooks"] = [f"0x{va:08x}" for va in sorted(hook_vas)]
     if extension:
         report["parent_catalog_sha256"] = extension[2]
@@ -205,8 +208,12 @@ def main():
         if not bodies:
             return
         path = output / f"shard_{shard_index:04d}.c"
+        font_header = '#include "nfsu1_fonts.h"\n' if any(
+            "nfsu1_font_dimension(" in body or "nfsu1_font_mip_reduction(" in body
+            for body in bodies) else ""
         path.write_text('/* GAME-DERIVED: local output, DO NOT DISTRIBUTE. */\n'
                         '#include "cpu.h"\n#include "decls.h"\n#include <math.h>\n'
+                        + font_header
                         + "\n\n".join(bodies) + "\n")
         bodies = []
         shard_index += 1
@@ -258,6 +265,9 @@ def main():
     if cooperative_yield_entries - emitted:
         parser.error("a cooperative yield entry failed emission; refusing an unhooked stub")
     flush()
+    if not args.limit and font_operands != set(FONT_SITES) | MIP_SITES:
+        raise SystemExit("missing scoped HD font dimension operands")
+    report["font_operand_sites"] = [f"0x{va:08x}" for va in sorted(font_operands)]
     if hook_vas:
         # Mid-block sites must appear as guest_hook calls in emitted bodies.
         # Fail closed: a missing site means the runtime cannot apply the patch.

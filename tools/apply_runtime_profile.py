@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from traffic_depth_overlay import com as traffic_depth_com
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMIT = "31da468582c3de14fd6f4233831f62816e2df83d"
@@ -176,6 +177,7 @@ void unsupported_insn(CPU *c, uint32_t addr, const char *mn){
             }
 ''')
     if name == "runtime/com.c":
+        source = traffic_depth_com(source)
         # D3DCAPS9 is 304 bytes in the 32-bit guest ABI. The upstream 336-byte
         # clear overwrites NFSU1's adjacent RECT and four mode-availability words.
         source = replace(source, '    mem_commit(p,0x150); memset(g_mem+p,0,0x150);',

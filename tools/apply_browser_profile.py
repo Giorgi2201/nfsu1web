@@ -14,10 +14,12 @@ import json
 import re
 from pathlib import Path
 from browser_keyboard_overlay import keyboard_input
+from depth_state_overlay import encoder as depth_encoder
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMIT = "31da468582c3de14fd6f4233831f62816e2df83d"
 FILES = {
+    "web/src/gpu/encoder.ts": "399a04f2db47df9ea7ef93a10f29807f2da19dcb",
     "web/src/main.ts": "d1215f3ea6cc5fbad3714e602957636461be7d4a",
     "web/src/app/style.css": "e8c5d7e21fd6ec430167219974c6f38565df5d40",
     "web/src/input/index.ts": "b322ec69927eb1c046cd67be8ce5e5d00caec44f",
@@ -74,6 +76,8 @@ def redesign_page(source: str) -> str:
 
 
 def transform(path: str, source: str) -> str:
+    if path == "web/src/gpu/encoder.ts":
+        return depth_encoder(source)
     if path == "web/src/main.ts":
         return exact(source, "void boot();", "import { mountMenu } from './app/menu';\n\nmountMenu();\nvoid boot();")
 
@@ -225,7 +229,7 @@ def transform(path: str, source: str) -> str:
   'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'NOSOUND', 'NFSU2_BACKGROUND', 'SNDSYNC', 'NFSFULL', 'NFSMAXPIX',
   'NFSU2_PAD', 'NFSU2_PAD_DEADZONE', 'NFSU2_PAD_TRIGGER_DEADZONE', 'NFSU2_PAD_TRIGGER_CLICK', 'NFSU2_FF',
   'NFSU2_AUDIO_LATENCY', 'NFSU2_TZ', 'NFSU2_TZ_NAME',
-  'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
+  'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'NFSU1_DEPTH_DIAGNOSTICS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
   'NFSU2_AUTOSAVE', 'NFSU2_NET', 'NFSU2_ONLINE', 'NFSU2_ROAM', 'NFSU2_SEED_REGISTRY', 'NFSU2_FPS_COUNTER', 'NFSU2_PAD_FE_KEYS',
 ]);
 /** Pass only host contracts and explicitly supported bring-up diagnostics to the process. */

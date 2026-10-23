@@ -1,170 +1,118 @@
-# Building and running locally
+# Build and run locally
 
-This is an experimental local build for the PC NFSU1 1.4 executable. It combines
-the pinned `nfsu2-web` runtime/emitter with locally generated code based on
-`nfsu1-recompiled` and its pinned `pcrecomp` analysis dependency. It is still
-experimental: the user's browser report covers intro clips with sound, profile
-creation and reload, profile loading, and starting a race. It does not establish
-a completed race or general game compatibility. Synthetic checks and Node
-guest runs are separate from browser/game validation.
+Run commands from the repository root. This experimental build targets one PC
+NFSU1 1.4 executable; see [status](status.md) for compatibility limits. Keep game
+files, catalogs, emitted game C, objects and Wasm under ignored `work/`, `gen/`
+and `out/`. Do not modify original inputs or distribute these private outputs.
 
-Run commands from the repository root. If this workspace is already built,
-check it with `python3 tools/serve_nfsu1.py --check`, then start it with
-`python3 tools/serve_nfsu1.py`; rebuilding or repeating emission is unnecessary.
-The steps below describe a fresh setup. Both lift tools require empty output
-directories and deliberately refuse to overwrite earlier emissions.
+For an existing build, start with `python3 tools/serve_nfsu1.py --check` and
+`python3 tools/serve_nfsu1.py`. Rebuilding and analysis are unnecessary unless
+inputs or source changed. Optional HD fonts and launch options are in
+[settings](settings.md); validation commands and browser checks are in
+[testing](testing.md).
 
-## Prerequisites and source setup
+## Tools and pinned sources
 
-Use Python 3.10 or newer, Node.js, npm, and a C toolchain. The source-only
-tests work with Node.js 20+, but the full Wasm Node host was tested with Node.js
-25.9. Do not infer full-module support on Node 20 from the test prerequisite.
-A full game-module build also needs a WASI SDK with threads, SIMD, exception
-handling and tail-call support. The tested workspace used WASI SDK 34; see
-[toolchain notes](toolchain.md) for exact flags and setup.
-
-The scripts assume a Unix-like shell with Bash, `tar`, `shasum`, `xargs` and
-standard command-line utilities. Apple Silicon macOS is the tested build host;
-Windows and Linux builds have not been verified. Network access is needed for
-the pinned source snapshots and toolchain dependencies. Allow disk space for
-your full installation, SDK, generated C and object cache; no minimum disk or
-build-time estimate has been established. `J=4` limits guest-shard compilation
-jobs, though runtime compilation also starts parallel jobs.
-
-To play locally, use a browser with WebGPU, shared memory, storage and the Wasm
-features checked by the startup page. The default module reserves 1 GiB of
-initial shared Wasm memory and permits growth to 4 GiB; the browser and GPU
-need additional memory. No minimum machine specification or browser support
-matrix has been established. Use the supplied loopback server so the required
-cross-origin isolation headers are present; opening `index.html` directly is
-insufficient.
-
-Install the SDK separately from the
-[official WASI SDK 34 release](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-34),
-choosing the archive for your host. For the tested Apple Silicon macOS setup,
-download `wasi-sdk-34.0-arm64-macos.tar.gz`, verify its SHA-256, and extract it:
-
-```sh
-shasum -a 256 /path/to/wasi-sdk-34.0-arm64-macos.tar.gz
-# Expected: 9c59398106b417f8f14913380fdf0097a8cc0ff4af9eb3ce0065a859e88d49e9
-mkdir -p work/toolchain
-tar -xzf /path/to/wasi-sdk-34.0-arm64-macos.tar.gz -C work/toolchain
-```
-
-The SDK root must contain `bin/clang`, `bin/llvm-objdump` and `share/wasi-sysroot/`.
-The build defaults to `work/toolchain/wasi-sdk-34.0-arm64-macos`; use
-`WASI=/path/to/sdk` for another location. Other host platforms are unverified.
-
-The three required upstream source snapshots live outside tracked project files.
-From the repository root, fetch the fixed revisions:
-
-```sh
-python3 tools/fetch_upstreams.py
-```
-
-This materializes the selected source and license files for `nfsu2-web`,
-`nfsu1-recompiled`, and `pcrecomp` in ignored `work/upstream/`. Each file is
-checked against its pinned Git blob hash in `profiles/upstreams.json`; the
-source revision is recorded there as well. This is a sparse source snapshot,
-not a full repository clone. No upstream repo is added as a submodule or copied
-into tracked project files. Verify the snapshot, including local overlay
-backups, without network access with:
-
-```sh
-python3 tools/fetch_upstreams.py --check
-```
-
-The NFSU1 runtime and browser overlays are reversible and idempotent. Apply
-them to the pinned source snapshot before building:
-
-```sh
-python3 tools/apply_runtime_profile.py --upstream work/upstream/nfsu2-web
-python3 tools/apply_browser_profile.py --upstream work/upstream/nfsu2-web
-```
-
-They only change hand-written runtime and browser-host files, retaining the
-originals and their hashes under the source snapshot's local overlay state.
-See `--help` for the matching `--revert` commands. Re-run `--check` after
-applying overlays to verify the pinned originals and saved backups.
-
-## Private game inputs and cached analysis
-
-Provide your own matching PC NFSU1 1.4 files. The catalog tool checks the
-executable's full SHA-256 and rejects a different build. Keep the executable,
-archive, extracted files and generated analysis under ignored `work/`; never
-put these in a tracked folder. For example, copy your unchanged executable to
-the private analysis directory and stage game data under `work/data/`:
-
-```sh
-mkdir -p work/analysis work/data
-cp /path/to/your/Speed.exe work/analysis/Speed.analysis.exe
-```
-
-See [supported inputs](game-inputs.md) for the exact executable fingerprint.
-The repository supplies no game files or download instructions. A different
-executable requires a separate compatibility investigation; changing the hash
-check alone does not make its addresses compatible.
-
-For the browser host, `work/data/` must contain the game files it requests and
-data directories. Copy the contents of your installation there, including
-`Cars`, `FrontEnd`, `Global`, `Tracks`, `Languages`, `fx`, `Sound`, `Movies`,
-`SNDSTREAMS` and `SpeechStreams`. Keep the unchanged executable at the analysis
-path above and point the browser's expected name at it with the allowed symlink
-(skip this command if `work/data/Speed.exe` already exists):
-
-```sh
-ln -s ../analysis/Speed.analysis.exe work/data/Speed.exe
-```
-
-Sound-bank analysis expects `work/data/Sound/**/*.abk`. Do not include native
-Windows plugins or mods in this experiment. The tools read source inputs
-without modifying them.
-
-Create a local virtual environment and install the pinned Python dependencies
-used by the current cached analysis:
+Use Python 3.10+, Node.js 20+, npm, Bash, a C compiler, `make`, `tar`, `shasum`
+and `xargs`. Full-module Node execution was checked with Node 25.9; the Node 20
+requirement covers source tests. Apple Silicon macOS is the tested build host;
+other hosts remain unverified. Allow space for the installation, SDK, generated
+code and object cache.
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install capstone==5.0.7 pefile==2024.8.26
+python3 tools/fetch_upstreams.py
+python3 tools/apply_runtime_profile.py --upstream work/upstream/nfsu2-web
+python3 tools/apply_browser_profile.py --upstream work/upstream/nfsu2-web
+python3 tools/fetch_upstreams.py --check
 ```
 
-The PC analysis outputs are cached under ignored `work/analysis/`. An unchanged
-rerun reuses the four original seed/catalog stages; it does not repeat the
-analysis.
+The bootstrap materializes sparse, pinned `nfsu2-web`, `nfsu1-recompiled` and
+`pcrecomp` snapshots in `work/upstream/`; revisions and blob hashes are in
+`profiles/upstreams.json`. Overlays retain verified originals and support
+`--revert`; consult each tool's `--help`. The final `--check` also verifies
+saved overlay backups without network access.
 
-Generate the main executable catalog once. The wrapper fingerprints its inputs
-and tools and reuses complete stages on later runs:
+If using this workspace's source-built Python dependencies instead of a venv,
+set these variables before running analysis, emission or lifter checks:
+
+```sh
+export PYTHONPATH="$PWD/work/toolchain/capstone/bindings/python:$PWD/work/toolchain/pefile"
+export LIBCAPSTONE_PATH="$PWD/work/toolchain/capstone"
+```
+
+That Capstone snapshot is 5.0.7 (`52c66920fc7bfa15fd9626dfd9f646c698aaa99b`);
+pefile is 2024.8.26 (`4b3b1e2e568a88d4f1897d694d684f23d9e270c4`). Their local
+provenance files and licenses stay beside the sources. To rebuild the existing
+Capstone source on macOS, run this from `work/toolchain/capstone/`:
+
+```sh
+make -j4 CAPSTONE_ARCHS=x86 CAPSTONE_X86_ATT_DISABLE=yes \
+  CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=no CAPSTONE_SHARED=yes
+ln -s libcapstone.5.dylib libcapstone.dylib  # Only if the alias is absent.
+```
+
+Install [WASI SDK 34](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-34)
+for your host. The tested Apple Silicon archive is
+`wasi-sdk-34.0-arm64-macos.tar.gz`, SHA-256
+`9c59398106b417f8f14913380fdf0097a8cc0ff4af9eb3ce0065a859e88d49e9`.
+
+```sh
+shasum -a 256 /path/to/wasi-sdk-34.0-arm64-macos.tar.gz
+mkdir -p work/toolchain
+tar -xzf /path/to/wasi-sdk-34.0-arm64-macos.tar.gz -C work/toolchain
+```
+
+The SDK must contain `bin/clang`, `bin/llvm-objdump` and `share/wasi-sysroot/`.
+The build defaults to `work/toolchain/wasi-sdk-34.0-arm64-macos`; set `WASI` for
+another location. The script supplies the required threads, SIMD, bulk-memory,
+nontrapping conversion, tail-call and exception-handling flags.
+
+## Private game inputs
+
+Supply your own matching installation. No game files or download source are
+provided. The required `Speed.exe` is 3,178,496 bytes, SHA-256:
+
+```text
+c0fad450912952f53809a54690d235aa8b4e25b9f46650693c7cbee1b4c074b7
+```
+
+This full digest was measured locally; the pinned PC upstream publishes an
+abbreviated matching digest. The selected PE has image base `0x00400000`,
+SizeOfImage `0x00394368` and entry RVA `0x00270cb5`. Analysis checks the full
+hash. A different executable needs separate compatibility work; bypassing the
+check does not make its addresses compatible. Details live in
+`profiles/nfsu1-pc.json`.
+
+```sh
+shasum -a 256 /path/to/your/Speed.exe
+mkdir -p work/analysis work/data
+cp /path/to/your/Speed.exe work/analysis/Speed.analysis.exe
+ln -s ../analysis/Speed.analysis.exe work/data/Speed.exe
+```
+
+Skip the symlink command if that path already exists. Copy the installation's
+`Cars`, `FrontEnd`, `Global`, `Tracks`, `Languages`, `fx`, `Sound`, `Movies`,
+`SNDSTREAMS` and `SpeechStreams` into `work/data/`, preserving filenames and
+structure. ABK analysis reads `Sound/**/*.abk`. Native Windows DLL/ASI plugins
+cannot be installed directly into the browser runtime.
+
+## Cache analysis and emit
+
+The analysis wrappers fingerprint inputs and tools, reuse completed stages and
+keep catalogs/provenance local. Do not rerun discovery for every build. The
+callback repair creates a derived catalog while preserving the cached base.
+Emission consumes these saved ranges and requires empty output directories.
 
 ```sh
 python3 tools/prepare_game_catalog.py --image work/analysis/Speed.analysis.exe
-```
-
-The resulting catalog and provenance stay in ignored `work/analysis/`. This
-uses the original pinned analysis passes locally; no maintainer-generated
-catalog is required. If a runtime callback later needs a focused addition,
-follow the callback-closure command in [progress.md](progress.md) and write its
-result under `work/analysis/`, keeping the baseline catalog intact.
-
-The current working audio path also needs the cached sound-bank analysis and
-emission. These commands use the private ABK data above:
-
-```sh
 python3 tools/prepare_abk_catalog.py \
   --image work/analysis/Speed.analysis.exe --data work/data
 python3 tools/lift_abk_catalog.py \
   --image work/analysis/Speed.analysis.exe --data work/data \
   --output-dir gen/nfsu1-abk
-```
-
-## Emit and compile the experimental module
-
-First follow the runtime-observed missing callback chain. This adds the two
-focused callback bodies to a derived catalog while preserving the cached base
-catalog. Then emit that repaired catalog with the cooperative movie-thread
-yield used by the current selection:
-
-```sh
 python3 tools/repair_catalog_callbacks.py \
   --image work/analysis/Speed.analysis.exe \
   --catalog work/analysis/catalog.json \
@@ -174,75 +122,42 @@ python3 tools/lift_catalog.py \
   --image work/analysis/Speed.analysis.exe \
   --catalog work/analysis/callback-closure/catalog.json \
   --base-catalog work/analysis/catalog.json \
-  --upstream work/upstream/nfsu2-web \
-  --output-dir gen/nfsu1-current \
+  --upstream work/upstream/nfsu2-web --output-dir gen/nfsu1-current \
   --cooperative-yield-entry 0x0063f0a0 \
-  --hooks-file work/upstream/nfsu1-recompiled/config/hooks.txt \
-  --link-stubs
+  --hooks-file work/upstream/nfsu1-recompiled/config/hooks.txt --link-stubs
 ```
 
-`--hooks-file` emits `guest_hook` before each NFSU1 widescreen site so
-`runtime/nfsu1_widescreen.c` can apply FOV/HUD corrections. The current lifter
-also scopes five HUD constant operands so menu layout keeps its original
-constants; older widescreen emissions must be regenerated. Choose a fresh
-`--output-dir` when re-emitting; the lift refuses a nonempty destination.
+Hooks and operand transformations provide scoped widescreen/HUD/font behavior;
+older emissions can require regeneration when these change. `--link-stubs` is
+still required: unresolved routines abort when reached. Successful compilation
+alone does not establish game compatibility.
 
-
-The emitter consumes the saved catalog; it does not scan for new functions.
-`--link-stubs` remains necessary because some entries are unresolved; a stub
-aborts if reached and does not count as emitted game code. The current main
-emission contains 22,944 bodies and 675 abort stubs. The companion ABK
-emission has 28 routines and no ABK stubs. Set `WASI` if your SDK is not at
-the workspace default, then compile and link:
+## Compile, bundle and serve
 
 ```sh
-WASI=/path/to/wasi-sdk-34 J=4 bash tools/build_nfsu1_wasm.sh
-```
-
-The script defaults to `gen/nfsu1-current`, `gen/nfsu1-abk`,
-`work/upstream/nfsu2-web`, and the workspace WASI SDK path. The module and
-metadata are written to the source snapshot's ignored `out/web/`. This step
-can take time and consume substantial disk space; cached objects are reused
-when their source hashes match. It is a bring-up build with visible abort
-stubs, not a clean full lift.
-
-## Bundle and serve the browser host
-
-Install the isolated, pinned esbuild before bundling if it is absent, then
-bundle the browser host against the linked module and local data:
-
-```sh
+J=4 bash tools/build_nfsu1_wasm.sh
 npm install --prefix work/toolchain/web-bundler --no-audit --no-fund \
   --ignore-scripts esbuild@0.27.4
 python3 tools/build_nfsu1_browser.py
-```
-
-The npm step can be skipped if `work/toolchain/web-bundler/node_modules/` is
-already present. Validate the staged build without opening a browser:
-
-```sh
 python3 tools/serve_nfsu1.py --check
+python3 tools/serve_nfsu1.py
 ```
 
-This checks local inputs, not game compatibility. Start the loopback server
-with `python3 tools/serve_nfsu1.py`
-and open `http://127.0.0.1:8765/` in your browser. Keep the server terminal open;
-stop it with Ctrl+C. After changing the module or game data, restart the server
-and reload the same address. Browser storage is origin-specific, so keep the
-same host and port to retain the created profile. The server exposes local game
-files as read-only. See [browser-testing.md](browser-testing.md) for the user
-test steps and evidence to record.
+Set `WASI=/path/to/sdk`, `GEN=/absolute/path/to/emission` or `ABK_GEN=...` before
+the build command to override defaults. Cached guest objects are reused when
+source hashes match; `J` controls guest compilation jobs. Skip npm installation
+when the pinned bundler is already available. Outputs are under the upstream
+snapshot's ignored `out/web/` and `web/dist/`.
 
-For a runtime-only change, re-run the Wasm build and browser bundler using the
-existing emissions. For a browser-only change, re-run the bundler. If emission
-must be repeated, select a fresh ignored output directory and set `GEN` or
-`ABK_GEN` when building; lift tools do not overwrite nonempty directories.
+Open `http://127.0.0.1:8765/` yourself. The server provides cross-origin isolation
+and read-only game data; opening HTML directly is insufficient. The browser
+needs WebGPU, shared memory/storage and the Wasm features checked at startup.
+The default module starts with 1 GiB shared memory and permits growth to 4 GiB;
+browser/GPU memory is additional. Follow [testing](testing.md) for game checks.
 
-## Keep outputs private
-
-The `.gitignore` covers `work/`, `gen/`, `out/`, game executable/archive
-extensions, and Python bytecode. Review `git status --ignored --short` before
-sharing changes; do not force-add game binaries, extracted assets, catalogs,
-analysis logs, generated game C, object files or Wasm modules. Keep upstream
-license and notice files alongside their local source trees. The repository's
-source and permission record explains the attribution and reuse basis.
+After runtime changes, rebuild Wasm and the browser bundle; after browser-only
+changes, rebuild the bundle. Re-emission needs a fresh ignored directory and
+an explicit `GEN`/`ABK_GEN`. Restart the server and reload after changing Wasm or
+data. Keep the same host and port to retain origin-specific browser saves.
+Review `git status --ignored --short` before sharing; never force-add private
+inputs, catalogs, emitted game code, binaries or logs. Preserve source licenses.

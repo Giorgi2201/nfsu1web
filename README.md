@@ -10,13 +10,14 @@ and [th0mk's NFSU2 browser runtime](https://github.com/th0mk/nfsu2-web).
 
 **Still a work in progress.** Local browser testing has reached intro movies
 with sound, profile creation and loading, saves that survive a reload, and
-starting a race. Completing races and broader game compatibility remain
+starting a race. HD font loading and traffic occlusion fixes are user-confirmed.
+Completing races and broader game compatibility remain
 unverified. Expect bugs, rendering issues and unfinished paths.
 
 ## Running it
 
 You'll need your own legally obtained PC game files and the exact
-[supported executable](docs/game-inputs.md). Game files and prebuilt game
+[supported executable](docs/building.md#private-game-inputs). Game files and prebuilt game
 modules are not included.
 
 Follow the **[build and run guide](docs/building.md)** for the full setup.
@@ -33,13 +34,13 @@ Once you've built it:
 python3 tools/serve_nfsu1.py
 ```
 
-Open **http://127.0.0.1:8765/** and click **Start experiment**. Keep the server
+Open **http://127.0.0.1:8765/** and click **Launch game**. Keep the server
 running while you play. Use the same address each time to keep your saved
 profile available.
 
 The browser host includes graphics presets, automatic resolution, widescreen
-hooks and startup movie controls. See the [graphics notes](docs/graphics.md)
-and [movie controls](docs/movie-skipping.md) for details and remaining checks.
+hooks, startup movie controls and optional local HD fonts. See
+[settings and fonts](docs/settings.md) for options and import instructions.
 
 ## Development
 
@@ -55,11 +56,10 @@ node --test tests/guest_abi.test.mjs
 ```
 
 These checks don't test gameplay. For browser testing and useful bug reports,
-see the [test guide](docs/browser-testing.md). Fixes and contributions are
+see the [test guide](docs/testing.md). Fixes and contributions are
 welcome; start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
-More detail: [progress](docs/progress.md) ·
-[compatibility](docs/compatibility.md) ·
+More detail: [current status](docs/status.md) ·
 [mod research](docs/mod-compatibility.md)
 
 ## Credits
@@ -84,4 +84,4 @@ Exact source revisions, notices and permission records are in
 Original contributions are [MIT-licensed](LICENSE); upstream material retains
 its own terms. This is an unofficial project, unaffiliated with Electronic
 Arts. No license to game content is granted. See the
-[rights notes](docs/rights.md) for details.
+[source and distribution terms](docs/source-permissions.md) for details.

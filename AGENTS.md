@@ -5,14 +5,14 @@
 This repository integrates PC NFS Underground 1 into the `nfsu2-web` browser runtime. It contains build tooling, runtime adapters and research for an experimental local browser build. The user has reported intro video/audio, a persisted profile and a race start; full compatibility remains unverified.
 
 - `tools/catalog_bridge.py`: saved-catalog normalization and an optional upstream-lifter adapter.
-- `tools/run_lifter_smoke.py`: focused real-lifter/native compilation check; setup in `docs/toolchain.md`.
+- `tools/run_lifter_smoke.py`: focused real-lifter/native compilation check; setup in `docs/building.md`.
 - `tools/fetch_upstreams.py`: pinned public source bootstrap into ignored `work/upstream/`.
 - `tools/build_nfsu1_wasm.sh`, `tools/build_nfsu1_browser.py` and `tools/serve_nfsu1.py`: local build and serving pipeline; setup in `docs/building.md`.
 - `runtime/`: handwritten NFSU1 host adapters and diagnostics; no emitted game functions.
 - `profiles/`: NFSU1 configuration consumed by the runtime overlay.
 - `poc/guest_abi.mjs`: original synthetic WebAssembly ABI fixture; `poc/README.md` documents its limits.
 - `tests/`: Python catalog tests and Node.js Wasm tests.
-- `docs/compatibility.md`: compatibility matrix and integration plan.
+- `docs/status.md`, `docs/settings.md`, `docs/testing.md`: current support, options and validation.
 - `docs/source-manifest.json` and `docs/source-permissions.md`: pinned evidence, permissions and attribution.
 
 ## Development & Test Commands

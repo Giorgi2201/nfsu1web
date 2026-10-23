@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import mimetypes
@@ -167,7 +168,8 @@ def validate_config(dist: Path, wasm: Path, metadata: Path, data: Path) -> list[
 
 
 class Config:
-    def __init__(self, dist: Path, wasm: Path, metadata: Path, data: Path):
+    def __init__(self, dist: Path, wasm: Path, metadata: Path, data: Path,
+                 hd_fonts: Path | None = None):
         self.dist = dist.resolve(strict=True)
         self.wasm = wasm.resolve(strict=True)
         self.metadata = metadata.resolve(strict=True)
@@ -176,12 +178,42 @@ class Config:
         # Restart after rebuilding the wasm or changing the game data.
         self.lock = threading.Lock()
         self.manifest = None
+        self.font_files = {}
         self.module_hash = self._hash_file(self.wasm)
         self.module_stamp = self._file_stamp(self.wasm)
         self.game_info = json.loads(self.metadata.read_text(encoding="utf-8"))
+        if hd_fonts is not None:
+            if self.game_info.get("hdFonts") != 1:
+                raise ValueError("rebuild Wasm with HD font scaling support before enabling fonts")
+            self._load_fonts(hd_fonts)
         self.game_info["rev"] = f"nfsu1-local-{self.module_hash[:12]}"
         self.game_info["module"] = self.module_hash
         self.game_json = json.dumps(self.game_info, separators=(",", ":")).encode("utf-8")
+
+    def _load_fonts(self, directory: Path):
+        directory = directory.resolve(strict=True)
+        report = json.loads((directory / "manifest.json").read_text())
+        if report.get("kind") != "nfsu1-hd-fonts":
+            raise ValueError("expected a prepared NFSU1 HD fonts manifest")
+        allowed = {"global/globala.bun", "languages/languagetextures.bin"}
+        entries = report.get("files", [])
+        if len(entries) != 2 or {e["path"].lower() for e in entries} != allowed:
+            raise ValueError("HD fonts must replace exactly the two font containers")
+        for entry in entries:
+            parts = decoded_parts("/" + entry["path"])
+            original = resolve_under(self.data, parts, data=True)
+            replacement = resolve_under(directory / "data", parts)
+            if self._hash_file(original) != entry["source_sha256"]:
+                raise ValueError(f"HD fonts source does not match: {entry['path']}")
+            digest = self._hash_file(replacement)
+            if digest != entry["sha256"]:
+                raise ValueError(f"HD fonts output hash mismatch: {entry['path']}")
+            # Content-derived version keeps stock and mod cache entries distinct,
+            # even if local copying preserves the file's size and timestamp.
+            self.font_files[entry["path"].lower()] = {
+                "path": replacement, "stamp": self._file_stamp(replacement),
+                "mtime": 0x100000000 + int(digest[:8], 16),
+            }
 
     @staticmethod
     def _hash_file(path: Path) -> str:
@@ -202,6 +234,10 @@ class Config:
         with self.lock:
             if self.manifest is None:
                 self.manifest = build_manifest(self.data)
+                for entry in self.manifest["files"]:
+                    font = self.font_files.get(entry["p"].lower())
+                    if font:
+                        entry.update(s=font["stamp"][2], m=font["mtime"])
             return self.manifest
 
 
@@ -265,6 +301,11 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/data" or path.startswith("/data/"):
                 suffix = path[len("/data/"):] if path.startswith("/data/") else ""
                 parts = decoded_parts("/" + suffix) if suffix else ()
+                font = self.config.font_files.get("/".join(parts).lower())
+                if font:
+                    self._send_file(font["path"], self._mime(font["path"]), send_body,
+                                    ranges=True, expected_stamp=font["stamp"])
+                    return
                 target = resolve_under(self.config.data, parts, data=True)
                 self._send_file(target, self._mime(target), send_body, ranges=True)
                 return
@@ -384,6 +425,8 @@ def parse_args(argv=None):
     parser.add_argument("--wasm", type=Path, default=DEFAULT_WASM, help="private NFSU1 wasm module")
     parser.add_argument("--metadata", type=Path, default=DEFAULT_METADATA, help="NFSU1 module metadata JSON")
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA, help="private game data directory")
+    parser.add_argument("--hd-fonts", type=Path,
+                        help="prepared fonts directory from prepare_hd_fonts.py")
     parser.add_argument("--host", default="127.0.0.1", help="bind address (localhost only by default)")
     parser.add_argument("--port", type=int, default=8765, help="HTTP port")
     parser.add_argument("--check", action="store_true", help="validate required local inputs without binding a port")
@@ -402,13 +445,33 @@ def main(argv=None):
         for error in errors:
             print(f"error: {error}", file=sys.stderr)
         return 1
+    try:
+        config = Config(args.dist, args.wasm, args.metadata, args.data, args.hd_fonts)
+    except (OSError, ValueError, KeyError, TypeError, RequestError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     if args.check:
         print("Local server inputs are ready.")
         return 0
-    config = Config(args.dist, args.wasm, args.metadata, args.data)
-    server = LocalServer((args.host, args.port), config)
+    try:
+        server = LocalServer((args.host, args.port), config)
+    except OSError as exc:
+        if exc.errno == errno.EADDRINUSE:
+            print(f"error: {args.host}:{args.port} is already in use. "
+                  "If the game server is already running, open "
+                  f"http://{args.host}:{args.port}/. Stop that server before restarting "
+                  "with different options; keep the same address to retain your profile.",
+                  file=sys.stderr)
+        else:
+            print(f"error: cannot start server on {args.host}:{args.port}: {exc}",
+                  file=sys.stderr)
+        return 1
     address = server.server_address
     print(f"Serving private NFSU1 build at http://{address[0]}:{address[1]}/ (Ctrl-C to stop)", flush=True)
+    if config.font_files:
+        print("HD fonts enabled (local overlay; gauges unchanged).", flush=True)
+    else:
+        print("Font assets: stock (no --hd-fonts overlay selected).", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

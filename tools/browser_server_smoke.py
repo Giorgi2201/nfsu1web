@@ -148,6 +148,36 @@ def exercise(request_fn, config, root):
     assert missing.status == 404
 
 
+def font_overlay_smoke(root):
+    data, overlay = root / "font-data", root / "fonts"
+    files = []
+    for name in ("GLOBAL/GLOBALA.BUN", "LANGUAGES/LANGUAGETEXTURES.BIN"):
+        source, replacement = data / name, overlay / "data" / name
+        source.parent.mkdir(parents=True, exist_ok=True)
+        replacement.parent.mkdir(parents=True, exist_ok=True)
+        source.write_bytes(b"original")
+        replacement.write_bytes(b"HD fonts")
+        files.append({"path": name, "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                      "sha256": hashlib.sha256(replacement.read_bytes()).hexdigest()})
+    (overlay / "manifest.json").write_text(json.dumps({"kind": "nfsu1-hd-fonts", "files": files}))
+    config = Config(root / "dist", root / "game.wasm", root / "game.json", data, overlay)
+    response = in_process_request(config, "/data/Global/GLOBALA.BUN", headers={"Range": "bytes=0-1"})
+    assert response.status == 206 and response.read() == b"HD"
+    entry = next(e for e in config.get_manifest()["files"] if e["p"] == files[0]["path"])
+    assert entry["s"] == 8 and entry["m"] != int((data / files[0]["path"]).stat().st_mtime)
+    assert (data / files[0]["path"]).read_bytes() == b"original"
+    plain = Config(root / "dist", root / "game.wasm", root / "game.json", data)
+    assert in_process_request(plain, "/data/GLOBAL/GLOBALA.BUN").read() == b"original"
+    (overlay / "data" / files[0]["path"]).write_bytes(b"tampered after server startup")
+    assert in_process_request(config, "/data/GLOBAL/GLOBALA.BUN").status == 409
+    try:
+        Config(root / "dist", root / "game.wasm", root / "game.json", data, overlay)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("tampered font overlay accepted")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group()
@@ -171,9 +201,11 @@ def main() -> int:
         wasm = root / "game.wasm"
         wasm.write_bytes(b"\0asm-test-module")
         metadata = root / "game.json"
-        metadata.write_text(json.dumps({"pages": 1, "maxPages": 2, "guestEnd": 65536, "size": wasm.stat().st_size}), encoding="utf-8")
+        metadata.write_text(json.dumps({"pages": 1, "maxPages": 2, "guestEnd": 65536, "size": wasm.stat().st_size,
+                                        "hdFonts": 1}), encoding="utf-8")
 
         config = Config(dist, wasm, metadata, data)
+        font_overlay_smoke(root)
         if args.mode == "in-process":
             exercise(in_process_request, config, root)
             disconnected_client_smoke(config)

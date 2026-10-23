@@ -3,7 +3,7 @@
 Original contributions by Yurii Smetanka are licensed under the root
 [MIT license](LICENSE). That grant covers only rights held by the author;
 third-party material below retains its own terms. See
-[rights and distribution boundaries](docs/rights.md).
+[source and distribution terms](docs/source-permissions.md).
 
 This integration builds on these projects at fixed revisions:
 
@@ -20,6 +20,11 @@ This integration builds on these projects at fixed revisions:
   widescreen patch semantics and HUD layout data, through the PC project's
   widescreen port. Its [MIT notice](patches/WidescreenFixesPack.LICENSE)
   is retained. The PC port also retains the permission basis described above.
+- **AeroWidescreen/NFSHDContentSupport**, by Aero_: HD font scaling
+  semantics adapted in `runtime/nfsu1_fonts.c` and `tools/font_operands.py`.
+  These adaptations are GPL-3.0; the full
+  [license](patches/NFSHDContentSupport.LICENSE) is retained.
+  Optional local font artwork is by Raze (NFSU-HD FONTS); it is not bundled.
 
 The Xbox investigation also referenced **antoxa2584x/nfsu1-sw**. No source from
 that repository or its vendored Xbox runtime is included in this integration.

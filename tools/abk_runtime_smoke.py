@@ -103,7 +103,7 @@ def main():
     if not compiler:
         raise SystemExit("clang or cc is required")
     if not (UPSTREAM_RUNTIME / "cpu.h").is_file():
-        raise SystemExit("pinned runtime checkout is missing; see docs/toolchain.md")
+        raise SystemExit("pinned runtime checkout is missing; see docs/building.md")
     with tempfile.TemporaryDirectory(prefix="nfsu1-abk-smoke-") as tmp:
         source = Path(tmp) / "abk_smoke.c"
         binary = Path(tmp) / "abk_smoke"

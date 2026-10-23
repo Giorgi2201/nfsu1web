@@ -1,6 +1,6 @@
 /* NFSU1 widescreen host hooks: CPU* port of the pinned PC recomp sites.
  * Semantics from ThirteenAG NFSUnderground.WidescreenFix (MIT) via
- * codepdbh/nfsu1-recompiled. See docs/graphics.md. */
+ * codepdbh/nfsu1-recompiled. See docs/settings.md. */
 #ifndef NFSU1_WIDESCREEN_H
 #define NFSU1_WIDESCREEN_H
 #include "cpu.h"

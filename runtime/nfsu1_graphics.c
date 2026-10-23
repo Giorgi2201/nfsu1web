@@ -1,6 +1,6 @@
 /* Original NFSU1 graphics preset adapter for the selected PC 1.4 image.
  * Names, addresses and ranges were verified locally against the settings
- * descriptor table and preset/capability routines; see docs/graphics.md.
+ * descriptor table and preset/capability routines; see docs/settings.md.
  * No translated game instructions or original image bytes are included. */
 #include "cpu.h"
 #include <stdio.h>

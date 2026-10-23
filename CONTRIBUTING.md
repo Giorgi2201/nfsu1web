@@ -3,7 +3,7 @@
 This is an experimental local integration. Small, focused fixes, build-guide
 corrections and reproducible compatibility reports are useful. Read the
 [README](README.md), [build guide](docs/building.md) and
-[compatibility assessment](docs/compatibility.md) before changing the runtime.
+[current status](docs/status.md) before changing the runtime.
 
 ## Source boundaries
 
@@ -22,7 +22,7 @@ licenses game content.
 
 Submit original contributions under the project's [MIT license](LICENSE).
 Third-party code must retain its applicable terms; see the
-[rights notes](docs/rights.md).
+[source terms](docs/source-permissions.md).
 
 ## Changes and checks
 
@@ -50,7 +50,7 @@ results. Do not infer compatibility from a successful build.
 Include your host OS and architecture, Python/Node/WASI SDK versions, repository
 revision, command or in-game steps, expected behavior and first relevant error.
 For browser reports, include the browser version, whether startup feature checks
-passed, and the failing stage. Follow [browser-testing.md](docs/browser-testing.md)
+passed, and the failing stage. Follow [testing.md](docs/testing.md)
 to collect a local log.
 
 Inspect logs before sharing. Post only the minimal relevant excerpt, removing
