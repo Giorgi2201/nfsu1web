@@ -1,6 +1,22 @@
 --- a/runtime/web/gpu_web.c
 +++ b/runtime/web/gpu_web.c
-@@ -727,8 +727,14 @@
+@@ -585,10 +585,15 @@
+     return (g_cur_ps > 0 && g_cur_ps < PSCUBE && metal_tex_is_cube(tex)) ? g_cur_ps + PSCUBE : g_cur_ps;
+ }
+ /* the record every draw shares: state at the time of the call */
++static float g_fe_canvas;
++void metal_set_fe_canvas(float on){ g_fe_canvas = on; }
+ static GwDraw *rec_draw(Buf *B, unsigned tex){
+     GwDraw *D = &B->d[B->dn];
+     memset(D, 0, sizeof *D);        /* slots are reused across frames (see metal.m's is_blit story) */
+     D->kind = GW_DRAW; D->tex = tex; D->target = g_cur_target;
++    /* clr_z is otherwise unused for GW_DRAW (it remains depth for GW_CLEAR).
++     * Capture per draw: the page must not consult mutable game-thread state. */
++    D->clr_z = g_fe_canvas;
+     D->blend = g_cur_blend; D->aref = g_cur_aref; D->depth = g_cur_depth;
+     D->tex1 = g_cur_tex1; D->tex2 = g_cur_tex2; D->tex3 = g_cur_tex3;
+     D->ps = ps_of(tex); D->psci = psc_put(B);
+@@ -727,8 +732,14 @@
          const char *ew = getenv("NFSU2_WIDTH"), *eh = getenv("NFSU2_HEIGHT");
          vw = ew && *ew ? (unsigned)atoi(ew) : 1280u; vh = eh && *eh ? (unsigned)atoi(eh) : 720u;
      }
@@ -17,7 +33,7 @@
  }
  /* the view size the game last chose its device size from (CreateDevice and
   * Reset read it through res_pick) */
-@@ -746,8 +752,8 @@
+@@ -746,8 +757,8 @@
  static void view_follow(void){
      static unsigned seen_w, seen_h; static double since = 0, asked = 0;
      if (!g_ctl || ald(&g_ctl->attached) != GW_ATTACHED || !g_view_used_w) return;

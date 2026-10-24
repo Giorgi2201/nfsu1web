@@ -39,8 +39,9 @@ static const GraphicsSetting graphics_settings[] = {
 /* Use the current canvas on CreateDevice and Reset. metal_view_size also
  * records the canvas size used here, arming the GPU host's resize detector.
  * With NFSU1_WIDESCREEN (default when dynamic resolution is on), the device
- * matches the canvas and PC widescreen hooks own FOV/HUD. NFSU1_WIDESCREEN=0
- * keeps whole multiples of the guest aspect (4:3 / 5:4 letterbox). */
+ * matches the canvas and PC aspect hooks own FOV/HUD. Menu UI is fitted
+ * separately over the scene. NFSU1_WIDESCREEN=0 keeps whole multiples of
+ * the guest aspect (4:3 / 5:4 letterbox). */
 int nfsu1_graphics_size(uint32_t gw, uint32_t gh, uint32_t *dw, uint32_t *dh){
     const char *dynamic = getenv("NFSU1_DYNAMIC_RESOLUTION");
     if (!dynamic || strcmp(dynamic, "1")) return 0;

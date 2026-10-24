@@ -52,6 +52,10 @@ int main(void){
     nfsu1_widescreen_set_display_aspect(16.0f / 9.0f);
     nfsu1_widescreen_set_resolution(1920, 1080);
     assert(nfsu1_widescreen_active());
+    /* No guest resolution hook has run yet: CreateDevice still initializes
+     * the race projection from the live device. */
+    assert(fabsf(nfsu1_widescreen_hud_pos_x() - 240.f * 16.f / 9.f) < 1e-4f);
+    assert(fabsf(nfsu1_widescreen_hud_scale_x() - 9.f / 3840.f) < 1e-7f);
 
     MRF32(0x006CC910u) = 320.0f;
     MRF32(0x006CC914u) = 1.0f / 320.0f;
@@ -64,7 +68,7 @@ int main(void){
 
     assert(MRF32(0x006CC910u) == 320.0f);
     assert(MRF32(0x006CC914u) == 1.0f / 320.0f);
-    assert(fabsf(nfsu1_widescreen_hud_scale_x() - 2.0f / 1066.0f * 600.0f / 480.0f) < 1e-7f);
+    assert(fabsf(nfsu1_widescreen_hud_scale_x() - 9.f / 3840.f) < 1e-7f);
     c->esp = 0x2000;
     const uint32_t quads[] = {0x004F1FD7u, 0x004F225Cu, 0x004F25D1u};
     for (unsigned i = 0; i < 3; i++) {
@@ -91,13 +95,33 @@ int main(void){
     assert(nfsu1_ws_hook(c, 0x004B8CF0u) == 1);
     assert(c->eax != before);
 
+    /* FE uses one unmodified logical frame. The host fits that frame once;
+     * text, quad centres and hit tests must share the same original units. */
+    MR32(0x0077A920u) = 3u;
+    assert(nfsu1_widescreen_hud_pos_x() == 320.f);
+    assert(nfsu1_widescreen_hud_scale_x() == 1.f / 320.f);
+    nfsu1_ws_hook(c, 0x004F20A7u);
+    assert(MRF32(c->esp + 0x80u) == 320.f);
+    c->eax = before;
+    nfsu1_ws_hook(c, 0x004B8CF0u);
+    assert(c->eax == before);
+    MR32(0x0077A920u) = 6u;
+    nfsu1_widescreen_set_resolution(2560, 1080);
+    assert(fabsf(nfsu1_widescreen_hud_pos_x() - 240.f * 2560.f / 1080.f) < 1e-4f);
+    nfsu1_widescreen_set_display_aspect(.75f);
+    assert(nfsu1_widescreen_active());
+    assert(nfsu1_widescreen_hud_pos_x() == 320.f);
+    assert(nfsu1_widescreen_hud_scale_x() == 1.f / 320.f);
+
     nfsu1_widescreen_set_display_aspect(4.0f / 3.0f);
-    assert(!nfsu1_widescreen_active());
+    assert(nfsu1_widescreen_active());
     assert(nfsu1_widescreen_hud_pos_x() == 320.0f);
     assert(nfsu1_widescreen_hud_scale_x() == 1.0f / 320.0f);
     c->eax = before;
     assert(nfsu1_ws_hook(c, 0x004B8CF0u) == 1);
     assert(c->eax == before);
+    nfsu1_widescreen_set_display_aspect(0.f);
+    assert(!nfsu1_widescreen_active());
 
     printf("widescreen_runtime_smoke ok\n");
     return 0;

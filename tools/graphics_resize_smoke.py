@@ -114,7 +114,15 @@ int main(void){
     pick(1280, 1024, 1601, 901, 1600, 900);
     assert(nfsu1_widescreen_active());
     pick(640, 480, 800, 600, 800, 600);
-    assert(!nfsu1_widescreen_active());
+    assert(nfsu1_widescreen_active());
+    /* The scene uses the whole canvas through wide/portrait transitions;
+     * the menu's logical canvas is fitted separately by the encoder. */
+    pick(640, 480, 1500, 1650, 1500, 1650);
+    assert(nfsu1_widescreen_active());
+    pick(640, 480, 600, 1000, 600, 1000);
+    pick(640, 480, 1338, 1000, 1338, 1000);
+    pick(640, 480, 1920, 1080, 1920, 1080);
+    assert(nfsu1_widescreen_active());
     setenv("NFSU1_WIDESCREEN", "0", 1);
     pick(640, 480, 1920, 1080, 1440, 1080);
     assert(!nfsu1_widescreen_active());

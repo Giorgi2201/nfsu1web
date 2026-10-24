@@ -60,7 +60,7 @@
      ws_set_mapping(g_aspfix);
      { void metal_set_ui_aspect(float, float); metal_set_ui_aspect(ws_ui_x(), ws_ui_y()); }
      fprintf(stderr,"com: device resolution %ux%u -> %ux%u (aspfix=%.4f)\n",
-@@ -1566,6 +1577,87 @@
+@@ -1566,6 +1577,110 @@
   * it returns 0 and the caller falls back to the old (index expansion) path. */
  static struct { uint32_t n, vbo, ibo, isz; int32_t base; uint64_t gh; } g_ix;
  static uint64_t g_dip_ix = 0, g_dip_ixfb[6];
@@ -145,10 +145,36 @@
 +    if (count == CAP) fprintf(stderr, "[nfsu1 depth] unique-state log limit reached\n");
 +}
 +
++/* Menu quads use the original logical 640x480 coordinates. Tag their
++ * submissions so the page fits the complete canvas over the scene. The
++ * narrow race HUD uses that canvas too. Only these original UI submitters
++ * qualify; world views and composites retain the full render target. */
++static float nfsu1_fe_canvas(const VSConst *vsk, const VSProg *prog){
++    extern int nfsu1_widescreen_active(void);
++    if (!nfsu1_widescreen_active() ||
++        (MR32(0x0077A920u) != 3u && (uint64_t)g_bb_w * 3u >= (uint64_t)g_bb_h * 4u) ||
++        !g_com_cpu || !g_bb_w || !g_bb_h) return 0.f;
++    /* com_call has already popped the guest return address into eip. */
++    uint32_t caller = g_com_cpu->eip;
++    if (caller != 0x0040C2D6u && caller != 0x0040C4A8u) return 0.f;
++    if (prog){
++        int cw = -1, cx = vs_pos_creg(prog, &cw), cy = vs_pos_creg_y(prog);
++        if (cx < 0 || cx > 120 || cy < 0 || cy > 120 || cw < 0 || cw > 120)
++            return 0.f;
++        const float *w = vsk->f[cw];
++        if (fabsf(w[0]) + fabsf(w[1]) + fabsf(w[2]) > 1e-6f ||
++            fabsf(w[3] - 1.f) > 1e-6f) return 0.f;
++    }
++    return 1.f;
++}
++
  static int draw_up(uint32_t pt, uint32_t nv, uint32_t vp, uint32_t stride){
      uint64_t _t0 = now_ns();
      static TVert tv[4096];
-@@ -1642,6 +1734,8 @@
+@@ -1579,0 +1695,2 @@
++    { void metal_set_fe_canvas(float);
++      metal_set_fe_canvas(nfsu1_fe_canvas(vsk, prog)); }
+@@ -1642,6 +1759,8 @@
      const DElem *el = dcc[dci].el; int nel = dcc[dci].nel;
      int p_off = dcc[dci].p_off, p_type = dcc[dci].p_type, c_off = dcc[dci].c_off,
          c_type = dcc[dci].c_type, t_off = dcc[dci].t_off, t_type = dcc[dci].t_type;
@@ -157,7 +183,7 @@
  
      /* ---------------- GPU vertex shader (GPUVS) ----------------
       * Measured: ~45% of the run time was in the CPU vs_run interpreter,
-@@ -2285,7 +2379,12 @@
+@@ -2285,7 +2404,12 @@
                             MR32(pm)   = ml[0];
                             MR32(pm+4) = ml[1];
                             MR32(pm+8) = 60;
@@ -171,7 +197,7 @@
                     r=0; } }
          else if (MID(GetAdapterDisplayMode)){
              uint32_t pm=A(c,2);
-@@ -4729,7 +4828,7 @@
+@@ -4729,7 +4853,7 @@
  }
  
  static void fill_caps(uint32_t p){

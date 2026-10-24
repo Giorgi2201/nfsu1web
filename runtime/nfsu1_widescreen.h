@@ -11,6 +11,7 @@
 
 void nfsu1_widescreen_set_display_aspect(float aspect);
 void nfsu1_widescreen_set_resolution(unsigned width, unsigned height);
+void nfsu1_widescreen_device_size(unsigned *width, unsigned *height);
 int nfsu1_widescreen_active(void);
 float nfsu1_widescreen_hud_pos_x(void);
 float nfsu1_widescreen_hud_scale_x(void);

@@ -1,28 +1,20 @@
 # Build and run
 
-1. **Copy your whole PC install** into `work/data/`  
+1. **Copy your whole PC install** into `work/data/`
+
    Include `Speed.exe` and the usual folders (`Cars`, `FrontEnd`, `Global`,
-   `Tracks`, `Languages`, `fx`, `Sound`, `Movies`, …).
+    `Tracks`, `Languages`, `fx`, `Sound`, `Movies`, …).
 
-   The exe must be Underground **1.4**  
-   (`SHA-256 c0fad450912952f53809a54690d235aa8b4e25b9f46650693c7cbee1b4c074b7`).
-
+    The exe must be Underground **1.4**  
+    (`SHA-256 c0fad450912952f53809a54690d235aa8b4e25b9f46650693c7cbee1b4c074b7`).
 2. **Build and play**
-
    ```sh
-   ./build.sh
-   ./start.sh        # → http://127.0.0.1:8765/
+    ./build.sh
+    ./start.sh        # → http://127.0.0.1:8765/
    ```
 
 `./build.sh` uses `work/data/Speed.exe` and fetches the required build tools and
 upstream sources under `work/` when they are missing.
-
-### Already prepared workspace
-
-```sh
-./build.sh
-./start.sh
-```
 
 ### OS packages once
 

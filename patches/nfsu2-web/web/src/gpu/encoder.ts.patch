@@ -1,6 +1,6 @@
 --- a/web/src/gpu/encoder.ts
 +++ b/web/src/gpu/encoder.ts
-@@ -368,7 +368,7 @@
+@@ -368,6 +368,6 @@
        fragment: { module: fmod, entryPoint: pq ? undefined : 'fs_ff', targets: [{ format: 'bgra8unorm', blend: bs, writeMask: mask }],
          constants: { ALPHA_FUNC: alphaFunc(nd ? 0 : 1) } },
        primitive: { topology: 'triangle-list', frontFace: 'cw', cullMode: cull === 1 ? 'none' : cull === 2 ? 'front' : 'back' },
@@ -8,17 +8,17 @@
 +      depthStencil: { format: 'depth32float', depthWriteEnabled: (dm & 3) === 3, depthCompare: (dm & 1) ? CMP[(dm >> 2) & 7] : 'always' },
      };
    }
- 
-@@ -527,7 +527,7 @@
+@@ -527,7 +527,8 @@
      const lastPF = new Float32Array(8);
  
      let pass: GPURenderPassEncoder | null = null;
 -    let curT = -1, curZ = -1, realZ = false, passKey = -2, passCube = -1;
 +    let curT = -1, curZ = -1, realZ = false, passNeedsDepth = false, passKey = -2, passCube = -1;
++    let passW = 0, passH = 0, menuCanvas = false;
      let screenTouched = false;
      const touched = new Set<number>();
      let clearArgb = u32[fw + F.clearArgb];
-@@ -539,7 +539,8 @@
+@@ -539,7 +540,8 @@
      let draws = 0, passes = 0, skipped = 0;
      const endPass = () => { if (pass) { pass.end(); pass = null; } };
  
@@ -28,8 +28,11 @@
        let view: GPUTextureView, w: number, h: number, key: number;
        if (!target) { view = this.screenView!; w = bbW; h = bbH; key = -1; passCube = -1; }
        else {
-@@ -551,14 +552,18 @@
+@@ -549,16 +551,21 @@
+         w = t.w; h = t.h; key = (target & 0xFFFF) * 8 + face; passCube = target & 0xFFFF;
+       }
        passKey = target ? (target & 0xFFFF) : -1;
++      passW = w; passH = h; menuCanvas = false;
        const first = key === -1 ? !screenTouched : !touched.has(key);
        let zv: GPUTextureView | undefined, zclear = false, zval = 1;
 -      if (zid && zid < 64) {
@@ -49,7 +52,7 @@
          }
          if (z) { zv = this.zView[zid]; if (this.zpend[zid]) { zclear = true; zval = this.zpendV[zid]; this.zpend[zid] = 0; } }
        }
-@@ -612,11 +617,14 @@
+@@ -612,13 +619,28 @@
            if (pass && curZ === zid) { endPass(); curT = -1; }
          }
        }
@@ -67,3 +70,17 @@
        }
        if (kind === Kind.Clear) continue;
        const count = u32[w + D.count];
++      // NFSU1 menu vertices use the original logical 640x480 canvas.
++      // Fit that entire canvas over the full-window scene, then clip only
++      // objects outside its logical bounds. clrZ is unused on other draws.
++      const fitMenu = passW === bbW && passH === bbH && f32[w + D.clrZ] === 1;
++      if (pass && fitMenu !== menuCanvas) {
++        const width = fitMenu ? Math.min(passW, Math.floor(passH * 4 / 3)) : passW;
++        const height = fitMenu ? Math.min(passH, Math.floor(passW * 3 / 4)) : passH;
++        const x = Math.floor((passW - width) / 2), y = Math.floor((passH - height) / 2);
++        pass.setViewport(x, y, width, height, 0, 1);
++        pass.setScissorRect(x, y, width, height);
++        menuCanvas = fitMenu;
++      }
+       if (!pass || !count) { if (tr) tr.push(`  #${i} draw skipped: ${pass ? 'no vertices' : 'no pass (target missing)'}`); skipped++; continue; }
+       const p: GPURenderPassEncoder = pass;

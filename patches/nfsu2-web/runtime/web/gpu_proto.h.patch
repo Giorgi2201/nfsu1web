@@ -1,0 +1,11 @@
+--- a/runtime/web/gpu_proto.h
++++ b/runtime/web/gpu_proto.h
+@@ -50,7 +50,7 @@
+     float    fogv[4];     /* fog colour rgb + enable */
+     uint32_t clr_argb;    /* GW_CLEAR: colour */
+     uint32_t clr_flags;   /* GW_CLEAR: D3DCLEAR_* (1 target, 2 Z, 4 stencil) */
+-    float    clr_z;       /* GW_CLEAR: Z value */
++    float    clr_z;       /* GW_CLEAR: Z; GW_DRAW: 1 = NFSU1 logical 640x480 UI canvas */
+     uint32_t ksz;         /* VS constant block size in bytes (16 + 16 * nk) */
+     uint32_t ix_isz;      /* indexed draw: index size 2 or 4; 0 = not indexed */
+     uint32_t ix_ib;       /* indexed draw: pool offset of the first index */

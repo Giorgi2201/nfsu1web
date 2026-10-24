@@ -11,6 +11,7 @@
 #include <string.h>
 
 static float s_display_aspect;
+static unsigned s_device_width, s_device_height;
 static float s_aspect = 4.0f / 3.0f;
 static double s_fov_scale[3] = {1.0, 0.5, 1.0};
 static float s_hud_pos_x = 320.0f;
@@ -82,11 +83,28 @@ static void hud_mem_pair(uint32_t va_x, uint32_t va_y, int minimap) {
 }
 
 void nfsu1_widescreen_set_display_aspect(float aspect) {
-    s_display_aspect = aspect > 1.34f ? aspect : 0.0f;
+    s_display_aspect = isfinite(aspect) && aspect > 0.0f ? aspect : 0.0f;
+    if (s_display_aspect > 0.0f) s_aspect = s_display_aspect;
+    /* CreateDevice/Reset selects the live canvas after the guest resolution
+     * setter has run. Keep projection constants current even on first launch
+     * and when resizing without another guest resolution selection. */
+    float hud_aspect = fmaxf(s_display_aspect, 4.0f / 3.0f);
+    s_hud_pos_x = 240.0f * hud_aspect;
+    s_hud_scale_x = 1.0f / s_hud_pos_x;
 }
 
 void nfsu1_widescreen_set_resolution(unsigned width, unsigned height) {
-    if (width && height) s_aspect = (float)width / (float)height;
+    if (width && height) {
+        s_device_width = width;
+        s_device_height = height;
+        s_aspect = (float)width / (float)height;
+        if (s_display_aspect > 0.0f) nfsu1_widescreen_set_display_aspect(s_aspect);
+    }
+}
+
+void nfsu1_widescreen_device_size(unsigned *width, unsigned *height) {
+    *width = s_device_width;
+    *height = s_device_height;
 }
 
 int nfsu1_widescreen_active(void) {
@@ -94,11 +112,11 @@ int nfsu1_widescreen_active(void) {
 }
 
 float nfsu1_widescreen_hud_pos_x(void) {
-    return s_display_aspect > 0.0f ? s_hud_pos_x : 320.0f;
+    return s_display_aspect > 0.0f && MR32(0x0077A920u) != 3u ? s_hud_pos_x : 320.0f;
 }
 
 float nfsu1_widescreen_hud_scale_x(void) {
-    return s_display_aspect > 0.0f ? s_hud_scale_x : 1.0f / 320.0f;
+    return s_display_aspect > 0.0f && MR32(0x0077A920u) != 3u ? s_hud_scale_x : 1.0f / 320.0f;
 }
 
 static int known_site(uint32_t va) {
@@ -146,6 +164,7 @@ int nfsu1_ws_hook(CPU *c, uint32_t va) {
 
     for (unsigned i = 0; i < sizeof k_hit / sizeof k_hit[0]; i++) {
         if (k_hit[i].va != va) continue;
+        if (MR32(0x0077A920u) == 3u) return 1;
         uint32_t *r = k_hit[i].reg == 0 ? &c->eax : k_hit[i].reg == 1 ? &c->ecx : &c->edx;
         *r += (uint32_t)(int32_t)lroundf(320.0f - s_hud_pos_x);
         return 1;
@@ -158,27 +177,22 @@ int nfsu1_ws_hook(CPU *c, uint32_t va) {
         if (height && width > MR32(0x0071A96Cu)) {
             MR32(0x0071A96Cu) = width;
             MR32(0x00701034u) = width;
-            s_aspect = (float)width / (float)height;
             { extern void metal_set_game_size(unsigned, unsigned);
               metal_set_game_size(width, height); }
         }
-        if (height) {
-            float w = (float)MR32(0x0071A96Cu), h = (float)height;
-            float scale = (1.0f / w * (h / 480.0f)) * 2.0f;
-            s_hud_pos_x = 640.0f / (640.0f * scale);
-            s_hud_scale_x = scale;
-            /* Keep the shared guest float pool intact: FE layout uses it too. */
-        }
+        /* Live host resolution owns projection constants. Guest dimensions
+         * may still describe a previous canvas or a legacy saved mode. */
         break;
     }
-    case HOOK_SITE(0x004F20A7): wrf(c->esp + 0x80u, s_hud_pos_x); break;
-    case HOOK_SITE(0x004F2333): wrf(c->esp + 0x90u, s_hud_pos_x); break;
-    case HOOK_SITE(0x004F28B3): wrf(c->esp + 0xA0u, s_hud_pos_x); break;
-    case HOOK_SITE(0x004F1E31): wrf(c->esp + 0x60u, s_hud_pos_x); break;
-    case HOOK_SITE(0x004F26E9): wrf(c->esp + 0x50u, s_hud_pos_x); break;
-    case HOOK_SITE(0x004F314B): wrf(c->esp + 0x19Cu, s_hud_pos_x); break;
+    case HOOK_SITE(0x004F20A7): wrf(c->esp + 0x80u, nfsu1_widescreen_hud_pos_x()); break;
+    case HOOK_SITE(0x004F2333): wrf(c->esp + 0x90u, nfsu1_widescreen_hud_pos_x()); break;
+    case HOOK_SITE(0x004F28B3): wrf(c->esp + 0xA0u, nfsu1_widescreen_hud_pos_x()); break;
+    case HOOK_SITE(0x004F1E31): wrf(c->esp + 0x60u, nfsu1_widescreen_hud_pos_x()); break;
+    case HOOK_SITE(0x004F26E9): wrf(c->esp + 0x50u, nfsu1_widescreen_hud_pos_x()); break;
+    case HOOK_SITE(0x004F314B): wrf(c->esp + 0x19Cu, nfsu1_widescreen_hud_pos_x()); break;
     case HOOK_SITE(0x0058E5C3): break; /* Minimap still reads the original 320. */
     case HOOK_SITE(0x00409F75): {
+        if (MR32(0x0077A920u) == 3u) break;
         const uint32_t xs[4] = { 0x6Cu, 0x7Cu, 0x8Cu, 0x9Cu };
         for (int i = 0; i < 4; i++)
             wrf(c->esp + xs[i], rdf(c->esp + xs[i]) + (s_hud_pos_x - 320.0f));

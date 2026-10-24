@@ -1,0 +1,45 @@
+--- a/runtime/web/input_web.c
++++ b/runtime/web/input_web.c
+@@ -298,12 +298,42 @@
+  * relative motion DirectInput reports is the same move in game pixels */
+ static double g_last_nx = -1, g_last_ny = -1, g_frac_dx, g_frac_dy;
++static unsigned g_mouse_map_w, g_mouse_map_h;
++static double g_mouse_map_ax, g_mouse_map_ay, g_mouse_map_ox, g_mouse_map_oy;
+ static void mouse_move(const InEv *e){
+     unsigned lw = 1280, lh = 720; metal_game_size(&lw, &lh);
+     if (!lw || !lh){ lw = 1280; lh = 720; }
+     double ax = atomic_load(&g_ui_asp) / 10000.0, ay = atomic_load(&g_ui_asp_y) / 10000.0;
+-    double nx = ((double)e->a / 65536.0 - (1.0 - ax) * 0.5) / ax;
+-    double ny = ((double)e->b / 65536.0 - (1.0 - ay) * 0.5) / ay;
++    double ox = (1.0 - ax) * .5, oy = (1.0 - ay) * .5;
++    /* Match the fitted logical UI canvas, including its integer viewport
++     * origin. DirectInput updates the game's cursor in these same units. */
++    { extern int nfsu1_widescreen_active(void);
++      extern void nfsu1_widescreen_device_size(unsigned *, unsigned *);
++      unsigned cw = 0, ch = 0;
++      nfsu1_widescreen_device_size(&cw, &ch);
++      if (nfsu1_widescreen_active() && cw && ch &&
++          (MR32(0x0077A920u) == 3u || (uint64_t)cw * 3u <= (uint64_t)ch * 4u)){
++          unsigned width = cw < ch * 4u / 3u ? cw : ch * 4u / 3u;
++          unsigned height = ch < cw * 3u / 4u ? ch : cw * 3u / 4u;
++          if (width && height){
++              lw = 640; lh = 480;
++              ax = (double)width / cw; ay = (double)height / ch;
++              ox = (double)((cw - width) / 2u) / cw;
++              oy = (double)((ch - height) / 2u) / ch;
++          }
++      }
++    }
++    if (lw != g_mouse_map_w || lh != g_mouse_map_h ||
++        ax != g_mouse_map_ax || ay != g_mouse_map_ay ||
++        ox != g_mouse_map_ox || oy != g_mouse_map_oy){
++        g_last_nx = g_last_ny = -1;
++        g_frac_dx = g_frac_dy = 0;
++        g_mouse_map_w = lw; g_mouse_map_h = lh;
++        g_mouse_map_ax = ax; g_mouse_map_ay = ay;
++        g_mouse_map_ox = ox; g_mouse_map_oy = oy;
++    }
++    double nx = ((double)e->a / 65536.0 - ox) / ax;
++    double ny = ((double)e->b / 65536.0 - oy) / ay;
+     if (g_last_nx >= -0.5){
+         g_frac_dx += (nx - g_last_nx) * lw; g_frac_dy += (ny - g_last_ny) * lh;

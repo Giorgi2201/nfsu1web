@@ -28,11 +28,11 @@ globalThis.GPUTextureUsage = { RENDER_ATTACHMENT: 1 };
 function texture(label, width, height) {
   return { label, width, height, depth: 1, createView() { return { texture: this }; }, destroy() {} };
 }
-function frame(records, initialZid = 1) {
+function frame(records, initialZid = 1, width = 800, height = 600) {
   const e = Object.create(Encoder.prototype);
   const memory = new ArrayBuffer(65536), u32 = new Uint32Array(memory), f32 = new Float32Array(memory);
-  const screen = texture('screen', 800, 600), small = texture('small', 128, 128);
-  const depthTextures = [], passes = [], visibility = [];
+  const screen = texture('screen', width, height), small = texture('small', 128, 128);
+  const depthTextures = [], passes = [], visibility = [], scissors = [], viewports = [];
   Object.assign(e, {
     views() {}, u32, i32: new Int32Array(memory), f32, u8: new Uint8Array(memory), ctlW: 0,
     device: {
@@ -60,7 +60,7 @@ function frame(records, initialZid = 1) {
   }
   const fw = 24, draws = 256;
   u32[fw + 1] = records.length; u32[fw + 6] = draws * 4;
-  u32[fw + 10] = 8192; u32[fw + 12] = 800; u32[fw + 13] = 600;
+  u32[fw + 10] = 8192; u32[fw + 12] = width; u32[fw + 13] = height;
   records.forEach((r, i) => {
     const w = draws + i * 38;
     u32[w] = r.first ?? i; u32[w + 1] = r.clear ? 0 : 3;
@@ -68,6 +68,7 @@ function frame(records, initialZid = 1) {
     u32[w + 7] = (initialZid << 8) | (r.depth ?? 19);
     u32[w + 26] = 1;
     if (r.clear) { u32[w + 32] = 2; f32[w + 33] = r.clearValue ?? 1; }
+    else f32[w + 33] = r.menuWidth ?? 0;
   });
   const enc = {
     beginRenderPass(desc) {
@@ -77,6 +78,8 @@ function frame(records, initialZid = 1) {
       let pipe;
       return {
         end() {}, setBindGroup() {}, setBlendConstant() {}, setPipeline(p) { pipe = p; },
+        setScissorRect(...rect) { scissors.push(rect); },
+        setViewport(...rect) { viewports.push(rect); },
         draw(_count, _instances, first) {
           const incoming = [0.25, 0.9, 0.75][first] ?? 0.75;
           const state = pipe.depthStencil;
@@ -88,7 +91,7 @@ function frame(records, initialZid = 1) {
     },
   };
   e.encodeFrame(0, enc, screen);
-  return { e, depthTextures, passes, visibility };
+  return { e, depthTextures, passes, visibility, scissors, viewports };
 }
 for (const zid of [1, 2]) {
   const r = frame([{ depth: 19 }, { target: 2, depth: 18 }, { depth: 19 }], zid);
@@ -106,6 +109,20 @@ const clearing = frame([{ depth: 19 }, { depth: 0, clear: true }, { depth: 19, f
 assert.equal(clearing.visibility[1], true, 'explicit depth clear must work even with Z disabled');
 assert.equal(clearing.passes[1].depthStencilAttachment.depthLoadOp, 'clear');
 console.log('PASS: actual frame encoder preserves scene depth across smaller Z-disabled targets, reopens for Z enable, honors depth clears');
+const menu = frame([
+  { depth: 0, menuWidth: 1 }, { depth: 0, menuWidth: 1 },
+  { depth: 0 }, { target: 2, depth: 0, menuWidth: 1 },
+  { depth: 0, menuWidth: 1 }, { depth: 0, clear: true },
+  { depth: 0 },
+], 1, 1920, 1080);
+assert.deepEqual(menu.scissors, [[240, 0, 1440, 1080], [0, 0, 1920, 1080],
+  [240, 0, 1440, 1080]], 'menu clipping must reset for world draws and after pass changes');
+assert.deepEqual(menu.viewports, menu.scissors.map(rect => [...rect, 0, 1]),
+  'the complete logical canvas must map into the clip rectangle');
+const portrait = frame([{ depth: 0, menuWidth: 1 }, { depth: 0 }], 1, 600, 1000);
+assert.deepEqual(portrait.scissors, [[0, 275, 600, 450], [0, 0, 600, 1000]]);
+assert.deepEqual(portrait.viewports, portrait.scissors.map(rect => [...rect, 0, 1]));
+console.log('PASS: complete UI fits wide and portrait views; world draws retain the full canvas');
 const comparison = ['always', 'never', 'less', 'equal', 'less-equal', 'greater',
                     'not-equal', 'greater-equal'];
 for (let z = 0; z < 2; z++) {

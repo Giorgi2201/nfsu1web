@@ -10,7 +10,7 @@ control difficulty, transmission, camera and action bindings.
 | --- | --- |
 | Graphics quality | Game, Low, Medium, High or Maximum; Maximum is the default. Game uses the saved profile's choices. |
 | Resolution | Automatic canvas device pixels, with an 8192-pixel dimension limit. Resize/fullscreen triggers a device reset. |
-| Widescreen | Enabled by default; corrects FOV and HUD layout. `NFSU1_WIDESCREEN=0` restores guest-aspect letterboxing. |
+| Widescreen | Enabled by default; the scene fills the window and the complete menu fits over it without stretching. `NFSU1_WIDESCREEN=0` uses guest-aspect letterboxing. |
 | Startup movies | Skippable by default; Original retains native behavior, Off skips on the first update. Story/tutorial movies are unchanged. |
 | Audio/background | Sound, output latency and Pause / Keep running policy. |
 | Controller | Device policy, dead zones, trigger threshold and vibration permission. |
@@ -18,6 +18,10 @@ control difficulty, transmission, camera and action bindings.
 Graphics presets use NFSU1's own detail levels and capability limits; they do
 not enable the upstream NFSU2 enhancement system. Their exact mapping is in
 [`runtime/nfsu1_graphics.c`](../runtime/nfsu1_graphics.c).
+
+Menu artwork uses its original 640×480 canvas, fitted and centered over the
+garage background in both wide and narrow windows. The background fills the
+view; menu objects parked outside the logical canvas remain hidden.
 
 **F9** opens the game overlay. **F10** temporarily disables keyboard aliases for
 typing. The WASD preset sends arrow keys; actions follow the game's Controls
