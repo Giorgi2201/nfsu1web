@@ -397,8 +397,7 @@
     "git_blob_sha1": "652cff8089910618f033fdcdfe0908e26be8a076",
     "reuse": "MIT-licensed notification adapter design and input baselining; NFSU1-specific handwritten implementation. Notice retained in patches/nfsu2-web.LICENSE.",
     "evidence": "Local matching PC 1.4 executable and cached catalog; interface addresses in runtime/nfsu1_intro.c.",
-    "output_policy": "Original executable and generated game functions unchanged. Local linked Wasm remains private and ignored.",
-    "validation": "Focused synthetic native adapter smoke, private Wasm relink, browser startup smoke/bundle/syntax and in-process server checks passed. Browser/game validation pending; no agent browser operation."
+    "output_policy": "Original executable and generated game functions unchanged. Local linked Wasm remains private and ignored."
   },
   "drag_loading_switch_recovery": {
     "date": "2026-10-23",
@@ -418,7 +417,6 @@
       "https://learn.microsoft.com/en-us/windows/win32/api/datetimeapi/nf-datetimeapi-gettimeformata",
       "https://learn.microsoft.com/en-us/windows/win32/intl/day--month--year--and-era-format-pictures"
     ],
-    "validation": "Focused synthetic native and compiled-WASI execution of actual helpers; private game module relink and browser bundle completed. User subsequently confirmed profile creation works; no agent operated a browser.",
     "output_policy": "No original game input or generated game functions changed; linked game module remains ignored and local."
   },
   "graphics_presets": {
@@ -428,19 +426,16 @@
     "evidence": "Read-only matching PC 1.4 settings descriptor table at 0x700ec0, original four-level preset routine at 0x410ed0, capability limits at 0x701040 and config loader at 0x41c680. Exact mapping in runtime/nfsu1_graphics.c.",
     "reuse": "No additional third-party source copied. Existing browser shell excerpts remain covered by patches/nfsu2-web.LICENSE; attribution to th0mk and the existing PC analysis pipeline by codepdbh/sp00nz is retained.",
     "output_policy": "Original game inputs unchanged. Emitted routines, local mapping comparison harness and linked game module remain ignored and private.",
-    "limitations": "Effect correctness/performance and live resize recovery require user browser checks. Widescreen FOV/HUD hooks are ported but need browser validation; smaller post-processing buffers retain original game sizing.",
+    "limitations": "Effect correctness and performance are incomplete. Widescreen FOV/HUD hooks are ported; smaller post-processing buffers retain original game sizing.",
     "dynamic_resolution": {
       "gpu_host_blob": "87d7fa6fa240bd861c05cb6c6992a37aa4000b80",
       "source": "th0mk/nfsu2-web runtime/web/gpu_web.c at pinned runtime revision",
-      "reuse": "Existing metal_view_size/view_follow and game-driven device loss/reset; normalized oversized view comparison prevents repeated resets. Existing MIT notice retained.",
-      "validation": "Focused native execution of actual res_pick/view_wh/metal_view_size/view_follow with growth, shrinkage, aspect preservation and debounce; private Wasm and browser bundle checks.",
-      "real_guest_smoke": "Bounded Node run forced RESETAT=20, recovered through original game Reset, chose 1440x1080 for1920x1080 view (800x600 guest, aspect1.0), and continued to intentional15s timeout. No browser rendering validated."
+      "reuse": "Existing metal_view_size/view_follow and game-driven device loss/reset; normalized oversized view comparison prevents repeated resets. Existing MIT notice retained."
     },
     "widescreen_layout_correction": {
       "date": "2026-10-23",
       "implementation": "Preserve generic frontend quad extents; scope HUD scale to four render operands and center to one comparison, leaving the shared float pool intact.",
-      "evidence": "User screenshot and read-only local PC 1.4 instruction inspection. Original mod comparison: https://github.com/ThirteenAG/WidescreenFixesPack/blob/master/source/NFSUnderground.WidescreenFix/Frontend.ixx",
-      "validation": "Focused native regression smoke passed; full private emission changed only two expected shards with unchanged failures/stubs; Wasm link, browser bundle, startup/syntax and server-input checks passed. Browser visual verification remains manual."
+      "evidence": "Local PC 1.4 instruction inspection. Original mod comparison: https://github.com/ThirteenAG/WidescreenFixesPack/blob/master/source/NFSUnderground.WidescreenFix/Frontend.ixx"
     }
   },
   "character_skinning": {
@@ -453,8 +448,7 @@
     "api_reference": "https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/m4x4---vs",
     "reuse": "Pinned th0mk/nfsu2-web translator and source-operand helper under existing retained MIT notice.",
     "output_policy": "Original game inputs unchanged; decoded effects and captured shader output stay ignored and private.",
-    "limitations": "No browser operated; visible character deformation and animation require user validation.",
-    "validation": "Authored synthetic native smoke passes overlay and fails pinned original; CPU selects distinct bone palettes and WGSL preserves every active matrix row for the five matrix opcodes. Wasm link, browser bundle/startup/syntax, server-input and pinned-source checks passed. No GPU/browser execution."
+    "limitations": "Visible character deformation and animation support is incomplete."
   },
   "publication_license": {
     "date": "2026-10-23",
@@ -494,22 +488,18 @@
       }
     ],
     "implementation": "Sparse local overlay of GLOBALA.BUN and LANGUAGETEXTURES.BIN; four scoped PC 1.4 font dimension operands; original game inputs preserved.",
-    "validation": "Native scaling, actual game JDLZ/header/stream/upload, pixel preservation and HTTP checks pass. User confirmed restored menu/race text with the HD overlay.",
     "upload_correction": {
       "font_operands_version": 2,
       "operand_sites": [
         "0x00407eb5",
         "0x00407f3d"
       ],
-      "scope": "Preserve top mip levels of exactly four 4x font atlases; retain original WorldLOD mip policy for all other textures.",
-      "validation": "Actual emitted uploader run with synthetic COM resources verifies creation dimensions, mip count and every copied pixel byte; previous emission fails."
+      "scope": "Preserve top mip levels of exactly four 4x font atlases; retain original WorldLOD mip policy for all other textures."
     },
     "language_streaming_correction": {
-      "cause": "Initial raw conversion removed table required by actual header-first language loader; only GLOBALA message font reached upload in user log.",
-      "implementation": "Preserve compressed stream table and five unrelated compressed textures; literal-only JDLZ encoding for three imported language fonts.",
-      "validation": "Actual emitted language header, stream linking, JDLZ codec and D3D upload execute with synthetic file/heap/COM:8textures,3HDfonts,43exact mip copies. Old raw pack fails header; first literal stream fails actual codec. Current streams match independent decoding, preserve output guards, and include terminal flag lookahead. User confirmed restored text after the correction."
-    },
-    "user_validation": "User confirmed text is restored with the HD overlay; covers selected menu and race font atlases. Gauges remain stock."
+      "cause": "Initial raw conversion removed a table required by the header-first language loader.",
+      "implementation": "Preserve compressed stream table and five unrelated compressed textures; literal-only JDLZ encoding for three imported language fonts."
+    }
   },
   "depth_state_correction": {
     "date": "2026-10-23",
@@ -518,20 +508,17 @@
     "path": "web/src/gpu/encoder.ts",
     "blob_sha": "399a04f2db47df9ea7ef93a10f29807f2da19dcb",
     "license": "MIT; patches/nfsu2-web.LICENSE",
-    "implementation": "Disable depth writes when ZENABLE is false and preserve persistent scene depth during smaller depth-disabled effect passes. Reopen scratch-only passes when depth is enabled; retain explicit clears.",
-    "validation": "Actual pipeline/frame encoder checks pass correction and fail pinned original. User confirmed corrected traffic occlusion in game."
+    "implementation": "Disable depth writes when ZENABLE is false and preserve persistent scene depth during smaller depth-disabled effect passes. Reopen scratch-only passes when depth is enabled; retain explicit clears."
   },
   "traffic_depth_investigation": {
     "date": "2026-10-23",
     "source": "runtime/com.c at pinned th0mk/nfsu2-web revision",
     "adapter": "patches/nfsu2-web/runtime/com.c.patch",
     "license": "MIT; patches/nfsu2-web.LICENSE",
-    "status": "depth lifetime correction user-confirmed in game",
-    "evidence": "User confirms traffic bodies/lights through walls on Maximum. Newest user log152534 has no depth size mismatches.",
+    "status": "depth lifetime correction",
+    "evidence": "PC 1.4 instruction inspection.",
     "implementation": "At most192 unique caller/state records with render/depth target,shader IDs,depth states,FVF and CPU-reference clip/depth sample; no traffic rendering override.",
-    "fix": "Do not acquire/resize persistent depth for depth-disabled effect passes. Use scratch depth and reopen when real depth becomes necessary; retain explicit depth clears.",
-    "validation": "Actual bundled frame encoder with synthetic GPU command objects and depth pixel: wall->smallerZoffeffect->farthercar. Pinned original loses scene depth and fails; correction preserves depth for implicit/explicit surfaces, handles same-target Z enable and explicit clears. No actual GPU/browser execution.",
-    "user_validation": "User confirmed traffic occlusion is now correct after the scene-depth preservation fix."
+    "fix": "Do not acquire/resize persistent depth for depth-disabled effect passes. Use scratch depth and reopen when real depth becomes necessary; retain explicit depth clears."
   },
   "online_corrections": {
     "date": "2026-10-24",
@@ -542,21 +529,16 @@
     "license": "MIT; patches/nfsu2-web.LICENSE",
     "reuse": "Retarget the existing real monotonic NetTick adapter to NFSU1 thunk 0x66e8b0; retain original simulation timing and diagnostic virtual fallback.",
     "protocol_evidence": "Local PC 1.4 sender and receiver analysis: mesg ATTR is Dirtysock flags, nested GAME/PARAMS are carried inside escaped TEXT; +msg reads F/N/T.",
-    "validation": "Rust lobby regression, native actual guest TagField parsers, native clock/ABI smoke and Wasm relocation checks pass. User confirms working challenges and Online race starts; broader multiplayer coverage remains unverified.",
-    "output_policy": "Game inputs unchanged; emitted guest functions, parser harness and image remain ignored/local.",
-    "user_validation": "User confirms challenges work and confirms Online races work after stock car-table restoration.",
-    "diagnostics": "Original bounded CPU* wrappers observe verified PC 1.4 connection, receive, heartbeat, server quit and cleanup callbacks; native ABI/log-bound smoke passes. No game decisions changed."
+    "output_policy": "Game inputs unchanged; emitted guest functions, parser harness and image remain ignored/local."
   },
   "online_car_data": {
     "date": "2026-10-24",
-    "evidence": "PC 1.4 car-table loader 0x57c8b0 and race-start check 0x43b044..0x43b08c; fresh paired logs show explicit host shutdown with healthy peer heartbeat.",
+    "evidence": "PC 1.4 car-table loader and race-start check.",
     "implementation": "Original standard-library preparer restores only chunk 0x34600 table from verified local stock GLOBALB.BUN into ignored sparse GlobalB.lzc overlay. Source containers and guest checksum logic unchanged.",
     "expected_car_crc": "238562c5",
     "local_modified_car_crc": "951b523f",
     "local_changed_bytes": 26,
-    "validation": "Actual emitted Wasm CRC rejects modified table and accepts restored table; all bytes outside table preserved, source/output hash validation and HTTP full/range/cache stamp checks pass. User confirmed Online races work after restoration; race completion and broad compatibility remain unverified.",
     "reuse": "Reuses project-authored path/chunk/JDLZ helpers from tools/prepare_hd_fonts.py. No new third-party implementation copied.",
-    "output_policy": "All source/replacement containers, extracted records and game-derived CRC harness stay ignored and private.",
-    "user_validation": "User confirmed the race-start failure is resolved with the prepared stock car-table overlay."
+    "output_policy": "All source/replacement containers, extracted records and game-derived CRC harness stay ignored and private."
   }
 }

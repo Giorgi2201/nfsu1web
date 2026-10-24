@@ -1,7 +1,5 @@
 # Build and run
 
-## You only do this
-
 1. **Copy your whole PC install** into `work/data/`  
    Include `Speed.exe` and the usual folders (`Cars`, `FrontEnd`, `Global`,
    `Tracks`, `Languages`, `fx`, `Sound`, `Movies`, …).
@@ -16,9 +14,8 @@
    ./start.sh        # → http://127.0.0.1:8765/
    ```
 
-No second copy of the exe, no symlink. `./build.sh` uses
-`work/data/Speed.exe` from that install. It also fetches the WASI SDK, Python
-analysis deps, and upstream sources under `work/` when they are missing.
+`./build.sh` uses `work/data/Speed.exe` and fetches the required build tools and
+upstream sources under `work/` when they are missing.
 
 ### Already prepared workspace
 
@@ -36,12 +33,9 @@ Python 3.10+, Node 20+, Rust (`rustup`), curl, tar.
 ## Optional detail
 
 Settings / HD fonts: [settings.md](settings.md).  
-Checks: [testing.md](testing.md).  
 `J=8 ./build.sh` for more compile jobs. Keep `work/` / `gen/` / game files out
 of git.
 
-The build also checks `GlobalB.lzc`'s car table against PC 1.4's Online
-checksum. If modified, it restores only that table from the install's verified
-stock `GLOBALB.BUN` into `work/mods/online-data/`. Original inputs remain
-unchanged. `./start.sh` automatically selects this prepared overlay; the
-server changes its manifest cache stamp so reloading clients fetches it.
+The build prepares a local Online car-data overlay when needed. It uses the
+verified stock table from the game install, leaves the original files intact,
+and selects the overlay automatically when serving the game.

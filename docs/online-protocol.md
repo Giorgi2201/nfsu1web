@@ -109,11 +109,6 @@ Do not echo invites/refusals back to the sender. Ordinary private chat keeps
 its sender echo. Forcing `F=EP5` loses the invite bit and displays the control
 text as purple chat; top-level `ATTR`/`GAME`/`PARAMS` in `+msg` are not read.
 
-Verified against PC 1.4: sender `0x54ac80`, `+msg` dispatch `0x665c9e`,
-frontend handler `0x54be20`; actual emitted TagField parsers were compiled
-natively to check the flags and both decoding layers. That does not validate
-the complete interactive flow. The user subsequently confirmed challenges work.
-
 Other game cmds: `gjoi` / `gget` / `glea` / `gdel` / `gsta` (or `gstanepl` if
 `count < min`). `gsta` success → `StartGame` → per-player `+ses` (adds `SEED`,
 `SELF`) + broadcast `+agm`. Race UDP 3658 follows.
@@ -139,52 +134,19 @@ Language help for the player list: pad to move highlight, **pad right** toggles
 Created Games List, **Select** opens the action pop-up for the highlighted
 player (`ONLINE_SEND_CHALLENGE`, etc.).
 
-## Implementation (`server/src/online.rs`)
+## Server coverage and limits
 
-Covered client commands: `@dir`, `addr`/`skey`, `acct`, `auth`, `cper`,
-`dper`, `pers`, `news`, `auxi`, `sele`, `user`, `room`, `move`, `mesg`,
-`gcre`, `gjoi`, `gget`, `glea`, `gdel`, `gsta`, `snap`, `rank`, `~png`.
+The local server supports login, lobby and room management, private messages,
+challenge invites, created games, and keepalives. News, player statistics and
+rankings use placeholder data. It does not provide a database.
 
-Hardcoded (no DB): news text, `GetPlayerStat` CSV, snap top-3 stand-ins,
-`rank` → `Unranked` / `TIME=866`.
+Online lobby traffic uses TCP 10900/10901. After the server starts a race, the
+clients communicate over UDP 3658. A lobby connection alone does not provide
+race networking. The local browser build includes the client challenge action.
 
-- Reply frames must be delivered to the **destination VIP** in the LAN header
-  (broadcast `+usr` / `+agm` / `+msg` / `+pop` / `+rom`), not only to the
-  requesting peer (`lan.rs` `deliver_online_replies`).
-- Automated checks: `cargo test --manifest-path server/Cargo.toml`.
-- Live command log: server stderr lines `[online] << …`.
+## Car-data compatibility
 
-**Still client-side:** FE Send Challenge / `EVENT_HANDLER` must emit `gcre`.
-**After `+ses`:** race UDP 3658 between peers (not lobby TCP).
-
-NFSU1's Dirtysock NetTick thunk is `0x66e8b0`, not the SPEED2 `0x74b730`.
-The runtime wraps it with the upstream monotonic clock, keeping network timers
-independent of rendering/loading. The Wasm build retains direct calls to the
-thunk so linker wrapping also covers calls within its own shard. Simulation
-continues using its existing frame-paced clock. `NFSU2_NETTICK=virtual` restores
-the original clock for diagnosis. Car-table compatibility is handled separately
-by the local data overlay below.
-
-`runtime/nfsu1_online.c` adds bounded observations around verified PC 1.4 timeout,
-quit and cleanup callbacks. `[nfsu1 online]` records caller, cached transport
-clock/last-receive, the separate game-level heartbeat age, host heartbeat send
-age/gate and session states. Failure callbacks include a short stack trace.
-The wrappers preserve the original CPU arguments and decisions; this is
-diagnostic instrumentation, not a race compatibility fix.
-
-## Local car-table compatibility
-
-On entering racing, PC 1.4 checks 35 car records (`35 * 0xc90` bytes) with
-its CRC routine at `0x5647d0`; expected result is `238562c5`. A mismatch calls
-the coordinator abort at `0x43b087` and ultimately sends server quit to
-the other player. This happens even if traffic and heartbeats are healthy.
-
-The local install's modified `GlobalB.lzc` has CRC `951b523f`; its stock
-`GLOBALB.BUN` has the expected table. Only 26 bytes differ across GOLF, PEUGOT
-and LANCER records. `tools/prepare_online_data.py` restores that table into a
-copied LZC container, retaining all other bytes and leaving source inputs
-untouched. `./build.sh` prepares it and `./start.sh` selects it automatically.
-The server validates source/output hashes and changes the data-manifest cache
-stamp. The game checksum is unchanged. Actual emitted Wasm rejects the source
-table and accepts the overlay. The user confirmed Online races work after the
-restoration. Race completion and broader multiplayer coverage remain unverified.
+Some modified game installs need a local car-data overlay for Online race
+starts. The build prepares and selects it automatically when required; see the
+[build guide](building.md). Race completion and broader multiplayer support
+are not available yet.

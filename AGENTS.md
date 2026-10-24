@@ -15,7 +15,7 @@ This repository integrates PC NFS Underground 1 into the `nfsu2-web` browser run
 - `profiles/`: NFSU1 configuration consumed by the runtime overlay.
 - `poc/guest_abi.mjs`: original synthetic WebAssembly ABI fixture; `poc/README.md` documents its limits.
 - `tests/`: Python catalog tests and Node.js Wasm tests.
-- `docs/status.md`, `docs/settings.md`, `docs/testing.md`: current support, options and validation.
+- `docs/status.md` and `docs/settings.md`: current support and options.
 - `docs/source-manifest.json` and `docs/source-permissions.md`: pinned evidence, permissions and attribution.
 
 ## Development & Test Commands

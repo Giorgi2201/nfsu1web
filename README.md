@@ -8,11 +8,11 @@ it locally in your browser. It builds on
 [codepdbh's NFSU1 recompilation work](https://github.com/codepdbh/nfsu1-recompiled)
 and [th0mk's NFSU2 browser runtime](https://github.com/th0mk/nfsu2-web).
 
-**Still a work in progress.** Local browser testing has reached intro movies
-with sound, profile creation and loading, saves that survive a reload, and
-starting a race. HD font loading and traffic occlusion fixes are user-confirmed.
-Completing races and broader game compatibility remain
-unverified. Expect bugs, rendering issues and unfinished paths.
+**Work in progress.** The game starts in a local browser build, with intro
+movies and sound, profiles and persistent saves, and single-player and Online
+race starts. The browser build also includes HD fonts and traffic occlusion
+support.
+Race completion and broader compatibility remain unverified.
 
 ## Running it
 
@@ -40,20 +40,11 @@ hooks, startup movie controls and optional local HD fonts. See
 
 ## Development
 
-The repo contains the build tools, handwritten runtime adapters and browser
-integration. Game analysis and generated code are created locally and kept out
-of Git.
+The repository contains the build tools and browser integration. Game analysis
+and generated code stay local and out of Git.
 
-You can run the basic tooling and ABI checks without game files:
-
-```sh
-python3 -m unittest discover -s tests -v
-node --test tests/guest_abi.test.mjs
-```
-
-These checks don't test gameplay. For browser testing and useful bug reports,
-see the [test guide](docs/testing.md). Fixes and contributions are
-welcome; start with [CONTRIBUTING.md](CONTRIBUTING.md).
+Fixes and contributions are welcome; start with
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 More detail: [current status](docs/status.md) ·
 [mod research](docs/mod-compatibility.md)

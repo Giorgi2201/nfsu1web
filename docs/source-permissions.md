@@ -1,24 +1,24 @@
 # Source, licenses and permission record
 
-This records inspected license evidence and the user's supplied authorization.
+This records inspected license evidence and maintainer permission reported by
+the project author.
 [Source manifest](source-manifest.json) and [upstream pins](../profiles/upstreams.json)
 contain exact revisions, file hashes and interface references. Public visibility
 alone is not permission to reuse source or artwork.
 
 ## Authorization and attribution
 
-The user reported: “i contacted maintainers personally, they okay if we mention
-them in any work we might do”. This authorizes the requested repository reuse
-with attribution; no additional approval gate applies. Correspondence was not
-independently examined. This permission does not replace third-party licenses
-or grant rights to game content or independently authored mod artwork.
+Maintainers of the referenced repositories granted permission to reuse their
+work with attribution, as reported by the project author. Correspondence was
+not independently examined. This permission does not replace third-party
+licenses or grant rights to game content or independently authored mod artwork.
 
 | Source | Evidence and reuse |
 | --- | --- |
-| `codepdbh/nfsu1-recompiled` | No root license found; user-reported maintainer permission with attribution. Revision `58d9d4f63d59c941031f91973ae48c2cdb1a42b1` supplies analysis, ABK analysis/matching, widescreen source, HUD data and hooks. |
+| `codepdbh/nfsu1-recompiled` | No root license found; maintainer permission reported with attribution. Revision `58d9d4f63d59c941031f91973ae48c2cdb1a42b1` supplies analysis, ABK analysis/matching, widescreen source, HUD data and hooks. |
 | `th0mk/nfsu2-web` | MIT, copyright 2026 th0mk; portions copyright 2026 Talha Müderrisoğlu. Revision `31da468582c3de14fd6f4233831f62816e2df83d` supplies the emitter, runtime and browser host. Notice: [nfsu2-web.LICENSE](../patches/nfsu2-web.LICENSE). |
 | `sp00nznet/pcrecomp` | MIT at `8c92919a99aaf9e129af5787776bca84863468cc`; selected PE/disassembly modules support local catalog generation. Notice: [pcrecomp.LICENSE](../patches/pcrecomp.LICENSE). Legacy native-runtime/lift32 patch chains are not reused. |
-| `antoxa2584x/nfsu1-sw` | No game-specific root license found; user-reported permission with attribution. No source copied. Its separately MIT-licensed `xboxrecomp/` at `d597e08f88e3f415eb44366b22e75054f2dfd15d` does not license the whole repository. xemu-derived LGPL APU/NV2A components are not reused. |
+| `antoxa2584x/nfsu1-sw` | No game-specific root license found; maintainer permission reported with attribution. No source copied. Its separately MIT-licensed `xboxrecomp/` at `d597e08f88e3f415eb44366b22e75054f2dfd15d` does not license the whole repository. xemu-derived LGPL APU/NV2A components are not reused. |
 | Capstone 5.0.7 | Source build at `52c66920fc7bfa15fd9626dfd9f646c698aaa99b`; BSD-style and LLVM component notices retained in ignored `work/toolchain/capstone/`. |
 | pefile 2024.8.26 | MIT, Ero Carrera, at `4b3b1e2e568a88d4f1897d694d684f23d9e270c4`; source and license retained in ignored `work/toolchain/pefile/`. |
 | esbuild 0.27.4 | MIT; isolated npm packages, license, lockfile and package integrities retained in ignored `work/toolchain/web-bundler/`. |

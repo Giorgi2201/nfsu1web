@@ -36,22 +36,20 @@ node --test tests/guest_abi.test.mjs
 ```
 
 These checks need Python 3.10+ and Node.js 20+; they do not execute the game.
-For runtime or build changes, use the focused compile/smoke check relevant to
-the change and describe its limits. Add tests for consequential behavior that
-is difficult to verify directly; broad test suites are unnecessary.
+For runtime or build changes, use the focused validation relevant to the
+change. Add tests for consequential behavior that is difficult to verify
+directly; broad test suites are unnecessary.
 
 Use imperative commit subjects. Pull requests should explain the problem,
-resulting behavior, validation performed and remaining limitations. Distinguish
-synthetic checks, upstream emission, compilation and actual browser/game
-results. Do not infer compatibility from a successful build.
+resulting behavior and remaining limitations. Do not infer compatibility from a
+successful build.
 
 ## Reporting a problem
 
 Include your host OS and architecture, Python/Node/WASI SDK versions, repository
 revision, command or in-game steps, expected behavior and first relevant error.
-For browser reports, include the browser version, whether startup feature checks
-passed, and the failing stage. Follow [testing.md](docs/testing.md)
-to collect a local log.
+For browser reports, include the browser version, whether startup completed and
+the failing stage.
 
 Inspect logs before sharing. Post only the minimal relevant excerpt, removing
 personal paths, profile names or other private information. Do not attach

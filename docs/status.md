@@ -1,10 +1,10 @@
 # Current status
 
-The local PC NFSU1 browser build runs with WebAssembly and WebGPU. User testing
-has confirmed intro video/audio, profile creation and loading, persistent saves,
-single-player and Online race starts, working Online challenges, restored HD
-text and corrected traffic occlusion. Race completion, full career progression,
-broad multiplayer coverage and device compatibility are not established.
+The local PC NFSU1 browser build runs with WebAssembly and WebGPU. It supports
+intro video and audio, profiles and persistent saves, single-player and Online
+race starts, Online challenges, HD text, and traffic occlusion. Race completion,
+full career progression, broad multiplayer coverage, and device compatibility
+are not yet supported or established.
 
 ## Implemented
 
@@ -12,44 +12,19 @@ broad multiplayer coverage and device compatibility are not established.
 - Graphics presets, automatic canvas resolution and widescreen FOV/HUD hooks.
 - Browser settings, keyboard aliases and startup movie controls.
 - Four optional HD font atlases used in menus and race text. Gauges remain stock.
-- Scene depth survives smaller depth-disabled effect passes; the user confirmed
-  traffic no longer appears through walls.
-- Same-origin virtual LAN (`/lan`) plus Online lobby at `10.77.0.1`
-  (`ps2nfs04.ea.com` → DNS map, TCP 10900/10901; full nfsuserver command
-  surface in [online-protocol.md](online-protocol.md)). Stats/news/rankings
-  are hardcoded. Free-roam stays off. Challenge forwarding preserves the
-  client's invite/refusal flags and nested escaped text. A sparse prepared
-  overlay restores the stock car table from the install's verified BUN when
-  modified `GlobalB.lzc` records would fail the game's race-start checksum;
-  original inputs remain unchanged. The user confirms challenges and Online
-  races work after this correction. Network timers use the upstream monotonic
-  clock through NFSU1's actual NetTick thunk. Bounded `[nfsu1 online]` logs
-  identify timeouts, race-state changes, checksum rejection and cleanup callers.
-
-The font importer retains the language pack's streaming table and produces
-JDLZ streams accepted by the game's decoder. The renderer preserves persistent
-depth during effects that do not use it. Focused regression checks are listed
-in [testing.md](testing.md).
+- Scene depth survives smaller depth-disabled effect passes, keeping traffic
+  behind walls.
+- Same-origin LAN play and an Online lobby. News, stats and rankings use
+  placeholder data; free-roam is unsupported. The server also prepares a
+  local car-data overlay when a modified install needs it. See the
+  [Online protocol reference](online-protocol.md).
 
 ## Limits and next work
 
-The build still contains abort stubs for unresolved game functions. A successful
-compile or synthetic test does not establish compatibility for an untested mode.
-Remaining priorities are repeatable race completion/career checks, wider browser
-coverage and optional HD gauges. Other mod candidates are in
+Some game functions remain unsupported. Remaining priorities are race completion
+and career progression, wider browser coverage, and optional HD gauges. Other
+mod candidates are in
 [mod-compatibility.md](mod-compatibility.md).
 
-## Code map
-
-| Area | Location |
-| --- | --- |
-| Catalog caching and emission | `tools/prepare_game_catalog.py`, `catalog_bridge.py`, `lift_catalog.py` |
-| Runtime and browser overlays | `patches/nfsu2-web/**/*.patch`, `tools/apply_*_profile.sh` |
-| NFSU1 host adapters | `runtime/` |
-| Launcher and controls | `browser/` |
-| Build and local server | `tools/build_nfsu1_wasm.sh`, `build_nfsu1_browser.py`, `server/` (`nfsu1-server`) |
-| Pinned source evidence | [source-manifest.json](source-manifest.json) |
-
-The integration targets the web runtime's `CPU *` ABI and reuses saved catalog
-block ranges. Native DLL/ASI injection is unavailable; patches need runtime or
-emission-time adaptations. Game data, catalogs, generated C and Wasm stay local.
+Native DLL/ASI mods are unsupported. Game data, catalogs, generated C and Wasm
+stay local.

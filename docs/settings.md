@@ -53,6 +53,5 @@ Restart after replacing assets, then reload the same browser address. Cache
 versions derive from content hashes; deleting saves or clearing storage is
 unnecessary.
 
-Upload logs start with `[nfsu1 fonts] HD` or `stock`. If menu/race text disappears,
-retain the log and verify that the prepared language pack passes
-`python3 tools/font_container_smoke.py`. HD gauges are a separate future port.
+If menu or race text disappears, restart without `--hd-fonts`. HD gauges are a
+separate future port.

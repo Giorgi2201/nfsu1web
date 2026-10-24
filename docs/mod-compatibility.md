@@ -1,8 +1,7 @@
 # Mod support and next steps
 
-Current status as of 2026-10-23. The local browser build has NFSU1 widescreen
-support and four HD fonts. The user confirmed the fonts and the traffic
-occlusion correction in game; this does not establish full game compatibility.
+The local browser build has NFSU1 widescreen support and four HD fonts. Race
+completion and full game compatibility remain unfinished.
 
 ## Implemented
 
@@ -26,15 +25,9 @@ time before combining them with larger texture or gameplay packs.
 
 ## Runtime constraints
 
-The build compiles an exact PC 1.4 executable into Wasm using cached analysis
-and the `CPU *` ABI. Changing x86 instructions after compilation does not
-change emitted code. A patch needs a runtime override, guest-data change or
-emission-time transformation; original executable inputs remain unchanged.
-
-Windows ASI/DLL mods and graphics injectors cannot be dropped into the browser.
-The renderer uses D3D9 emulation, shared command queues and WebGPU/WGSL.
-Native upstream texture-pack support is not general browser replacement
-support: the font importer handles two specific game containers only.
+Windows ASI/DLL mods and graphics injectors are unsupported. The optional font
+importer supports the specific font assets described in [settings](settings.md),
+not general texture-pack replacement.
 
 ## Larger changes deferred
 

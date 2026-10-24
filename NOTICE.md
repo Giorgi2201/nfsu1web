@@ -11,9 +11,9 @@ This integration builds on these projects at fixed revisions:
   browser runtime, CPU ABI and emitter. Upstream excerpts in the overlays
   retain the [MIT notice](patches/nfsu2-web.LICENSE).
 - **codepdbh/nfsu1-recompiled**, by codepdbh: PC NFSU1 analysis, seed rules
-  and sound-bank parser/matching approach. Reuse follows the user's reported
-  maintainer permission with attribution; no root license was present at the
-  pinned revision.
+  and sound-bank parser/matching approach. Reuse follows maintainer permission
+  reported by the project author, with attribution; no root license was present
+  at the pinned revision.
 - **sp00nznet/pcrecomp**, by sp00nz: PE analysis and x86 disassembly.
   Its [MIT notice](patches/pcrecomp.LICENSE) is retained.
 - **ThirteenAG/WidescreenFixesPack**, by ThirteenAG: NFS Underground
