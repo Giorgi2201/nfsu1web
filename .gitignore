@@ -64,13 +64,3 @@ node_modules/
 *.swp
 *.swo
 *~
-
-# Private deployment tooling and operational documentation (kept locally).
-/deploy.sh
-/deploy/
-/docs/r2.md
-/server/.dockerignore
-/server/Dockerfile
-/server/docker-entrypoint.sh
-/tools/prepare_deploy_assets.py
-/tools/upload_r2_assets.sh

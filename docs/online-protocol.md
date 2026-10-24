@@ -40,11 +40,16 @@ Global rooms are named `{A-H}.{label}` (`roomIds = "ABCDEFGH"`):
 | A–D | Ranked Circuit / Sprint / Drift / Drag |
 | E–H | Unranked Circuit / Sprint / Drift / Drag |
 
-Default label is `LAN` → `A.LAN` … `H.LAN`. The client filters by first letter
-for the mode screen. Custom `room` names are whatever the client sends (often
+Default label is `Main Lobby` → `A.Main Lobby` … `H.Main Lobby`. The client
+filters by first letter for the mode screen. Custom `room` names are whatever the client sends (often
 already prefixed).
 
-`+rom` list fields (7): `I` `N` `H` `F=CK` `T=<count>` `L=50` `P=0`.
+Main lobbies allow 128 users each; user-created rooms allow 16. Creation and
+listing fields advertise the same enforced capacity. A full room returns
+`movefull`, preserving the user's previous room and race membership. These
+limits are independent of race size and the relay's overall player cap.
+
+`+rom` list fields (7): `I` `N` `H` `F=CK` `T=<count>` `L=<capacity>` `P=0`.
 
 ## Login path (10901)
 

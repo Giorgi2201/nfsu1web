@@ -27,6 +27,8 @@ const LAN_HDR: usize = 8;
 const MAX_PEER_CONNECTIONS: usize = 16;
 const MAX_COMMAND_BUFFER: usize = 64 * 1024;
 const MAX_USERS: usize = 16 * 1024;
+const MAIN_ROOM_CAPACITY: u32 = 128;
+const USER_ROOM_CAPACITY: u32 = 16;
 const CONNECTION_IDLE: Duration = Duration::from_secs(120);
 
 const NEWS: &str =
@@ -54,6 +56,16 @@ struct Room {
     global: bool,
     members: Vec<ConnKey>,
     games: Vec<Game>,
+}
+
+impl Room {
+    fn capacity(&self) -> u32 {
+        if self.global {
+            MAIN_ROOM_CAPACITY
+        } else {
+            USER_ROOM_CAPACITY
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -105,7 +117,7 @@ impl OnlineHost {
         for prefix in b'A'..=b'H' {
             rooms.push(Room {
                 id,
-                name: format!("{}.LAN", prefix as char),
+                name: format!("{}.Main Lobby", prefix as char),
                 host: "nfsu1".into(),
                 count: 0,
                 global: true,
@@ -142,7 +154,7 @@ impl OnlineHost {
                             &format!("H={}", r.host),
                             "F=CK",
                             &format!("T={}", r.count),
-                            "L=50",
+                            &format!("L={}", r.capacity()),
                             "P=0",
                         ],
                     ),
@@ -796,7 +808,7 @@ impl OnlineHost {
                     &format!("HOST={}", info.persona),
                     "DESC=",
                     "COUNT=1",
-                    "LIMIT=50",
+                    &format!("LIMIT={USER_ROOM_CAPACITY}"),
                     "FLAGS=C",
                 ],
             ),
@@ -826,7 +838,7 @@ impl OnlineHost {
                 &format!("H={}", info.persona),
                 "F=CH",
                 "T=1",
-                "L=25",
+                &format!("L={USER_ROOM_CAPACITY}"),
                 "P=10",
                 &format!("A={}", info.addr),
             ],
@@ -865,6 +877,9 @@ impl OnlineHost {
             .map(|r| r.id)
         {
             let mut out = self.add_user_to_room(key, id);
+            if self.conns.get(&key).and_then(|c| c.room_id) != Some(id) {
+                return out;
+            }
             // +pop Z=id/count to all lobby users
             if let Some(room) = self.rooms.iter().find(|r| r.id == id) {
                 let pop = make_command("+pop", &[&format!("Z={}/{}", room.id, room.count)]);
@@ -1345,10 +1360,22 @@ impl OnlineHost {
     }
 
     fn add_user_to_room(&mut self, key: ConnKey, room_id: u32) -> Vec<Vec<u8>> {
-        self.leave_room(key);
         let Some(room_idx) = self.rooms.iter().position(|r| r.id == room_id) else {
             return Vec::new();
         };
+        let room = &self.rooms[room_idx];
+        if room.members.len() >= room.capacity() as usize && !room.members.contains(&key) {
+            return vec![tcp_data(
+                key.peer,
+                key.dport,
+                key.sport,
+                key.cid,
+                &make_command("movefull", &[]),
+            )];
+        }
+        // Check capacity before leaving: a failed move must preserve the
+        // player's current room and any race membership.
+        self.leave_room(key);
         let count_before = self.rooms[room_idx].members.len() as u32;
         let rname = self.rooms[room_idx].name.clone();
         let rid = self.rooms[room_idx].id;
@@ -1914,7 +1941,10 @@ mod tests {
 
     #[test]
     fn make_command_matches_nfsuserver_length() {
-        let b = make_command("move", &["IDENT=1", "NAME=E.LAN", "COUNT=0", "FLAGS=C"]);
+        let b = make_command(
+            "move",
+            &["IDENT=1", "NAME=E.Main Lobby", "COUNT=0", "FLAGS=C"],
+        );
         assert_eq!(
             b.len(),
             u32::from_be_bytes(b[8..12].try_into().unwrap()) as usize
@@ -2034,7 +2064,7 @@ mod tests {
             let mut b = vec![0u8; 17];
             b[..4].copy_from_slice(b"move");
             b[8..12].copy_from_slice(&28u32.to_be_bytes());
-            b.extend_from_slice(b"E.LAN\0");
+            b.extend_from_slice(b"E.Main Lobby\0");
             // fix length
             let len = b.len() as u32;
             b[8..12].copy_from_slice(&len.to_be_bytes());
@@ -2067,7 +2097,7 @@ mod tests {
         let move_cmd = {
             let mut b = vec![0u8; 17];
             b[..4].copy_from_slice(b"move");
-            b.extend_from_slice(b"E.LAN\0");
+            b.extend_from_slice(b"E.Main Lobby\0");
             let len = b.len() as u32;
             b[8..12].copy_from_slice(&len.to_be_bytes());
             b
@@ -2079,7 +2109,7 @@ mod tests {
             "gcre",
             &[
                 "NAME=TestRace",
-                "ROOM=E.LAN",
+                "ROOM=E.Main Lobby",
                 "MAXSIZE=4",
                 "MINSIZE=2",
                 "SYSFLAGS=0",
@@ -2098,7 +2128,7 @@ mod tests {
         let game = host
             .rooms
             .iter()
-            .find(|r| r.name == "E.LAN")
+            .find(|r| r.name == "E.Main Lobby")
             .unwrap()
             .games
             .first()
@@ -2172,8 +2202,116 @@ mod tests {
         let names: Vec<_> = host.rooms.iter().map(|r| r.name.as_str()).collect();
         assert_eq!(
             names,
-            ["A.LAN", "B.LAN", "C.LAN", "D.LAN", "E.LAN", "F.LAN", "G.LAN", "H.LAN"]
+            [
+                "A.Main Lobby",
+                "B.Main Lobby",
+                "C.Main Lobby",
+                "D.Main Lobby",
+                "E.Main Lobby",
+                "F.Main Lobby",
+                "G.Main Lobby",
+                "H.Main Lobby"
+            ]
         );
+    }
+
+    #[test]
+    fn room_capacities_are_advertised_and_enforced_without_losing_previous_room() {
+        for (global, capacity) in [(true, MAIN_ROOM_CAPACITY), (false, USER_ROOM_CAPACITY)] {
+            let mut host = OnlineHost::new();
+            let key = ConnKey {
+                peer: 0x0a4d0002,
+                sport: 40000,
+                dport: PORT_LOBBY,
+                cid: 1,
+            };
+            host.on_frame(&lan_tcp(
+                key.peer,
+                key.sport,
+                key.dport,
+                TCP_SYN,
+                key.cid,
+                &[],
+            ));
+            host.add_user_to_room(key, 2);
+            host.rooms[1].games.push(Game {
+                id: 7,
+                name: "Race".into(),
+                params: String::new(),
+                max: 4,
+                min: 2,
+                sysflags: 0,
+                members: vec![key],
+            });
+            host.conns.get_mut(&key).unwrap().game_id = Some(7);
+            host.rooms[0].global = global;
+            let fill = capacity - 1;
+            host.rooms[0].members = (0..fill)
+                .map(|n| ConnKey {
+                    peer: 0x0a4d0100 + n,
+                    ..key
+                })
+                .collect();
+            host.rooms[0].count = fill;
+
+            let listing = host.room_list_msgs(key.peer, key.sport, key.dport, key.cid);
+            assert_eq!(
+                parse_kv_fields(&listing[0][F_DATA + LAN_HDR..]).get("L"),
+                Some(&capacity.to_string())
+            );
+
+            let last = ConnKey {
+                peer: 0x0a4d0700,
+                ..key
+            };
+            host.on_frame(&lan_tcp(
+                last.peer,
+                last.sport,
+                last.dport,
+                TCP_SYN,
+                last.cid,
+                &[],
+            ));
+            host.add_user_to_room(last, 1);
+            assert_eq!(host.rooms[0].count, capacity);
+
+            let replies = host.add_user_to_room(key, 1);
+            assert_eq!(reply_cmds(&replies), vec!["movefull"]);
+            assert_eq!(host.conns[&key].room_id, Some(2));
+            assert_eq!(host.conns[&key].game_id, Some(7));
+            assert!(host.rooms[1].games[0].members == vec![key]);
+            assert_eq!(host.rooms[0].count, capacity);
+        }
+
+        let mut host = OnlineHost::new();
+        let key = ConnKey {
+            peer: 0x0a4d0002,
+            sport: 40000,
+            dport: PORT_LOBBY,
+            cid: 1,
+        };
+        host.on_frame(&lan_tcp(
+            key.peer,
+            key.sport,
+            key.dport,
+            TCP_SYN,
+            key.cid,
+            &[],
+        ));
+        let mut request = vec![0u8; 17];
+        request.extend_from_slice(b"E.Crew\0");
+        let replies = host.handle_room(key, &request);
+        for command in ["room", "+rom"] {
+            let reply = replies
+                .iter()
+                .find(|r| cmd_name(&r[F_DATA + LAN_HDR..]) == command)
+                .unwrap();
+            let field = if command == "room" { "LIMIT" } else { "L" };
+            assert_eq!(
+                parse_kv_fields(&reply[F_DATA + LAN_HDR..]).get(field),
+                Some(&USER_ROOM_CAPACITY.to_string())
+            );
+        }
     }
 
     #[test]
@@ -2210,7 +2348,7 @@ mod tests {
         ));
         let mut move_cmd = vec![0u8; 17];
         move_cmd[..4].copy_from_slice(b"move");
-        move_cmd.extend_from_slice(b"E.LAN\0");
+        move_cmd.extend_from_slice(b"E.Main Lobby\0");
         let len = move_cmd.len() as u32;
         move_cmd[8..12].copy_from_slice(&len.to_be_bytes());
         let _ = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &move_cmd));
@@ -2218,7 +2356,7 @@ mod tests {
             "gcre",
             &[
                 "NAME=DelMe",
-                "ROOM=E.LAN",
+                "ROOM=E.Main Lobby",
                 "MAXSIZE=4",
                 "MINSIZE=2",
                 "SYSFLAGS=0",
@@ -2229,7 +2367,7 @@ mod tests {
         assert_eq!(
             host.rooms
                 .iter()
-                .find(|r| r.name == "E.LAN")
+                .find(|r| r.name == "E.Main Lobby")
                 .unwrap()
                 .games
                 .len(),
@@ -2246,7 +2384,7 @@ mod tests {
         assert!(host
             .rooms
             .iter()
-            .find(|r| r.name == "E.LAN")
+            .find(|r| r.name == "E.Main Lobby")
             .unwrap()
             .games
             .is_empty());
