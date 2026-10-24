@@ -71,6 +71,15 @@ and untouched textures, using an original literal-only JDLZ encoder for fonts.
 
 ## Packaging and distribution
 
+The NFSU1 Rust relay implements the pinned `th0mk/nfsu2-web`
+`web/src/net/index.ts` kind-32 bundle wire format (MIT, revision
+`31da468582c3de14fd6f4233831f62816e2df83d`), including optional destination
+lists and reliable, ordered LAN frame delivery. Queue draining adds no timed
+delay to race packets. Larger subnet support follows that revision's existing
+browser/runtime peer bitmap. The implementation is handwritten; no NFSU2
+server crate or game function bodies are copied. Existing attribution and
+the retained nfsu2-web license apply to the referenced browser/runtime.
+
 The Online entry adapter in `runtime/nfsu1_online_entry.c` uses locally verified
 PC 1.4 interface addresses to populate the profile-based online identity and
 follow the existing post-persona car-selection transition. Its guest-call

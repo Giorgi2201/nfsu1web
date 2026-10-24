@@ -36,6 +36,7 @@ async function waitHealth(ms = 8000) {
 function openPeer(name) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`ws://127.0.0.1:${port}/lan`);
+    const timer = setTimeout(() => { ws.close(); reject(new Error(`welcome timeout for ${name}`)); }, 5000);
     const ctrl = [];
     let welcome = null;
     ws.binaryType = 'arraybuffer';
@@ -48,12 +49,12 @@ function openPeer(name) {
         ctrl.push(m);
         if (m.t === 'welcome') {
           welcome = m;
+          clearTimeout(timer);
           resolve({ ws, welcome, ctrl });
         }
       }
     });
     ws.addEventListener('error', () => reject(new Error(`ws error for ${name}`)));
-    setTimeout(() => reject(new Error(`welcome timeout for ${name}`)), 5000);
   });
 }
 
@@ -93,7 +94,8 @@ try {
   const a = await openPeer('Alpha');
   const b = await openPeer('Bravo');
   if (a.welcome.vip === b.welcome.vip) throw new Error('duplicate VIP');
-  if (a.welcome.bundle !== 0) throw new Error('expected bundle:0');
+  if (a.welcome.bundle !== 1) throw new Error('expected bundle:1');
+  if (a.welcome.mask !== '255.255.248.0') throw new Error('expected /21 network');
 
   const frame = Buffer.alloc(24);
   frame[0] = 3;
@@ -110,12 +112,47 @@ try {
   if (src !== (a.welcome.vip >>> 0)) throw new Error(`src rewrite ${src} != ${a.welcome.vip}`);
   if (got.subarray(16, 24).toString() !== 'ping-lan') throw new Error('payload mismatch');
 
-  const counts = await (await fetch(`http://127.0.0.1:${port}/players`)).json();
-  if (counts.players !== 2) throw new Error(`expected 2 players, got ${JSON.stringify(counts)}`);
+  // An upstream bundle containing two reliable frames must arrive in order,
+  // whether the writer combines them or emits separate WebSocket messages.
+  const frames = [];
+  const takeFrames = (ev) => {
+    if (typeof ev.data === 'string') return;
+    const bytes = Buffer.from(ev.data);
+    if (bytes[0] !== 32) { frames.push(bytes); return; }
+    for (let at = 4; at < bytes.length;) {
+      const start = at + 4 + bytes[at] * 4, end = start + bytes.readUInt16BE(at + 2);
+      frames.push(bytes.subarray(start, end));
+      at = end;
+    }
+  };
+  b.ws.addEventListener('message', takeFrames);
+  const bundle = Buffer.alloc(4 + 2 * (4 + frame.length));
+  bundle[0] = 32;
+  for (let n = 0; n < 2; n++) {
+    const at = 4 + n * (4 + frame.length);
+    bundle.writeUInt16BE(frame.length, at + 2);
+    frame.copy(bundle, at + 4);
+    bundle[at + 4 + 23] = n;
+  }
+  a.ws.send(bundle);
+  const until = Date.now() + 3000;
+  while (frames.length < 2 && Date.now() < until) await sleep(10);
+  b.ws.removeEventListener('message', takeFrames);
+  if (frames.length !== 2 || frames[0][23] !== 0 || frames[1][23] !== 1
+      || frames.some(f => f.readUInt32BE(4) !== (a.welcome.vip >>> 0))) {
+    throw new Error('bundle order/source mismatch');
+  }
 
-  a.ws.close();
-  b.ws.close();
-  console.log(`lan_switch_smoke ok: ${a.welcome.vipStr} / ${b.welcome.vipStr}, unicast rewrite, /players=2`);
+  const peers = [a, b];
+  const target = Number(process.env.NFSU1_LAN_SMOKE_PEERS || 2);
+  for (let i = 2; i < target; i++) peers.push(await openPeer(`Peer${i}`));
+  if (new Set(peers.map(p => p.welcome.vip)).size !== peers.length) throw new Error('duplicate VIP');
+
+  const counts = await (await fetch(`http://127.0.0.1:${port}/players`)).json();
+  if (counts.players !== peers.length) throw new Error(`expected ${peers.length} players, got ${JSON.stringify(counts)}`);
+
+  for (const peer of peers) peer.ws.close();
+  console.log(`lan_switch_smoke ok: ${peers.length} peers, unicast source rewrite, ordered bundles`);
 } catch (err) {
   console.error(String(err));
   if (out.trim()) console.error(out.trim().split('\n').slice(-20).join('\n'));

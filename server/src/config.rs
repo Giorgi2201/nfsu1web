@@ -41,6 +41,7 @@ pub struct Config {
     pub module_hash: String,
     pub module_stamp: FileStamp,
     pub game_json: Vec<u8>,
+    pub asset_base: Option<String>,
     pub font_files: HashMap<String, OverlayFile>,
     pub online_files: HashMap<String, OverlayFile>,
     manifest: Mutex<Option<Manifest>>,
@@ -54,12 +55,14 @@ impl Config {
         data: PathBuf,
         hd_fonts: Option<PathBuf>,
         online_data: Option<PathBuf>,
+        asset_base: Option<String>,
         strict_data: bool,
     ) -> Result<Self, String> {
         let errors = validate(&dist, &wasm, &metadata, &data, strict_data);
         if !errors.is_empty() {
             return Err(errors.join("\n"));
         }
+        let asset_base = asset_base.map(validate_asset_base).transpose()?;
         let module_hash = hash_file(&wasm).map_err(|e| e.to_string())?;
         let module_stamp = FileStamp::from_meta(&fs::metadata(&wasm).map_err(|e| e.to_string())?);
         let mut game_info: Map<String, Value> =
@@ -87,6 +90,18 @@ impl Config {
         let short = &module_hash[..12.min(module_hash.len())];
         game_info.insert("rev".into(), Value::String(format!("nfsu1-local-{short}")));
         game_info.insert("module".into(), Value::String(module_hash.clone()));
+        game_info.remove("moduleUrl");
+        if let Some(base) = &asset_base {
+            game_info.insert(
+                "moduleUrl".into(),
+                Value::String(format!("{base}game.wasm")),
+            );
+            let release = hex::encode(Sha256::digest(base.as_bytes()));
+            game_info.insert(
+                "rev".into(),
+                Value::String(format!("nfsu1-{short}-{}", &release[..12])),
+            );
+        }
         let game_json = serde_json::to_vec(&Value::Object(game_info)).map_err(|e| e.to_string())?;
         Ok(Self {
             dist: dist.canonicalize().map_err(|e| e.to_string())?,
@@ -95,6 +110,7 @@ impl Config {
             module_hash,
             module_stamp,
             game_json,
+            asset_base,
             font_files,
             online_files,
             manifest: Mutex::new(None),
@@ -110,6 +126,7 @@ impl Config {
             let mut manifest = build_manifest(&self.data).map_err(|_| {
                 RequestError::new(StatusCode::INTERNAL_SERVER_ERROR, "manifest failed")
             })?;
+            manifest.data_base = self.asset_base.as_ref().map(|base| format!("{base}data/"));
             for entry in &mut manifest.files {
                 let key = entry.p.to_ascii_lowercase();
                 if let Some(file) = self
@@ -132,6 +149,26 @@ impl Config {
             .map(|m| FileStamp::from_meta(&m) == self.module_stamp)
             .unwrap_or(false)
     }
+}
+
+fn validate_asset_base(base: String) -> Result<String, String> {
+    let invalid = || {
+        "--asset-base must be an HTTPS release URL without credentials, query or fragment"
+            .to_string()
+    };
+    let uri: axum::http::Uri = base.parse().map_err(|_| invalid())?;
+    let authority = uri.authority().ok_or_else(invalid)?;
+    if uri.scheme_str() != Some("https")
+        || authority.as_str().contains('@')
+        || uri.host().is_none_or(str::is_empty)
+        || uri.query().is_some()
+        || base.contains('#')
+        || base.contains('\\')
+        || decoded_parts(uri.path()).is_err()
+    {
+        return Err(invalid());
+    }
+    Ok(format!("{}/", base.trim_end_matches('/')))
 }
 
 fn load_fonts(directory: &Path, data: &Path) -> Result<HashMap<String, OverlayFile>, String> {

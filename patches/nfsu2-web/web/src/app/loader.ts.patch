@@ -1,0 +1,8 @@
+--- a/web/src/app/loader.ts
++++ b/web/src/app/loader.ts
+@@ -10 +10 @@
+-export interface GameInfo { pages: number; maxPages: number; guestEnd: number; rev: string; size: number; opt: string; module?: string }
++export interface GameInfo { pages: number; maxPages: number; guestEnd: number; rev: string; size: number; opt: string; module?: string; moduleUrl?: string }
+@@ -23 +23 @@
+-    const url = new URL(info.module ? `/game.wasm?v=${encodeURIComponent(info.module)}` : '/game.wasm', location.href).href;
++    const url = new URL(info.moduleUrl ?? (info.module ? `/game.wasm?v=${encodeURIComponent(info.module)}` : '/game.wasm'), location.href).href;

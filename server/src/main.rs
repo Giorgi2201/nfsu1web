@@ -47,6 +47,10 @@ struct Args {
     #[arg(long)]
     online_data: Option<PathBuf>,
 
+    /// HTTPS release prefix for direct module and game-data downloads
+    #[arg(long)]
+    asset_base: Option<String>,
+
     /// Bind address. Loopback by default.
     #[arg(long, default_value = "127.0.0.1")]
     host: String,
@@ -58,6 +62,10 @@ struct Args {
     /// Allow non-loopback bind
     #[arg(long)]
     public: bool,
+
+    /// Maximum connected players (virtual LAN supports up to 2045)
+    #[arg(long, default_value_t = 512, value_parser = clap::value_parser!(u16).range(1..=2045))]
+    max_players: u16,
 
     /// Validate inputs without binding a port
     #[arg(long)]
@@ -108,6 +116,7 @@ async fn main() -> ExitCode {
         data,
         hd_fonts,
         online_data,
+        args.asset_base,
         /* strict_data */ args.check || !args.public,
     ) {
         Ok(c) => c,
@@ -126,7 +135,7 @@ async fn main() -> ExitCode {
 
     let fonts = !config.font_files.is_empty();
     let online_data = !config.online_files.is_empty();
-    let lan = LanSwitch::new();
+    let lan = LanSwitch::new(usize::from(args.max_players));
     let state = AppState {
         config: Arc::new(config),
         lan: lan.clone(),

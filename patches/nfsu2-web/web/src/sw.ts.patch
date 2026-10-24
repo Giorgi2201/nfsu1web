@@ -1,20 +1,45 @@
 --- a/web/src/sw.ts
 +++ b/web/src/sw.ts
-@@ -25,7 +25,7 @@
- declare const self: ServiceWorkerGlobalScope;
- export {};
- 
+@@ -28 +28 @@
 -const CACHE = 'nfsu2-offline-2';
 +const CACHE = 'nfsu1-offline-1';
- const PAGE = '/', MODULE = '/game.wasm';
- /** what a start needs, and the module; the page loads the first five itself before Play */
- const KEPT = ['/', '/main.js', '/main.css', '/game.json', '/data-manifest',
-@@ -108,7 +108,7 @@
- });
- self.addEventListener('activate', e => {
-   e.waitUntil((async () => {
+@@ -49 +49 @@
+-  if (res.status !== 200 || res.type !== 'basic') return;
++  if (res.status !== 200 || (res.type !== 'basic' && !(key.startsWith(MODULE + '?') && res.type === 'cors'))) return;
+@@ -59 +59 @@
+-  const info = await (await cache.match('/game.json', { ignoreVary: true }))?.json() as { module?: string } | undefined;
++  const info = await (await cache.match('/game.json', { ignoreVary: true }))?.json() as { module?: string; moduleUrl?: string } | undefined;
+@@ -63 +63,11 @@
+-  if (!kept) await keep(cache, key, await fetch(key));
++  if (!kept) await keep(cache, key, await fetch(info.moduleUrl ?? key));
++}
++
++/** CDN modules use the same hash-keyed local alias as local modules. A saved
++ *  metadata record is the only authority for mapping a cross-origin request. */
++async function externalModule(e: FetchEvent): Promise<Response> {
++  const cache = await caches.open(CACHE);
++  const info = await (await cache.match('/game.json', { ignoreVary: true }))?.json() as { module?: string; moduleUrl?: string } | undefined;
++  if (!info?.module || !info.moduleUrl || new URL(info.moduleUrl, self.location.href).href !== e.request.url)
++    return fetch(e.request);
++  return answer(e, `${MODULE}?v=${encodeURIComponent(info.module)}`);
+@@ -89,4 +99,7 @@
+-    e.waitUntil((async () => {
+-      await keep(cache, key, res.clone(), kept);
+-      if (key === PAGE) await refresh(cache, LATER);
+-    })().catch(() => {}));
++    // Publish metadata before the loader starts its CDN request: the request
++    // must be associated with this module hash, never an older cached release.
++    if (key === '/game.json') await keep(cache, key, res.clone(), kept);
++    else e.waitUntil((async () => {
++        await keep(cache, key, res.clone(), kept);
++        if (key === PAGE) await refresh(cache, LATER);
++      })().catch(() => {}));
+@@ -111 +124 @@
 -    for (const k of await caches.keys()) if (k.startsWith('nfsu2-offline-') && k !== CACHE) await caches.delete(k);
 +    for (const k of await caches.keys()) if (k.startsWith('nfsu1-offline-') && k !== CACHE) await caches.delete(k);
-     await self.clients.claim();
-   })());
- });
+@@ -122,0 +136,5 @@
++  else if (e.request.method === 'GET' && !e.request.headers.has('range')) {
++    const u = new URL(e.request.url);
++    if (u.origin !== self.location.origin && u.pathname.endsWith('/game.wasm'))
++      e.respondWith(externalModule(e));
++  }

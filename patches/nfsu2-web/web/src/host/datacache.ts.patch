@@ -9,3 +9,11 @@
  /** where the server has the manifest and the install folder (web/server-rs/src/app/manifest.rs) */
  export const MANIFEST_URL = '/data-manifest', DATA_BASE = '/data/';
  
+@@ -14,6 +14,7 @@
+  *  of their blocks compressed (an older server has no "blocks": byte ranges of /data/ then) */
+ export interface Manifest {
+   files: { p: string; d?: number; s?: number; m?: number }[];
++  dataBase?: string;       // immutable HTTPS release prefix for direct CDN reads
+   blocks?: { url: string; size: number; max: number };
+ }
+ /** The manifest's compressed runs, if it has them in this cache's block size: [url, most blocks a request]. */

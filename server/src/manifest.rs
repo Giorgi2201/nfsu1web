@@ -20,13 +20,18 @@ pub struct ManifestEntry {
 #[derive(Clone, Debug, Serialize)]
 pub struct Manifest {
     pub files: Vec<ManifestEntry>,
+    #[serde(rename = "dataBase", skip_serializing_if = "Option::is_none")]
+    pub data_base: Option<String>,
 }
 
 pub fn build_manifest(data: &Path) -> std::io::Result<Manifest> {
     let root = data.canonicalize()?;
     let mut files = Vec::new();
     walk(&root, &root, &mut files)?;
-    Ok(Manifest { files })
+    Ok(Manifest {
+        files,
+        data_base: None,
+    })
 }
 
 fn walk(root: &Path, current: &Path, files: &mut Vec<ManifestEntry>) -> std::io::Result<()> {

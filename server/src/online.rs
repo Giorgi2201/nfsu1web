@@ -4,7 +4,7 @@
 //! Accounts / persona lists / stats / news / rankings are in-memory hardcoded
 //! stand-ins (no DB).
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 
 pub const ONLINE_VIP: u32 = u32::from_be_bytes([10, 77, 0, 1]);
@@ -24,8 +24,13 @@ const PORT_CLIENT_REP: u16 = 10800;
 
 const F_DATA: usize = 16;
 const LAN_HDR: usize = 8;
+const MAX_PEER_CONNECTIONS: usize = 16;
+const MAX_COMMAND_BUFFER: usize = 64 * 1024;
+const MAX_USERS: usize = 16 * 1024;
+const CONNECTION_IDLE: Duration = Duration::from_secs(120);
 
-const NEWS: &str = "Welcome to NFSU1 browser Online.\nModify docs/online-protocol.md notes as needed.";
+const NEWS: &str =
+    "Welcome to NFSU1 browser Online.\nModify docs/online-protocol.md notes as needed.";
 /// nfsuserver GetPlayerStat: 35 hex CSV fields (all/circ/sprint/drag/drift × 7).
 const DEFAULT_STAT: &str = "3e8,a,2,0,1e240,1e240,3e8,3e8,a,2,0,1e240,1e240,3e8,3e8,a,2,0,1e240,1e240,3e8,3e8,a,2,0,1e240,1e240,3e8,3e8,a,2,0,1e240,1e240,3e8";
 const SKEY: &str = "SKEY=$37940faf2a8d1381a3b7d0d2f570e6a7";
@@ -164,7 +169,12 @@ impl OnlineHost {
         let dport = u16::from_be_bytes(frame[14..16].try_into().unwrap());
         let op = frame[F_DATA];
         let cid = u32::from_le_bytes(frame[F_DATA + 4..F_DATA + 8].try_into().unwrap());
-        let key = ConnKey { peer, sport, dport, cid };
+        let key = ConnKey {
+            peer,
+            sport,
+            dport,
+            cid,
+        };
 
         match op {
             TCP_SYN => {
@@ -173,6 +183,14 @@ impl OnlineHost {
                     && dport != PORT_REPORT
                     && dport != PORT_CLIENT_REP
                 {
+                    return vec![tcp_ctl(peer, dport, sport, TCP_RST, cid)];
+                }
+                // A repeated SYN must not replace a live connection and leave
+                // its old room/game membership behind.
+                if self.conns.contains_key(&key) {
+                    return vec![tcp_ctl(peer, dport, sport, TCP_SYNACK, cid)];
+                }
+                if self.conns.keys().filter(|k| k.peer == peer).count() >= MAX_PEER_CONNECTIONS {
                     return vec![tcp_ctl(peer, dport, sport, TCP_RST, cid)];
                 }
                 let peer_ip = std::net::Ipv4Addr::from(peer).to_string();
@@ -201,6 +219,11 @@ impl OnlineHost {
                 let Some(conn) = self.conns.get_mut(&key) else {
                     return vec![tcp_ctl(peer, dport, sport, TCP_RST, cid)];
                 };
+                if conn.buf.len().saturating_add(payload.len()) > MAX_COMMAND_BUFFER {
+                    let mut out = self.close_connection(key);
+                    out.push(tcp_ctl(peer, dport, sport, TCP_RST, cid));
+                    return out;
+                }
                 conn.buf.extend_from_slice(payload);
                 let mut cmds = Vec::new();
                 while let Some(cmd) = take_command(&mut conn.buf) {
@@ -216,16 +239,71 @@ impl OnlineHost {
                 out
             }
             TCP_FIN | TCP_RST => {
-                self.leave_room(key);
-                self.conns.remove(&key);
+                let mut out = self.close_connection(key);
                 if op == TCP_FIN {
-                    vec![tcp_ctl(peer, dport, sport, TCP_FIN, cid)]
-                } else {
-                    Vec::new()
+                    out.push(tcp_ctl(peer, dport, sport, TCP_FIN, cid));
                 }
+                out
             }
             _ => Vec::new(),
         }
+    }
+
+    /// Release every virtual socket owned by a disconnected browser before its
+    /// address can be allocated to someone else.
+    pub fn disconnect_peer(&mut self, peer: u32) -> Vec<Vec<u8>> {
+        let keys: Vec<_> = self
+            .conns
+            .keys()
+            .filter(|k| k.peer == peer)
+            .copied()
+            .collect();
+        let mut out = Vec::new();
+        for key in keys {
+            out.extend(self.close_connection(key));
+        }
+        out.retain(|frame| u32::from_be_bytes(frame[8..12].try_into().unwrap()) != peer);
+        out
+    }
+
+    fn close_connection(&mut self, key: ConnKey) -> Vec<Vec<u8>> {
+        let room_id = self.conns.get(&key).and_then(|c| c.room_id);
+        let games: Vec<u32> = room_id
+            .and_then(|rid| self.rooms.iter().find(|r| r.id == rid))
+            .map(|room| {
+                room.games
+                    .iter()
+                    .filter(|g| g.members.contains(&key))
+                    .map(|g| g.id)
+                    .collect()
+            })
+            .unwrap_or_default();
+        self.leave_room(key);
+        self.conns.remove(&key);
+        let Some(rid) = room_id else {
+            return Vec::new();
+        };
+        let Some(room) = self.rooms.iter().find(|r| r.id == rid) else {
+            return Vec::new();
+        };
+        let mut out = Vec::new();
+        for gid in games {
+            let fields = if let Some(game) = room.games.iter().find(|g| g.id == gid) {
+                self.agm_fields(&room.name, game)
+            } else {
+                vec![format!("IDENT={gid}")]
+            };
+            let refs: Vec<_> = fields.iter().map(String::as_str).collect();
+            out.extend(self.broadcast_room(rid, &make_command("+agm", &refs)));
+        }
+        let count = room.count;
+        let remove_room = !room.global && count == 0;
+        out.extend(self.broadcast_lobby(&make_command("+pop", &[&format!("Z={rid}/{count}")])));
+        if remove_room {
+            self.rooms.retain(|r| r.id != rid);
+            out.extend(self.broadcast_lobby(&make_command("+rom", &[&format!("I={rid}")])));
+        }
+        out
     }
 
     pub fn keepalive_pings(&mut self) -> Vec<Vec<u8>> {
@@ -233,6 +311,15 @@ impl OnlineHost {
         let mut out = Vec::new();
         let keys: Vec<ConnKey> = self.conns.keys().copied().collect();
         for key in keys {
+            if self
+                .conns
+                .get(&key)
+                .is_some_and(|c| now.duration_since(c.last_active) >= CONNECTION_IDLE)
+            {
+                out.extend(self.close_connection(key));
+                out.push(tcp_ctl(key.peer, key.dport, key.sport, TCP_RST, key.cid));
+                continue;
+            }
             let Some(c) = self.conns.get_mut(&key) else {
                 continue;
             };
@@ -242,8 +329,7 @@ impl OnlineHost {
             if now.duration_since(c.last_active) < Duration::from_secs(25) {
                 continue;
             }
-            if c
-                .last_ping
+            if c.last_ping
                 .map(|t| now.duration_since(t) < Duration::from_secs(20))
                 .unwrap_or(false)
             {
@@ -317,7 +403,13 @@ impl OnlineHost {
             return Vec::new();
         }
         if name.starts_with("addr") || name.starts_with("skey") {
-            return vec![tcp_data(peer, dport, sport, cid, &make_command("skey", &[SKEY]))];
+            return vec![tcp_data(
+                peer,
+                dport,
+                sport,
+                cid,
+                &make_command("skey", &[SKEY]),
+            )];
         }
         if name.starts_with("acct") {
             return self.handle_acct(key, cmd);
@@ -355,13 +447,7 @@ impl OnlineHost {
                 &make_command(
                     "sele",
                     &[
-                        "GAMES=1",
-                        "ROOMS=1",
-                        "USERS=1",
-                        "MESGS=1",
-                        "RANKS=0",
-                        "MORE=1",
-                        "SLOTS=36",
+                        "GAMES=1", "ROOMS=1", "USERS=1", "MESGS=1", "RANKS=0", "MORE=1", "SLOTS=36",
                     ],
                 ),
             )];
@@ -415,6 +501,23 @@ impl OnlineHost {
         Vec::new()
     }
 
+    fn reserve_user(&mut self, user: &str) -> bool {
+        if self.users.contains_key(user) || self.users.len() < MAX_USERS {
+            return true;
+        }
+        // Accounts are only an in-memory stand-in. Under pressure discard
+        // inactive accounts, retaining every connected player's personas.
+        let active: HashSet<_> = self.conns.values().filter_map(|c| c.user.clone()).collect();
+        self.users.retain(|name, _| active.contains(name));
+        self.users.len() < MAX_USERS
+    }
+
+    fn reset_connection(&mut self, key: ConnKey) -> Vec<Vec<u8>> {
+        let mut out = self.close_connection(key);
+        out.push(tcp_ctl(key.peer, key.dport, key.sport, TCP_RST, key.cid));
+        out
+    }
+
     fn handle_acct(&mut self, key: ConnKey, cmd: &[u8]) -> Vec<Vec<u8>> {
         let uid = self.conns.get(&key).map(|c| c.user_id).unwrap_or(1);
         let user = extract_name(cmd).unwrap_or_else(|| format!("p{uid}"));
@@ -436,6 +539,9 @@ impl OnlineHost {
                 &make_command("acctdupl", &[]),
             )];
         }
+        if !self.reserve_user(&user) {
+            return self.reset_connection(key);
+        }
         self.users.insert(user.clone(), Vec::new());
         if let Some(c) = self.conns.get_mut(&key) {
             c.user = Some(user.clone());
@@ -452,6 +558,9 @@ impl OnlineHost {
     fn handle_auth(&mut self, key: ConnKey, cmd: &[u8]) -> Vec<Vec<u8>> {
         let uid = self.conns.get(&key).map(|c| c.user_id).unwrap_or(1);
         let user = extract_name(cmd).unwrap_or_else(|| format!("p{uid}"));
+        if !self.reserve_user(&user) {
+            return self.reset_connection(key);
+        }
         // The browser enters Online with the active profile's name. Keep
         // account and persona aligned without a separate persona selection.
         let default_persona = user.clone();
@@ -517,10 +626,13 @@ impl OnlineHost {
                 )];
             }
         }
-        let Some(c) = self.conns.get_mut(&key) else {
+        let Some(c) = self.conns.get(&key) else {
             return Vec::new();
         };
         let user = c.user.clone().unwrap_or_else(|| persona.clone());
+        if !self.reserve_user(&user) {
+            return self.reset_connection(key);
+        }
         let list = self.users.entry(user.clone()).or_default();
         if list.len() >= 4 {
             return vec![tcp_data(
@@ -541,7 +653,10 @@ impl OnlineHost {
             key.dport,
             key.sport,
             key.cid,
-            &make_command("cper", &[&format!("NAME={user}"), &format!("PERS={persona}")]),
+            &make_command(
+                "cper",
+                &[&format!("NAME={user}"), &format!("PERS={persona}")],
+            ),
         )]
     }
 
@@ -600,7 +715,9 @@ impl OnlineHost {
         if let Some(c) = self.conns.get_mut(&key) {
             if cmd.len() > 17 {
                 let car = String::from_utf8_lossy(&cmd[17..]);
-                let end = car.find(|c| c == '\0' || c == '\t' || c == '\n').unwrap_or(car.len());
+                let end = car
+                    .find(|c| c == '\0' || c == '\t' || c == '\n')
+                    .unwrap_or(car.len());
                 c.car = car[..end].to_string();
             }
         }
@@ -741,7 +858,12 @@ impl OnlineHost {
 
     fn handle_move(&mut self, key: ConnKey, cmd: &[u8]) -> Vec<Vec<u8>> {
         let room_name = field_at(cmd, 17).unwrap_or_default();
-        if let Some(id) = self.rooms.iter().find(|r| r.name == room_name).map(|r| r.id) {
+        if let Some(id) = self
+            .rooms
+            .iter()
+            .find(|r| r.name == room_name)
+            .map(|r| r.id)
+        {
             let mut out = self.add_user_to_room(key, id);
             // +pop Z=id/count to all lobby users
             if let Some(room) = self.rooms.iter().find(|r| r.id == id) {
@@ -769,7 +891,10 @@ impl OnlineHost {
                 out.extend(self.broadcast_lobby(&pop));
             }
             // Remove empty non-global rooms.
-            if let Some(idx) = self.rooms.iter().position(|r| r.id == id && !r.global && r.count == 0)
+            if let Some(idx) = self
+                .rooms
+                .iter()
+                .position(|r| r.id == id && !r.global && r.count == 0)
             {
                 let rid = self.rooms[idx].id;
                 self.rooms.remove(idx);
@@ -880,11 +1005,12 @@ impl OnlineHost {
         let sysflags = parsed.sysflags;
         let mut params = parsed.params;
 
-        let room_id = self
-            .conns
-            .get(&key)
-            .and_then(|c| c.room_id)
-            .or_else(|| self.rooms.iter().find(|r| r.name == room_name).map(|r| r.id));
+        let room_id = self.conns.get(&key).and_then(|c| c.room_id).or_else(|| {
+            self.rooms
+                .iter()
+                .find(|r| r.name == room_name)
+                .map(|r| r.id)
+        });
         let Some(room_id) = room_id else {
             eprintln!("[online] gcre with no room for {game_name}");
             return Vec::new();
@@ -1107,8 +1233,14 @@ impl OnlineHost {
             .or_else(|| field_at(cmd, 18).and_then(|s| s.parse().ok()))
             .unwrap_or(1);
         let chan: u32 = fields.get("CHAN").and_then(|s| s.parse().ok()).unwrap_or(0);
-        let start: u32 = fields.get("START").and_then(|s| s.parse().ok()).unwrap_or(0);
-        let range: u32 = fields.get("RANGE").and_then(|s| s.parse().ok()).unwrap_or(100);
+        let start: u32 = fields
+            .get("START")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(0);
+        let range: u32 = fields
+            .get("RANGE")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(100);
 
         let mut out = vec![tcp_data(
             key.peer,
@@ -1128,11 +1260,7 @@ impl OnlineHost {
         )];
 
         // Hardcoded leaderboard stand-ins (indices 1–5 = overall / modes).
-        let fake = [
-            ("Racer1", 1u32),
-            ("Racer2", 2u32),
-            ("nfsu1", 3u32),
-        ];
+        let fake = [("Racer1", 1u32), ("Racer2", 2u32), ("nfsu1", 3u32)];
         for (name, ind) in fake {
             let s = match index {
                 1 => format!("S={ind:x},a,2,0,1e240,1e240,3e8"),
@@ -1391,7 +1519,14 @@ impl OnlineHost {
         )
     }
 
-    fn usr_packet(&self, to: ConnKey, info: &ConnInfo, flags: &str, port: &str, t: &str) -> Vec<u8> {
+    fn usr_packet(
+        &self,
+        to: ConnKey,
+        info: &ConnInfo,
+        flags: &str,
+        port: &str,
+        t: &str,
+    ) -> Vec<u8> {
         tcp_data(
             to.peer,
             to.dport,
@@ -1751,7 +1886,6 @@ fn field_at(cmd: &[u8], off: usize) -> Option<String> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1781,8 +1915,99 @@ mod tests {
     #[test]
     fn make_command_matches_nfsuserver_length() {
         let b = make_command("move", &["IDENT=1", "NAME=E.LAN", "COUNT=0", "FLAGS=C"]);
-        assert_eq!(b.len(), u32::from_be_bytes(b[8..12].try_into().unwrap()) as usize);
+        assert_eq!(
+            b.len(),
+            u32::from_be_bytes(b[8..12].try_into().unwrap()) as usize
+        );
         assert!(b.starts_with(b"move"));
+    }
+
+    #[test]
+    fn disconnect_releases_memberships_and_expires_abandoned_sockets() {
+        let mut host = OnlineHost::new();
+        let a = ConnKey {
+            peer: 0x0a4d0002,
+            sport: 40000,
+            dport: PORT_LOBBY,
+            cid: 1,
+        };
+        let b = ConnKey {
+            peer: 0x0a4d0003,
+            sport: 40001,
+            dport: PORT_LOBBY,
+            cid: 2,
+        };
+        for key in [a, b] {
+            host.on_frame(&lan_tcp(
+                key.peer,
+                key.sport,
+                key.dport,
+                TCP_SYN,
+                key.cid,
+                &[],
+            ));
+            host.add_user_to_room(key, 1);
+        }
+        host.rooms[0].games.push(Game {
+            id: 7,
+            name: "Race".into(),
+            params: String::new(),
+            max: 4,
+            min: 2,
+            sysflags: 0,
+            members: vec![a],
+        });
+        host.conns.get_mut(&a).unwrap().game_id = Some(7);
+        let replies = host.disconnect_peer(a.peer);
+        assert!(!host.conns.contains_key(&a));
+        assert!(host.rooms[0].members == vec![b]);
+        assert_eq!(host.rooms[0].count, 1);
+        assert!(host.rooms[0].games.is_empty());
+        assert!(reply_cmds(&replies).contains(&"+agm".into()));
+        assert!(reply_cmds(&replies).contains(&"+pop".into()));
+        assert!(replies
+            .iter()
+            .all(|r| u32::from_be_bytes(r[8..12].try_into().unwrap()) == b.peer));
+
+        host.conns.get_mut(&b).unwrap().last_active = Instant::now() - CONNECTION_IDLE;
+        let replies = host.keepalive_pings();
+        assert!(host.conns.is_empty());
+        assert!(host.rooms[0].members.is_empty());
+        assert!(replies.iter().any(|r| r[F_DATA] == TCP_RST));
+    }
+
+    #[test]
+    fn peer_socket_limit_and_repeated_syn_preserve_live_state() {
+        let mut host = OnlineHost::new();
+        let peer = 0x0a4d0002;
+        for cid in 0..MAX_PEER_CONNECTIONS as u32 {
+            let replies = host.on_frame(&lan_tcp(peer, 40000, PORT_LOBBY, TCP_SYN, cid, &[]));
+            assert_eq!(replies[0][F_DATA], TCP_SYNACK);
+        }
+        let key = ConnKey {
+            peer,
+            sport: 40000,
+            dport: PORT_LOBBY,
+            cid: 0,
+        };
+        host.add_user_to_room(key, 1);
+        let replies = host.on_frame(&lan_tcp(peer, 40000, PORT_LOBBY, TCP_SYN, 0, &[]));
+        assert_eq!(replies[0][F_DATA], TCP_SYNACK);
+        assert_eq!(host.conns[&key].room_id, Some(1));
+        let replies = host.on_frame(&lan_tcp(peer, 40000, PORT_LOBBY, TCP_SYN, 99, &[]));
+        assert_eq!(replies[0][F_DATA], TCP_RST);
+        assert_eq!(host.conns.len(), MAX_PEER_CONNECTIONS);
+        let replies = host.on_frame(&lan_tcp(
+            peer,
+            40000,
+            PORT_LOBBY,
+            TCP_DATA,
+            0,
+            &vec![0; MAX_COMMAND_BUFFER + 1],
+        ));
+        assert!(replies.iter().any(|r| r[F_DATA] == TCP_RST));
+        assert!(!host.conns.contains_key(&key));
+        assert!(host.rooms[0].members.is_empty());
     }
 
     #[test]
@@ -1796,7 +2021,14 @@ mod tests {
 
         // Minimal persona/car so +who has content.
         let key_payload = make_command("pers", &["NAME=Racer2"]);
-        let _ = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &key_payload));
+        let _ = host.on_frame(&lan_tcp(
+            peer,
+            sport,
+            PORT_LOBBY,
+            TCP_DATA,
+            cid,
+            &key_payload,
+        ));
 
         let move_cmd = {
             let mut b = vec![0u8; 17];
@@ -1857,7 +2089,9 @@ mod tests {
         let replies = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &gcre));
         let names = reply_cmds(&replies);
         assert!(
-            names.iter().any(|n| n.starts_with("gcre") || n.starts_with("gjoi")),
+            names
+                .iter()
+                .any(|n| n.starts_with("gcre") || n.starts_with("gjoi")),
             "{names:?}"
         );
         assert!(names.iter().any(|n| n.starts_with("+agm")), "{names:?}");
@@ -1949,14 +2183,14 @@ mod tests {
         let sport = 40002u16;
         let cid = 3u32;
         let _ = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_SYN, cid, &[]));
-        let snap = make_command(
-            "snap",
-            &["INDEX=1", "CHAN=0", "START=0", "RANGE=100"],
-        );
+        let snap = make_command("snap", &["INDEX=1", "CHAN=0", "START=0", "RANGE=100"]);
         let replies = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &snap));
         let names = reply_cmds(&replies);
         assert!(names.iter().any(|n| n.starts_with("snap")), "{names:?}");
-        assert!(names.iter().filter(|n| n.starts_with("+snp")).count() >= 1, "{names:?}");
+        assert!(
+            names.iter().filter(|n| n.starts_with("+snp")).count() >= 1,
+            "{names:?}"
+        );
     }
 
     #[test]
@@ -1992,7 +2226,15 @@ mod tests {
             ],
         );
         let _ = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &gcre));
-        assert_eq!(host.rooms.iter().find(|r| r.name == "E.LAN").unwrap().games.len(), 1);
+        assert_eq!(
+            host.rooms
+                .iter()
+                .find(|r| r.name == "E.LAN")
+                .unwrap()
+                .games
+                .len(),
+            1
+        );
         let mut gdel = vec![0u8; 17];
         gdel[..4].copy_from_slice(b"gdel");
         gdel.extend_from_slice(b"DelMe\0");
@@ -2001,6 +2243,12 @@ mod tests {
         let replies = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &gdel));
         let names = reply_cmds(&replies);
         assert!(names.iter().any(|n| n.starts_with("gdel")), "{names:?}");
-        assert!(host.rooms.iter().find(|r| r.name == "E.LAN").unwrap().games.is_empty());
+        assert!(host
+            .rooms
+            .iter()
+            .find(|r| r.name == "E.LAN")
+            .unwrap()
+            .games
+            .is_empty());
     }
 }

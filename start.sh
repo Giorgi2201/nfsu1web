@@ -16,6 +16,7 @@ PORT="${PORT:-8765}"
 HD_FONTS=""
 ONLINE_DATA="${NFSU1_ONLINE_DATA:-$ROOT/work/mods/online-data}"
 ONLINE_DATA_REQUIRED=0
+ASSET_BASE="${NFSU1_ASSET_BASE:-}"
 CHECK=0
 NO_BUILD=0
 EXTRA=()
@@ -29,10 +30,12 @@ while [[ $# -gt 0 ]]; do
     --port|--http-port) PORT="$2"; shift 2 ;;
     --hd-fonts) HD_FONTS="$2"; shift 2 ;;
     --online-data) ONLINE_DATA="$2"; ONLINE_DATA_REQUIRED=1; shift 2 ;;
+    --asset-base) ASSET_BASE="$2"; shift 2 ;;
     --check) CHECK=1; shift ;;
     --no-build) NO_BUILD=1; shift ;;
     --public) EXTRA+=(--public); shift ;;
     --host) EXTRA+=(--host "$2"); shift 2 ;;
+    --max-players) EXTRA+=(--max-players "$2"); shift 2 ;;
     -h|--help)
       sed -n '2,8p' "$0"
       exit 0
@@ -66,6 +69,7 @@ fi
 [[ -x "$SERVER_BIN" ]] || { echo "error: missing $SERVER_BIN (run without --no-build)" >&2; exit 1; }
 
 ARGS=(--dist "$DIST" --wasm "$WASM" --metadata "$META" --data "$DATA" --port "$PORT")
+[[ -n "$ASSET_BASE" ]] && ARGS+=(--asset-base "$ASSET_BASE")
 [[ -n "$HD_FONTS" ]] && ARGS+=(--hd-fonts "$HD_FONTS")
 if [[ "$ONLINE_DATA_REQUIRED" -eq 1 && ! -f "$ONLINE_DATA/manifest.json" ]]; then
   echo "error: missing prepared Online data manifest: $ONLINE_DATA/manifest.json" >&2
