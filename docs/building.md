@@ -39,3 +39,9 @@ Settings / HD fonts: [settings.md](settings.md).
 Checks: [testing.md](testing.md).  
 `J=8 ./build.sh` for more compile jobs. Keep `work/` / `gen/` / game files out
 of git.
+
+The build also checks `GlobalB.lzc`'s car table against PC 1.4's Online
+checksum. If modified, it restores only that table from the install's verified
+stock `GLOBALB.BUN` into `work/mods/online-data/`. Original inputs remain
+unchanged. `./start.sh` automatically selects this prepared overlay; the
+server changes its manifest cache stamp so reloading clients fetches it.

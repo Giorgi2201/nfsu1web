@@ -114,15 +114,19 @@ async fn dispatch(
             decoded_parts(&format!("/{suffix}"))?
         };
         let key = parts.join("/").to_ascii_lowercase();
-        if let Some(font) = cfg.font_files.get(&key) {
-            let mime = mime_for(&font.path);
+        if let Some(file) = cfg
+            .font_files
+            .get(&key)
+            .or_else(|| cfg.online_files.get(&key))
+        {
+            let mime = mime_for(&file.path);
             return send_file(
-                &font.path,
+                &file.path,
                 mime,
                 send_body,
                 true,
                 "no-store",
-                Some(&font.stamp),
+                Some(&file.stamp),
                 headers,
             )
             .await;

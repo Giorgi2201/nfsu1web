@@ -532,5 +532,31 @@
     "fix": "Do not acquire/resize persistent depth for depth-disabled effect passes. Use scratch depth and reopen when real depth becomes necessary; retain explicit depth clears.",
     "validation": "Actual bundled frame encoder with synthetic GPU command objects and depth pixel: wall->smallerZoffeffect->farthercar. Pinned original loses scene depth and fails; correction preserves depth for implicit/explicit surfaces, handles same-target Z enable and explicit clears. No actual GPU/browser execution.",
     "user_validation": "User confirmed traffic occlusion is now correct after the scene-depth preservation fix."
+  },
+  "online_corrections": {
+    "date": "2026-10-24",
+    "repository": "th0mk/nfsu2-web",
+    "commit": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "path": "runtime/winsock.c",
+    "blob_sha": "680c179d3be2f9b33c79b79a30da08b0cd1890cb",
+    "license": "MIT; patches/nfsu2-web.LICENSE",
+    "reuse": "Retarget the existing real monotonic NetTick adapter to NFSU1 thunk 0x66e8b0; retain original simulation timing and diagnostic virtual fallback.",
+    "protocol_evidence": "Local PC 1.4 sender and receiver analysis: mesg ATTR is Dirtysock flags, nested GAME/PARAMS are carried inside escaped TEXT; +msg reads F/N/T.",
+    "validation": "Rust lobby regression, native actual guest TagField parsers, native clock/ABI smoke and Wasm relocation checks pass. User confirms working challenges and Online race starts; broader multiplayer coverage remains unverified.",
+    "output_policy": "Game inputs unchanged; emitted guest functions, parser harness and image remain ignored/local.",
+    "user_validation": "User confirms challenges work and confirms Online races work after stock car-table restoration.",
+    "diagnostics": "Original bounded CPU* wrappers observe verified PC 1.4 connection, receive, heartbeat, server quit and cleanup callbacks; native ABI/log-bound smoke passes. No game decisions changed."
+  },
+  "online_car_data": {
+    "date": "2026-10-24",
+    "evidence": "PC 1.4 car-table loader 0x57c8b0 and race-start check 0x43b044..0x43b08c; fresh paired logs show explicit host shutdown with healthy peer heartbeat.",
+    "implementation": "Original standard-library preparer restores only chunk 0x34600 table from verified local stock GLOBALB.BUN into ignored sparse GlobalB.lzc overlay. Source containers and guest checksum logic unchanged.",
+    "expected_car_crc": "238562c5",
+    "local_modified_car_crc": "951b523f",
+    "local_changed_bytes": 26,
+    "validation": "Actual emitted Wasm CRC rejects modified table and accepts restored table; all bytes outside table preserved, source/output hash validation and HTTP full/range/cache stamp checks pass. User confirmed Online races work after restoration; race completion and broad compatibility remain unverified.",
+    "reuse": "Reuses project-authored path/chunk/JDLZ helpers from tools/prepare_hd_fonts.py. No new third-party implementation copied.",
+    "output_policy": "All source/replacement containers, extracted records and game-derived CRC harness stay ignored and private.",
+    "user_validation": "User confirmed the race-start failure is resolved with the prepared stock car-table overlay."
   }
 }

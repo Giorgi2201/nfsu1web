@@ -2,9 +2,9 @@
 
 The local PC NFSU1 browser build runs with WebAssembly and WebGPU. User testing
 has confirmed intro video/audio, profile creation and loading, persistent saves,
-race starts, restored HD text and corrected traffic occlusion. Race completion,
-full career progression, multiplayer and broad device compatibility are not
-established.
+single-player and Online race starts, working Online challenges, restored HD
+text and corrected traffic occlusion. Race completion, full career progression,
+broad multiplayer coverage and device compatibility are not established.
 
 ## Implemented
 
@@ -17,11 +17,14 @@ established.
 - Same-origin virtual LAN (`/lan`) plus Online lobby at `10.77.0.1`
   (`ps2nfs04.ea.com` → DNS map, TCP 10900/10901; full nfsuserver command
   surface in [online-protocol.md](online-protocol.md)). Stats/news/rankings
-  are hardcoded. Free-roam stays off. In-room Send Challenge FE
-  (`EVENT_HANDLER` still on HUD). Challenge invite must not use `F=EP5` (that
-  painted `GAME=`/`PARAMS=` as purple DMs). Race enter does D3D `DEVICELOST`→
-  Reset (e.g. 876x600) via canvas watcher — if the race then returns to lobby,
-  grab a fresh Downloads log after restart.
+  are hardcoded. Free-roam stays off. Challenge forwarding preserves the
+  client's invite/refusal flags and nested escaped text. A sparse prepared
+  overlay restores the stock car table from the install's verified BUN when
+  modified `GlobalB.lzc` records would fail the game's race-start checksum;
+  original inputs remain unchanged. The user confirms challenges and Online
+  races work after this correction. Network timers use the upstream monotonic
+  clock through NFSU1's actual NetTick thunk. Bounded `[nfsu1 online]` logs
+  identify timeouts, race-state changes, checksum rejection and cleanup callers.
 
 The font importer retains the language pack's streaming table and produces
 JDLZ streams accepted by the game's decoder. The renderer preserves persistent

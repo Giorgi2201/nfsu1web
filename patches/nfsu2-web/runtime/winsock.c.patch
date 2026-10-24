@@ -45,3 +45,31 @@
              if (e) FAIL(e);
              return (uint32_t)got;
          }
+@@ -2010,7 +2007,8 @@
+ /* DirtySock's clock                                                        */
+ /* ======================================================================= */
+-/* NetTick (0x74B730) is SPEED2.EXE's `jmp [GetTickCount]` for all of EA's
+- * network code: 60 call sites at 0x73DE1C-0x75BB12 (adverts and their
++/* NFSU1 NetTick (0x66E8B0) is Speed.exe 1.4's `jmp [GetTickCount]` at
++ * IAT 0x697220. Wrap its emitted thunk and direct/function-table calls.
++ * Its networking callers at 0x662B27-0x66F40F include adverts and their
+  * expiry, CommUDP / NetGameLink retransmits, keepalives and timeouts, pings,
+- * lobby timers, the lobby challenge code); no game-simulation code calls it.
++ * lobby timers and challenges; simulation keeps its frame-paced clock.
+  * The HLE's GetTickCount is the frame-paced virtual clock, which nearly
+@@ -2019,10 +2017,12 @@
+  * expects the Mac to: so NetTick returns real monotonic milliseconds.
+  * NFSU2_NETTICK=virtual restores the old clock. */
+-void sub_0074b730_orig(CPU *c);
+-void sub_0074b730(CPU *c){
++void __real_sub_0066e8b0(CPU *c);
++void __wrap_sub_0066e8b0(CPU *c){
+     static int virt = -1;
+     if (virt < 0){ const char *e = getenv("NFSU2_NETTICK"); virt = e && !strcmp(e, "virtual"); }
+-    if (virt){ sub_0074b730_orig(c); return; }
++    if (virt){ __real_sub_0066e8b0(c); return; }
++    static int noted;
++    if (!noted++) ws_log("NFSU1 NetTick: real monotonic clock (independent of rendering/loading)");
+     POP32(c->eip);
+     c->eax = (uint32_t)(ws_now_us() / 1000ull);
+ }

@@ -154,6 +154,10 @@ if [[ ! -f gen/nfsu1-current/fntab.c ]]; then
     --hooks-file work/upstream/nfsu1-recompiled/config/hooks.txt --link-stubs
 fi
 
+# Restore stock car attributes for the game's Online integrity check in a
+# sparse local overlay, preserving the user's original containers.
+python3 tools/prepare_online_data.py --data work/data --output work/mods/online-data
+
 # --- Compile ---
 echo "==> Wasm"
 J="${J:-4}" bash tools/build_nfsu1_wasm.sh

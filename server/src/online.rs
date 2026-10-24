@@ -793,11 +793,12 @@ impl OnlineHost {
             .cloned()
             .or_else(|| field_at(cmd, 17))
             .unwrap_or_default();
-        // Speed.exe challenge invite: PRIV=… ATTR=… TEXT=… GAME=%d PARAMS=%s
-        // Stock nfsuserver only forwarded T/N; challenge Accept/Refuse needs GAME+PARAMS.
-        let game = fields.get("GAME").cloned();
-        let params = fields.get("PARAMS").cloned();
-        let attr = fields.get("ATTR").cloned();
+        // ATTR is a Dirtysock flag string, not a number. Speed.exe sends E0 for
+        // an invite and E1 for a refusal; GAME/PARAMS are nested inside TEXT and
+        // escaped one extra time. Relay that TEXT verbatim as T so the client
+        // decodes each level itself. +msg reads F (not ATTR) and T (not GAME).
+        let attr = fields.get("ATTR").map(String::as_str).unwrap_or("E");
+        let is_challenge = attr.bytes().any(|b| matches!(b, b'0' | b'1'));
 
         let target = fields.get("PRIV").cloned().or_else(|| {
             let body = String::from_utf8_lossy(cmd.get(17..).unwrap_or(&[]));
@@ -820,49 +821,25 @@ impl OnlineHost {
         if let Some(target) = target {
             if let Some(tk) = self.find_conn_by_name(&target) {
                 let ti = self.conn_info(tk);
-                let is_challenge = game.is_some() && params.is_some();
+                out.push(tcp_data(
+                    tk.peer,
+                    tk.dport,
+                    tk.sport,
+                    tk.cid,
+                    &make_command(
+                        "+msg",
+                        &[
+                            &format!("F={attr}P"),
+                            &format!("T={text}"),
+                            &format!("N={}", info.persona),
+                        ],
+                    ),
+                ));
                 if is_challenge {
-                    // Challenge invite: GAME+PARAMS open Accept/Refuse. Do not put them on
-                    // F=EP5 chat (shows as purple "GAME=1" / PARAMS=… DM) and do not echo
-                    // to the sender. ATTR marks the invite (client sends ATTR=%f).
-                    let mut invite = vec![
-                        format!("N={}", info.persona),
-                        format!("GAME={}", game.as_ref().unwrap()),
-                        format!("PARAMS={}", params.as_ref().unwrap()),
-                    ];
-                    invite.insert(
-                        0,
-                        format!("ATTR={}", attr.as_deref().unwrap_or("1")),
-                    );
-                    let refs: Vec<&str> = invite.iter().map(|s| s.as_str()).collect();
-                    out.push(tcp_data(
-                        tk.peer,
-                        tk.dport,
-                        tk.sport,
-                        tk.cid,
-                        &make_command("+msg", &refs),
-                    ));
-                    eprintln!(
-                        "[online] challenge → {target} GAME={} PARAMS_len={}",
-                        game.as_deref().unwrap_or("-"),
-                        params.as_ref().map(|p| p.len()).unwrap_or(0)
-                    );
+                    eprintln!("[online] challenge → {target} ATTR={attr}");
                 } else {
-                    // Normal private chat (stock nfsuserver: F=EP5 T= N= only).
-                    out.push(tcp_data(
-                        tk.peer,
-                        tk.dport,
-                        tk.sport,
-                        tk.cid,
-                        &make_command(
-                            "+msg",
-                            &[
-                                "F=EP5",
-                                &format!("T={text}"),
-                                &format!("N={}", info.persona),
-                            ],
-                        ),
-                    ));
+                    // Only ordinary chat has a sender echo. Replaying an invite
+                    // or refusal to its sender runs the wrong frontend action.
                     out.push(tcp_data(
                         key.peer,
                         key.dport,
@@ -1898,7 +1875,7 @@ mod tests {
     }
 
     #[test]
-    fn mesg_challenge_goes_to_target_not_chat_echo() {
+    fn mesg_preserves_challenge_flags_and_nested_text() {
         let mut host = OnlineHost::new();
         let a = u32::from_be_bytes([10, 77, 0, 10]);
         let b = u32::from_be_bytes([10, 77, 0, 11]);
@@ -1920,25 +1897,37 @@ mod tests {
             2,
             &make_command("pers", &["NAME=Bob"]),
         ));
-        let params = "TRACK%3d1003%0aDIR%3d0%0aLAPS%3d2%0aMYIP%3d1";
-        let mesg = make_command(
-            "mesg",
-            &["TEXT=", "PRIV=Bob", "ATTR=1", "GAME=7", &format!("PARAMS={params}")],
-        );
-        let replies = host.on_frame(&lan_tcp(a, 41000, PORT_LOBBY, TCP_DATA, 1, &mesg));
-        let msgs: Vec<(u32, String)> = replies
-            .iter()
-            .filter(|r| r.len() > F_DATA + LAN_HDR && r[F_DATA] == TCP_DATA)
-            .filter(|r| cmd_name(&r[F_DATA + LAN_HDR..]).starts_with("+msg"))
-            .map(|r| {
-                let dst = u32::from_be_bytes(r[8..12].try_into().unwrap());
-                (dst, String::from_utf8_lossy(&r[F_DATA + LAN_HDR..]).into_owned())
-            })
-            .collect();
-        assert_eq!(msgs.len(), 1, "challenge must not echo to sender: {msgs:?}");
-        assert_eq!(msgs[0].0, b, "{msgs:?}");
-        assert!(msgs[0].1.contains("GAME=7") && msgs[0].1.contains("PARAMS=TRACK%3d"), "{msgs:?}");
-        assert!(!msgs[0].1.contains("F=EP5"), "challenge must not use chat F=EP5: {msgs:?}");
+        // Actual client format: PRIV=%s ATTR=%f TEXT=%s. GAME/PARAMS live
+        // inside TEXT, escaped again by TagFieldSetString; not top-level KV.
+        let invite = "GAME%3d7%0aPARAMS%3dTRACK%253d1003%250aDIR%253d0%250aLAPS%253d2%250aMYIP%253d172818443";
+        for (attr, text, expected_flags, count) in [
+            ("E0", invite, "E0P", 1),
+            ("E1", "", "E1P", 1),
+            ("E", "hello%3dworld", "EP", 2),
+        ] {
+            let mesg = make_command(
+                "mesg",
+                &["PRIV=Bob", &format!("ATTR={attr}"), &format!("TEXT={text}")],
+            );
+            let replies = host.on_frame(&lan_tcp(a, 41000, PORT_LOBBY, TCP_DATA, 1, &mesg));
+            let msgs: Vec<_> = replies
+                .iter()
+                .filter(|r| r.len() > F_DATA + LAN_HDR && r[F_DATA] == TCP_DATA)
+                .filter(|r| cmd_name(&r[F_DATA + LAN_HDR..]).starts_with("+msg"))
+                .map(|r| {
+                    let dst = u32::from_be_bytes(r[8..12].try_into().unwrap());
+                    (dst, parse_kv_fields(&r[F_DATA + LAN_HDR..]))
+                })
+                .collect();
+            assert_eq!(msgs.len(), count, "ATTR={attr}: {msgs:?}");
+            assert_eq!(msgs[0].0, b, "{msgs:?}");
+            assert_eq!(msgs[0].1.get("F").unwrap(), expected_flags);
+            assert_eq!(msgs[0].1.get("T").unwrap(), text);
+            assert_eq!(msgs[0].1.get("N").unwrap(), "Alice");
+            if count == 2 {
+                assert_eq!(msgs[1].0, a, "chat should echo to sender");
+            }
+        }
     }
 
     #[test]

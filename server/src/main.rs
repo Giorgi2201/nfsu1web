@@ -43,6 +43,10 @@ struct Args {
     #[arg(long)]
     hd_fonts: Option<PathBuf>,
 
+    /// Prepared stock car-table overlay from prepare_online_data.py
+    #[arg(long)]
+    online_data: Option<PathBuf>,
+
     /// Bind address. Loopback by default.
     #[arg(long, default_value = "127.0.0.1")]
     host: String,
@@ -95,6 +99,7 @@ async fn main() -> ExitCode {
     let metadata = resolve_path(&cwd, &args.metadata);
     let data = resolve_path(&cwd, &args.data);
     let hd_fonts = args.hd_fonts.map(|p| resolve_path(&cwd, &p));
+    let online_data = args.online_data.map(|p| resolve_path(&cwd, &p));
 
     let config = match config::Config::load(
         dist,
@@ -102,6 +107,7 @@ async fn main() -> ExitCode {
         metadata,
         data,
         hd_fonts,
+        online_data,
         /* strict_data */ args.check || !args.public,
     ) {
         Ok(c) => c,
@@ -119,6 +125,7 @@ async fn main() -> ExitCode {
     }
 
     let fonts = !config.font_files.is_empty();
+    let online_data = !config.online_files.is_empty();
     let lan = LanSwitch::new();
     let state = AppState {
         config: Arc::new(config),
@@ -164,6 +171,9 @@ async fn main() -> ExitCode {
         println!("HD fonts enabled (local overlay; gauges unchanged).");
     } else {
         println!("Font assets: stock (no --hd-fonts overlay selected).");
+    }
+    if online_data {
+        println!("Online car data: stock table restored in a local overlay.");
     }
 
     if let Err(e) = axum::serve(listener, app).await {

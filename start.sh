@@ -2,7 +2,7 @@
 # Build (if needed) and run the NFSU1 browser server — same role as upstream
 # nfsu2-web's web/start.sh, without Python.
 #
-#   ./start.sh [--data DIR] [--port N] [--hd-fonts DIR] [--check] [--no-build]
+#   ./start.sh [--data DIR] [--port N] [--hd-fonts DIR] [--online-data DIR] [--check] [--no-build]
 #
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -14,6 +14,8 @@ WASM="$ROOT/work/upstream/nfsu2-web/out/web/nfsu1.wasm"
 META="$ROOT/work/upstream/nfsu2-web/out/web/nfsu1.json"
 PORT="${PORT:-8765}"
 HD_FONTS=""
+ONLINE_DATA="${NFSU1_ONLINE_DATA:-$ROOT/work/mods/online-data}"
+ONLINE_DATA_REQUIRED=0
 CHECK=0
 NO_BUILD=0
 EXTRA=()
@@ -26,6 +28,7 @@ while [[ $# -gt 0 ]]; do
     --metadata) META="$2"; shift 2 ;;
     --port|--http-port) PORT="$2"; shift 2 ;;
     --hd-fonts) HD_FONTS="$2"; shift 2 ;;
+    --online-data) ONLINE_DATA="$2"; ONLINE_DATA_REQUIRED=1; shift 2 ;;
     --check) CHECK=1; shift ;;
     --no-build) NO_BUILD=1; shift ;;
     --public) EXTRA+=(--public); shift ;;
@@ -64,6 +67,11 @@ fi
 
 ARGS=(--dist "$DIST" --wasm "$WASM" --metadata "$META" --data "$DATA" --port "$PORT")
 [[ -n "$HD_FONTS" ]] && ARGS+=(--hd-fonts "$HD_FONTS")
+if [[ "$ONLINE_DATA_REQUIRED" -eq 1 && ! -f "$ONLINE_DATA/manifest.json" ]]; then
+  echo "error: missing prepared Online data manifest: $ONLINE_DATA/manifest.json" >&2
+  exit 1
+fi
+[[ -f "$ONLINE_DATA/manifest.json" ]] && ARGS+=(--online-data "$ONLINE_DATA")
 if ((${#EXTRA[@]})); then
   ARGS+=("${EXTRA[@]}")
 fi

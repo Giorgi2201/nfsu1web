@@ -37,6 +37,10 @@ files and blobs, including `intro.c`, `tz.c`, `gpu_web.c`, `vsemu_wgsl.inc`,
 `encoder.ts`, `com.c` and the emitter's guarded jump-table implementation.
 Retained MIT notices cover anchored excerpts and adapted source. Bounded COM
 draw diagnostics are original adapter logic using existing runtime accessors.
+The Online timing correction retargets `runtime/winsock.c`'s existing
+MIT-licensed monotonic NetTick adapter to NFSU1's locally identified thunk;
+the runtime revision and blob are recorded in the source manifest. Protocol
+corrections use local PC 1.4 analysis; no emitted game code is distributed.
 
 The NFSU1 widescreen port comes through the pinned PC project. Its patch
 semantics derive from ThirteenAG's MIT WidescreenFixesPack; retain

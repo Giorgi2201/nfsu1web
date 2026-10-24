@@ -96,11 +96,23 @@ Server parse (nfsuserver): name @+17, then room, max, min, sysflags, params
 Then server: `GameClass::AddUser` (`gjoi` to creator) → `gcre` ack (14+ fields)
 → RefreshUser → broadcast `+agm`.
 
-Challenge invite `mesg` (Speed.exe): `PRIV=` `ATTR=` `TEXT=` plus `GAME=`
-`PARAMS=`. Forward to the target as `+msg` with `ATTR`/`N`/`GAME`/`PARAMS`
-(not `F=EP5` chat — that dumps `GAME=`/`PARAMS=` as purple DMs). Do not echo
-the invite back to the sender. Normal PRIV chat still uses stock `F=EP5` `T`
-`N`.
+Challenge invite `mesg` (Speed.exe): `PRIV=` `ATTR=` `TEXT=`. `GAME=` and
+`PARAMS=` are **inside TEXT**, escaped again by TagFieldSetString. `ATTR` is
+a Dirtysock flag string: `E0` for an invite (bits `0x08000020`), `E1` for a
+refusal. The `%f` in `PRIV=%s ATTR=%f TEXT=%s` formats flags, not a float.
+
+Forward to the target as `+msg` with `F=<ATTR plus P>` (private), `N=<sender>`
+and `T=<original escaped TEXT>`. Keep the escaping intact: the client first
+decodes `T`, parses `GAME` and `PARAMS` from it, then decodes `PARAMS` again.
+Example wire `T=GAME%3d7%0aPARAMS%3dTRACK%253d1003%250a…`.
+Do not echo invites/refusals back to the sender. Ordinary private chat keeps
+its sender echo. Forcing `F=EP5` loses the invite bit and displays the control
+text as purple chat; top-level `ATTR`/`GAME`/`PARAMS` in `+msg` are not read.
+
+Verified against PC 1.4: sender `0x54ac80`, `+msg` dispatch `0x665c9e`,
+frontend handler `0x54be20`; actual emitted TagField parsers were compiled
+natively to check the flags and both decoding layers. That does not validate
+the complete interactive flow. The user subsequently confirmed challenges work.
 
 Other game cmds: `gjoi` / `gget` / `glea` / `gdel` / `gsta` (or `gstanepl` if
 `count < min`). `gsta` success → `StartGame` → per-player `+ses` (adds `SEED`,
@@ -144,3 +156,35 @@ Hardcoded (no DB): news text, `GetPlayerStat` CSV, snap top-3 stand-ins,
 
 **Still client-side:** FE Send Challenge / `EVENT_HANDLER` must emit `gcre`.
 **After `+ses`:** race UDP 3658 between peers (not lobby TCP).
+
+NFSU1's Dirtysock NetTick thunk is `0x66e8b0`, not the SPEED2 `0x74b730`.
+The runtime wraps it with the upstream monotonic clock, keeping network timers
+independent of rendering/loading. The Wasm build retains direct calls to the
+thunk so linker wrapping also covers calls within its own shard. Simulation
+continues using its existing frame-paced clock. `NFSU2_NETTICK=virtual` restores
+the original clock for diagnosis. Car-table compatibility is handled separately
+by the local data overlay below.
+
+`runtime/nfsu1_online.c` adds bounded observations around verified PC 1.4 timeout,
+quit and cleanup callbacks. `[nfsu1 online]` records caller, cached transport
+clock/last-receive, the separate game-level heartbeat age, host heartbeat send
+age/gate and session states. Failure callbacks include a short stack trace.
+The wrappers preserve the original CPU arguments and decisions; this is
+diagnostic instrumentation, not a race compatibility fix.
+
+## Local car-table compatibility
+
+On entering racing, PC 1.4 checks 35 car records (`35 * 0xc90` bytes) with
+its CRC routine at `0x5647d0`; expected result is `238562c5`. A mismatch calls
+the coordinator abort at `0x43b087` and ultimately sends server quit to
+the other player. This happens even if traffic and heartbeats are healthy.
+
+The local install's modified `GlobalB.lzc` has CRC `951b523f`; its stock
+`GLOBALB.BUN` has the expected table. Only 26 bytes differ across GOLF, PEUGOT
+and LANCER records. `tools/prepare_online_data.py` restores that table into a
+copied LZC container, retaining all other bytes and leaving source inputs
+untouched. `./build.sh` prepares it and `./start.sh` selects it automatically.
+The server validates source/output hashes and changes the data-manifest cache
+stamp. The game checksum is unchanged. Actual emitted Wasm rejects the source
+table and accepts the overlay. The user confirmed Online races work after the
+restoration. Race completion and broader multiplayer coverage remain unverified.
