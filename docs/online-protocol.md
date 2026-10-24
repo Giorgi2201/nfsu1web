@@ -48,6 +48,13 @@ already prefixed).
 
 ## Login path (10901)
 
+The browser's Online entry uses the active local profile name for the account
+and persona. EA account selection, password entry, persona selection and legacy
+terms screens are skipped; the local server needs no EA credentials. The
+entry opens Online car selection, then the game's connection and lobby protocol
+run normally. The discarded account-login connection is unnecessary: the
+original persona screen closes it before opening car selection too.
+
 Typical order: `addr`/`skey` → `acct` → `auth` → `cper`/`pers` → `news` →
 `auxi` (car blob at +17) → `sele` → `user` → `+rom` list.
 

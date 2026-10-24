@@ -71,6 +71,13 @@ and untouched textures, using an original literal-only JDLZ encoder for fonts.
 
 ## Packaging and distribution
 
+The Online entry adapter in `runtime/nfsu1_online_entry.c` uses locally verified
+PC 1.4 interface addresses to populate the profile-based online identity and
+follow the existing post-persona car-selection transition. Its guest-call
+state preservation follows the host adapter pattern in `th0mk/nfsu2-web`
+`runtime/online.c` at `31da468582c3de14fd6f4233831f62816e2df83d` (MIT;
+[license](../patches/nfsu2-web.LICENSE)). No guest function bodies are included.
+
 Original contributions by Yurii Smetanka are MIT under [LICENSE](../LICENSE),
 subject to the distinct third-party terms above. [NOTICE.md](../NOTICE.md)
 summarizes credits. The root license grants no sublicense to upstream or game

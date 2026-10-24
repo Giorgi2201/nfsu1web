@@ -540,5 +540,17 @@
     "local_changed_bytes": 26,
     "reuse": "Reuses project-authored path/chunk/JDLZ helpers from tools/prepare_hd_fonts.py. No new third-party implementation copied.",
     "output_policy": "All source/replacement containers, extracted records and game-derived CRC harness stay ignored and private."
+  },
+  "online_profile_entry": {
+    "date": "2026-10-24",
+    "adapter": "runtime/nfsu1_online_entry.c",
+    "repository": "th0mk/nfsu2-web",
+    "commit": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "path": "runtime/online.c",
+    "blob_sha": "6aedfc9416039249f195d5e6e82dfb26156c731f",
+    "license": "MIT; patches/nfsu2-web.LICENSE",
+    "reuse": "CPU-state-preserving guest call pattern; NFSU1-specific identity and transition adapter authored from local PC 1.4 interface inspection.",
+    "evidence": "Main-menu Online switch return 0x4b3454; active profile name at 0x7588c4 (13-byte field). Profile frontend 0x4cbe30 copies it into shared text-entry scratch 0x777b74, which must not be used as the persistent name. Persona success 0x55cc97 closes login lobby then opens car selection. Normal game-session lobby subsequently authenticates with the supplied identity.",
+    "output_policy": "Original game inputs unchanged. Real catalogs, inspected frontend data and generated guest functions remain ignored/local."
   }
 }

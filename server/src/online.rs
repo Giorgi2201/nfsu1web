@@ -452,7 +452,9 @@ impl OnlineHost {
     fn handle_auth(&mut self, key: ConnKey, cmd: &[u8]) -> Vec<Vec<u8>> {
         let uid = self.conns.get(&key).map(|c| c.user_id).unwrap_or(1);
         let user = extract_name(cmd).unwrap_or_else(|| format!("p{uid}"));
-        let default_persona = format!("Racer{uid}");
+        // The browser enters Online with the active profile's name. Keep
+        // account and persona aligned without a separate persona selection.
+        let default_persona = user.clone();
         let personas = self
             .users
             .entry(user.clone())

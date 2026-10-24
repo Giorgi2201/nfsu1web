@@ -66,7 +66,7 @@ CFLAGS="$TARGET $OPT $FEAT $DEFS $EXTRA -fno-delete-null-pointer-checks -include
 SHARDFLAGS="-DNFSU2_GUEST_OBJ"
 HDRSUM="$( (cat runtime/cpu.h runtime/nfsu1_profile.h runtime/web/compat/wasm_plat.h; echo "$CFLAGS $SHARDFLAGS") | shasum | cut -c1-16)"
 CACHE_KEYS="$ROOT/tools/guest_object_cache.py"
-NOINLINE_WRAPS='sub_0066e8b0|sub_00547db0|sub_00547dc0|sub_00548610|sub_00546d70|sub_00546e00|sub_00547ae0|sub_0054e2f0|sub_0043a220|sub_0043a830|sub_004390d0|sub_005647d0'
+NOINLINE_WRAPS='sub_0066e8b0|sub_00547db0|sub_00547dc0|sub_00548610|sub_00546d70|sub_00546e00|sub_00547ae0|sub_0054e2f0|sub_0043a220|sub_0043a830|sub_004390d0|sub_005647d0|sub_004f6360'
 export CC OBJDUMP CFLAGS SHARDFLAGS OUT FULL MEMCHECK OBJCACHE HDRSUM CACHE_KEYS NOINLINE_WRAPS
 
 { (cd gen/all && ls shard_*.c fntab.c impargs.c $([ -f stubs.c ] && echo stubs.c) | sed "s|^|all |")
@@ -75,8 +75,8 @@ export CC OBJDUMP CFLAGS SHARDFLAGS OUT FULL MEMCHECK OBJCACHE HDRSUM CACHE_KEYS
   case "$1" in all) od="$OUT/obj" ;; *) od="$OUT/obj/srv" ;; esac
   src="gen/$1/$2"; obj="$od/$(basename "$2" .c).o"
   shardflags="$SHARDFLAGS"; shardhdr="$HDRSUM"
-  # Preserve the clock thunk and small Online callbacks so linker wrappers
-  # also observe their intra-shard calls, including cleanup tail calls.
+  # Preserve the clock thunk, Online callbacks and frontend switch so linker
+  # wrappers also observe their intra-shard calls, including cleanup tail calls.
   if grep -Eq "^void ($NOINLINE_WRAPS)\\(" "$src"; then
     shardflags="$shardflags -fno-inline-functions"
     shardhdr="$HDRSUM-online-noinline-v3"
@@ -125,12 +125,13 @@ cp -f "$ROOT/runtime/nfsu1_win32.c" "$UPSTREAM/runtime/nfsu1_win32.c"
 cp -f "$ROOT/runtime/nfsu1_diagnostics.c" "$UPSTREAM/runtime/nfsu1_diagnostics.c"
 cp -f "$ROOT/runtime/nfsu1_intro.c" "$UPSTREAM/runtime/nfsu1_intro.c"
 cp -f "$ROOT/runtime/nfsu1_online.c" "$UPSTREAM/runtime/nfsu1_online.c"
+cp -f "$ROOT/runtime/nfsu1_online_entry.c" "$UPSTREAM/runtime/nfsu1_online_entry.c"
 cp -f "$ROOT/runtime/nfsu1_graphics.c" "$UPSTREAM/runtime/nfsu1_graphics.c"
 cp -f "$ROOT/runtime/nfsu1_fonts.c" "$UPSTREAM/runtime/nfsu1_fonts.c"
 cp -f "$ROOT/runtime/nfsu1_widescreen.c" "$UPSTREAM/runtime/nfsu1_widescreen.c"
 cp -f "$ROOT/runtime/nfsu1_widescreen.h" "$UPSTREAM/runtime/nfsu1_widescreen.h"
 cp -f "$ROOT/runtime/widescreen_hud.inc" "$UPSTREAM/runtime/widescreen_hud.inc"
-RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics nfsu1_intro nfsu1_online nfsu1_graphics nfsu1_fonts nfsu1_widescreen com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
+RT="mem dispatch genexec heap watchdog win32 win32_ext nfsu1_win32 nfsu1_diagnostics nfsu1_intro nfsu1_online nfsu1_online_entry nfsu1_graphics nfsu1_fonts nfsu1_widescreen com debug res fileio overrides d3dx_hle vsemu oracle autotest lifecycle widescreen framerate dinput_pad dikeys keyboard dinput_kbd career intro drifttest roam roam_core roam_game horn carsfx racehorn winsock online netrace module modheap enhance headlights"
 # Widescreen requires mid-block guest_hook sites in the selected emission.
 python3 - <<'PY'
 import json, pathlib, re, sys
@@ -226,8 +227,8 @@ PAGES=$(( INITIAL_MB * 16 ))
 # Presets run after the original config loader; the network clock uses real
 # time independently of the renderer. The Wasm linker wraps both
 # direct calls and function-table references, including calls in the same
-# shard. Refuse a build that optimized away the only direct loader call.
-for entry in sub_0041c680 sub_00410e50 sub_0066e8b0; do
+# shard. Refuse a build that optimized away a required wrapped call.
+for entry in sub_0041c680 sub_00410e50 sub_0066e8b0 sub_004f6360; do
   wrapper_refs=0
   for src in gen/all/shard_*.c; do
     if grep -Fq "$entry(c)" "$src"; then
@@ -247,7 +248,7 @@ $CC $TARGET $OPT $FEAT $EXTRA -o "$OUT/nfsu1.wasm" "${OBJS[@]}" \
   -Wl,--wrap=sub_00547db0,--wrap=sub_00547dc0,--wrap=sub_00548610 \
   -Wl,--wrap=sub_00546d70,--wrap=sub_00546e00,--wrap=sub_00547ae0,--wrap=sub_0054e2f0 \
   -Wl,--wrap=sub_0043a220,--wrap=sub_0043a830,--wrap=sub_004390d0 \
-  -Wl,--wrap=sub_005647d0 \
+  -Wl,--wrap=sub_005647d0,--wrap=sub_004f6360 \
   -Wl,--import-memory,--export-memory,--shared-memory,--max-memory=4294967296 \
   -Wl,--initial-memory=$(( INITIAL_MB * 1048576 )),--global-base=$GUEST_END \
   -Wl,-z,stack-size=$(( 8 * 1048576 )) -Wl,--no-stack-first \

@@ -15,8 +15,9 @@ are not yet supported or established.
 - Scene depth survives smaller depth-disabled effect passes, keeping traffic
   behind walls.
 - Same-origin LAN play and an Online lobby. News, stats and rankings use
-  placeholder data; free-roam is unsupported. The server also prepares a
-  local car-data overlay when a modified install needs it. See the
+  placeholder data; Online entry uses the active profile name and skips the
+  legacy EA account, persona and terms screens. Free-roam is unsupported. The
+  server also prepares a local car-data overlay when a modified install needs it. See the
   [Online protocol reference](online-protocol.md).
 
 ## Limits and next work
