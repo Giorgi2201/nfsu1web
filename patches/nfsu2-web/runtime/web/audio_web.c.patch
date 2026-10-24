@@ -1,0 +1,95 @@
+--- a/runtime/web/audio_web.c
++++ b/runtime/web/audio_web.c
+@@ -109,6 +109,8 @@
+     float    vol;             /* 0..1 */
+     uint32_t wpos;            /* end of the last region the game wrote (Unlock) */
+     int      wseen;
++    int      is_static;
++    uint8_t *fresh;           /* streamed PCM: one validity byte per source frame */
+     double   trim;            /* servo rate correction */
+     double   target;          /* fill fraction the servo locks to (adapts) */
+     double   freq;            /* SetFrequency ratio */
+@@ -154,6 +156,7 @@
+         b->used = 1; b->playing = 0; b->loop = 0; b->cursor = 0.0; b->vol = 1.f;
+         b->wpos = 0; b->wseen = 0; b->trim = 1.0; b->target = 0.0; b->over = 0;
+         b->freq = 1.0; b->plays = b->stops = 0;
++        b->is_static = 0; b->fresh = NULL;
+         b->wr_bytes = b->wr_calls = b->wr_nonzero = 0;
+         fprintf(stderr, "  [sound] buffer #%d: %u Hz, %u channels, %u bit, %u bytes (%.2f s)\n",
+                 id, rate, chans, bits, bytes,
+@@ -185,6 +188,33 @@
+     }
+     pthread_mutex_unlock(&g_slock);
+ }
++/* Static effects may intentionally repeat forever. Only a non-static buffer
++ * rewritten in partial regions while playing is treated as a stream. Keep
++ * cursor motion independent of freshness: the guest writer follows it. */
++void audio_buffer_static(int id, int is_static){
++    if (id <= 0 || id >= MAXSND) return;
++    pthread_mutex_lock(&g_slock);
++    g_snd[id].is_static = is_static;
++    pthread_mutex_unlock(&g_slock);
++}
++void audio_note_region(int id, uint32_t offset, uint32_t bytes){
++    if (id <= 0 || id >= MAXSND) return;
++    pthread_mutex_lock(&g_slock);
++    SndBuf *b = &g_snd[id];
++    uint32_t bpf = b->chans * (b->bits / 8u);
++    if (b->used && bpf && bytes && offset < b->bytes && bytes <= b->bytes - offset){
++        uint32_t count = b->bytes / bpf;
++        if (!b->fresh && !b->is_static && b->playing && b->loop && bytes < b->bytes){
++            b->fresh = malloc(count);
++            if (b->fresh) memset(b->fresh, 1, count);
++        }
++        if (b->fresh){
++            uint32_t first = offset / bpf, end = (offset + bytes) / bpf;
++            if (end > first) memset(b->fresh + first, 1, end - first);
++        }
++    }
++    pthread_mutex_unlock(&g_slock);
++}
+ void audio_note_write_stat(int id, uint32_t n, int nonzero){
+     if (id <= 0 || id >= MAXSND) return;
+     pthread_mutex_lock(&g_slock);
+@@ -212,6 +242,8 @@
+     pthread_mutex_lock(&g_slock);
+     if (g_snd[src].used && (id = snd_new_id()) != 0){
+         g_snd[id] = g_snd[src];
++        /* Duplicated effects share PCM, but never own the source's tracker. */
++        g_snd[id].fresh = NULL;
+         g_snd[id].playing = 0; g_snd[id].cursor = 0.0; g_snd[id].trim = 1.0;
+         g_snd[id].target = 0.0; g_snd[id].over = 0;
+         g_snd[id].plays = g_snd[id].stops = 0;
+@@ -226,6 +258,7 @@
+     if (id <= 0 || id >= MAXSND) return;
+     pthread_mutex_lock(&g_slock);
+     if (g_snd[id].used){
++        free(g_snd[id].fresh); g_snd[id].fresh = NULL;
+         g_snd[id].used = 0; g_snd[id].playing = 0; g_snd[id].data = 0;
+         if (g_nsndfree < MAXSND) g_sndfree[g_nsndfree++] = id;
+     }
+@@ -353,6 +386,7 @@
+                 else { b->playing = 0; break; }
+             }
+             uint32_t si = (uint32_t)sp;
++            int fresh = !b->fresh || b->fresh[si];
+             for (int c = 0; c < OUT_CH; c++){
+                 uint32_t sc = (b->chans == 2u) ? (uint32_t)c : 0u;
+                 uint32_t off = b->data + si*bpf + sc*bps;
+@@ -363,7 +397,15 @@
+                 } else {
+                     s = ((float)g_mem[off] - 128.f) / 128.f;
+                 }
+-                acc[f*OUT_CH + c] += s * b->vol;
++                if (fresh) acc[f*OUT_CH + c] += s * b->vol;
++            }
++            /* Keep the current frame valid while upsampling repeats it.
++             * Consume skipped frames too when downsampling or changing pitch. */
++            if (b->fresh){
++                uint32_t advance = (uint32_t)(sp + step) - si;
++                if (advance > nsrc) advance = nsrc;
++                for (uint32_t q = 0; q < advance; q++)
++                    b->fresh[(si + q) % nsrc] = 0;
+             }
+         }
+         if (g_csv){

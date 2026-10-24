@@ -197,7 +197,36 @@
                     r=0; } }
          else if (MID(GetAdapterDisplayMode)){
              uint32_t pm=A(c,2);
-@@ -4729,7 +4853,7 @@
+@@ -3962,6 +4086,10 @@
+               if (!(flags & 0x1u)){
+                   audio_init();
+                   MR32(b+28) = (uint32_t)audio_register(MR32(b+8), bytes, rate, chans, bits);
++#ifdef __wasm__
++                  { void audio_buffer_static(int, int);
++                    audio_buffer_static((int)MR32(b+28), (flags & 0x4u) != 0); }
++#endif
+               } }
+             if(pp) MR32(pp)=b; r=0; }
+         else if (MID(GetCaps)){
+@@ -4072,6 +4200,17 @@
+             if(pn2){ mem_commit(pn2,4); MR32(pn2)= b2; }
+             r=0; }
+         else if (MID(Unlock)){
++#ifdef __wasm__
++            /* Report both written regions, including a circular wrap. */
++            if (self && MR32(self+28)){
++                void audio_note_region(int, uint32_t, uint32_t);
++                uint32_t base = MR32(self+8);
++                if (A(c,1) >= base)
++                    audio_note_region((int)MR32(self+28), A(c,1) - base, A(c,2));
++                if (A(c,3) >= base)
++                    audio_note_region((int)MR32(self+28), A(c,3) - base, A(c,4));
++            }
++#endif
+             /* VOICELOG=1: the game's OWN sound channel table.
+              * sub_00725378 walks the table with address [0x8b466c], stride
+              * 0x90, count [0x8b460c] (int16); it tests byte +0x26 as "in use".
+@@ -4729,7 +4868,7 @@
  }
  
  static void fill_caps(uint32_t p){

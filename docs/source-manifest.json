@@ -552,5 +552,17 @@
     "reuse": "CPU-state-preserving guest call pattern; NFSU1-specific identity and transition adapter authored from local PC 1.4 interface inspection.",
     "evidence": "Main-menu Online switch return 0x4b3454; active profile name at 0x7588c4 (13-byte field). Profile frontend 0x4cbe30 copies it into shared text-entry scratch 0x777b74, which must not be used as the persistent name. Persona success 0x55cc97 closes login lobby then opens car selection. Normal game-session lobby subsequently authenticates with the supplied identity.",
     "output_policy": "Original game inputs unchanged. Real catalogs, inspected frontend data and generated guest functions remain ignored/local."
+  },
+  "audio_stream_freshness": {
+    "date": "2026-10-25",
+    "repository": "th0mk/nfsu2-web",
+    "commit": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "paths": [
+      "runtime/com.c",
+      "runtime/web/audio_web.c"
+    ],
+    "license": "MIT; patches/nfsu2-web.LICENSE",
+    "implementation": "Track consumed frames for non-static looping buffers partially rewritten during playback; report both Unlock regions, silence stale PCM and continue advancing DirectSound cursors.",
+    "validation": "Native synthetic mixer smoke; browser/game confirmation required."
   }
 }

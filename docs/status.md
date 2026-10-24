@@ -9,6 +9,9 @@ are not yet supported or established.
 ## Implemented
 
 - NFSU1 startup, input, isolated saves, sound-bank callbacks and local serving.
+- Browser stream freshness tracking silences consumed PCM when the game's audio
+  writer stalls, while DirectSound cursors keep moving. Static looping effects
+  retain their data. Native mixer smoke checked; Online exit needs game testing.
 - Graphics presets, automatic canvas resolution and widescreen FOV/HUD hooks.
 - Browser settings, keyboard aliases and startup movie controls.
 - Four optional HD font atlases used in menus and race text. Gauges remain stock.
@@ -29,3 +32,8 @@ mod candidates are in
 
 Native DLL/ASI mods are unsupported. Game data, catalogs, generated C and Wasm
 stay local.
+
+Audio buffers are classified as streams when a non-static loop is partially
+rewritten during playback. Such buffers need fresh writes to sound again after
+their PCM has been consumed; this prevents stale loops but does not restart a
+stalled guest audio writer.

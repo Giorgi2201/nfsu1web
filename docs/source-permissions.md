@@ -71,6 +71,13 @@ and untouched textures, using an original literal-only JDLZ encoder for fonts.
 
 ## Packaging and distribution
 
+The browser audio freshness overlay modifies `runtime/com.c` and
+`runtime/web/audio_web.c` from `th0mk/nfsu2-web` at
+`31da468582c3de14fd6f4233831f62816e2df83d` (MIT;
+[license](../patches/nfsu2-web.LICENSE)). Original host-side tracking prevents
+consumed stream PCM from repeating when the guest writer stalls. No game
+audio or guest function bodies are included.
+
 The NFSU1 Rust relay implements the pinned `th0mk/nfsu2-web`
 `web/src/net/index.ts` kind-32 bundle wire format (MIT, revision
 `31da468582c3de14fd6f4233831f62816e2df83d`), including optional destination
