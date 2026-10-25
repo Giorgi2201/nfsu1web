@@ -1,6 +1,6 @@
 --- a/web/src/app/style.css
 +++ b/web/src/app/style.css
-@@ -305,4 +305,151 @@
+@@ -305,4 +305,152 @@
  }
  @media (prefers-reduced-motion: reduce) {
    *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -94,6 +94,7 @@
 +#keys .keys > div { font-size: 13px; }
 +#keys .keys kbd { font-style: normal; font-family: var(--mono); border-radius: 2px; font-size: 12px; }
 +#keyboard-controls { border-top: 1px solid var(--line); padding-top: 22px; }
++#controller-settings { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 22px; }
 +#keyboard-controls .row { margin: 15px 0; }
 +#keyboard-controls p { color: var(--muted); font-size: 13px; line-height: 20px; }
 +#keyboard-controls .btn { min-width: 86px; }
