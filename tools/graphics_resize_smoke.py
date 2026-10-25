@@ -19,6 +19,7 @@ HARNESS = r'''
 #include <stdlib.h>
 
 uint8_t *g_mem;
+uint8_t g_cbits[1u << 15];
 void __real_sub_0041c680(CPU *c){ (void)c; }
 void __real_sub_00410e50(CPU *c){ (void)c; }
 int nfsu1_graphics_size(uint32_t, uint32_t, uint32_t *, uint32_t *);
@@ -49,6 +50,7 @@ static void ws_set_mapping(float scale){ mapping = scale; }
 static float ws_ui_x(void){ return 1.f; }
 static float ws_ui_y(void){ return 1.f; }
 void metal_set_game_size(unsigned w, unsigned h){ (void)w; (void)h; }
+void metal_get_cursor(int *x, int *y){ if (x) *x = 320; if (y) *y = 240; }
 void metal_set_ui_aspect(float x, float y){ (void)x; (void)y; }
 void metal_native_size(unsigned w, unsigned h, unsigned *ow, unsigned *oh){
     (void)w; (void)h; (void)ow; (void)oh;

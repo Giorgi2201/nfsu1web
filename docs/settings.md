@@ -22,6 +22,10 @@ not enable the upstream NFSU2 enhancement system. Their exact mapping is in
 Menu artwork uses its original 640×480 canvas, fitted and centered over the
 garage background in both wide and narrow windows. The background fills the
 view; menu objects parked outside the logical canvas remain hidden.
+Race HUD and results elements retain their original proportions and anchor
+to the left or right screen edge using the HUD element table. Menus and
+centered messages remain centered. Edge placement uses the current render
+target on each draw, so resizing does not rebuild or move cached guest geometry.
 
 **F9** opens the game overlay. **F10** temporarily disables keyboard aliases for
 typing. The WASD preset sends arrow keys; actions follow the game's Controls

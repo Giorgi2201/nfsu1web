@@ -34,6 +34,7 @@ uint32_t read_word(uint32_t address){ return address == 0x0077A920u ? state : 0x
 #define MR32(address) read_word(address)
 int mem_is_committed(uint32_t address){ return address < 0x100000u; }
 int nfsu1_widescreen_active(void){ return active; }
+float nfsu1_widescreen_ui_canvas(CPU *c){ (void)c; return 1.f; }
 int vs_pos_creg(const VSProg *p, int *w){ *w = p->cw; return p->cx; }
 int vs_pos_creg_y(const VSProg *p){ return p->cy; }
 ''' + classifier + r'''
@@ -47,7 +48,7 @@ int main(void){
     assert(nfsu1_fe_canvas(&k, &p) == 0.f);
     k.f[3][2] = 0.f;
     state = 6;
-    assert(nfsu1_fe_canvas(&k, &p) == 0.f);
+    assert(nfsu1_fe_canvas(&k, &p) == 1.f);
     state = 3;
     assert(fabsf(nfsu1_fe_canvas(&k, 0) - 1.f) < 1e-6f);
     cpu.eip = 0x0040C4A8u;
@@ -66,8 +67,18 @@ int main(void){
     assert(nfsu1_fe_canvas(&k, &p) == 1.f);
     g_bb_w = 600; g_bb_h = 800;
     assert(nfsu1_fe_canvas(&k, &p) == 1.f);
-    state = 6;
-    assert(nfsu1_fe_canvas(&k, &p) == 1.f);
+    /* Race and results draw selection survives aspect/state changes for
+     * both the normalized quad and shader submitters. */
+    const uint32_t sizes[][2] = {{1984,1278}, {2560,1080}, {600,1000}, {1920,1080}};
+    for (unsigned i = 0; i < sizeof sizes / sizeof sizes[0]; i++){
+        g_bb_w = sizes[i][0]; g_bb_h = sizes[i][1];
+        for (state = 3; state <= 7; state++){
+            cpu.eip = 0x0040C2D6u;
+            assert(nfsu1_fe_canvas(&k, &p) == 1.f);
+            cpu.eip = 0x0040C4A8u;
+            assert(nfsu1_fe_canvas(&k, &p) == 1.f);
+        }
+    }
     return 0;
 }
 '''
@@ -78,7 +89,7 @@ int main(void){
         subprocess.run(["cc", "-std=c11", "-Wall", "-Wextra", "-Werror",
                         str(c_file), "-lm", "-o", str(executable)], check=True)
         subprocess.run([str(executable)], check=True)
-    print("PASS: logical UI canvas selects menu and narrow HUD draws while excluding world/composites")
+    print("PASS: logical UI canvas selects menu, race and results draws across resize while excluding world/composites")
 
 
 if __name__ == "__main__":

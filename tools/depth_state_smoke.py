@@ -122,7 +122,20 @@ assert.deepEqual(menu.viewports, menu.scissors.map(rect => [...rect, 0, 1]),
 const portrait = frame([{ depth: 0, menuWidth: 1 }, { depth: 0 }], 1, 600, 1000);
 assert.deepEqual(portrait.scissors, [[0, 275, 600, 450], [0, 0, 600, 1000]]);
 assert.deepEqual(portrait.viewports, portrait.scissors.map(rect => [...rect, 0, 1]));
-console.log('PASS: complete UI fits wide and portrait views; world draws retain the full canvas');
+// Re-submit the same cached UI at different target sizes. Padding stays
+// relative to the appropriate physical edge; world and menus keep their maps.
+for (const [width, height, uiWidth, left] of [
+  [1920, 1080, 1440, 240], [2560, 1080, 1440, 560],
+  [1984, 1278, 1704, 140], [1920, 1080, 1440, 240],
+]) {
+  const r = frame([{depth: 0, menuWidth: 2}, {depth: 0, menuWidth: 3},
+    {depth: 0, menuWidth: 1}, {depth: 0}], 1, width, height);
+  assert.deepEqual(r.scissors, [[0, 0, uiWidth, height],
+    [width - uiWidth, 0, uiWidth, height], [left, 0, uiWidth, height],
+    [0, 0, width, height]]);
+  assert.deepEqual(r.viewports, r.scissors.map(rect => [...rect, 0, 1]));
+}
+console.log('PASS: left/right HUD anchors follow resized targets; menus stay centered and world draws fill the canvas');
 const comparison = ['always', 'never', 'less', 'equal', 'less-equal', 'greater',
                     'not-equal', 'greater-equal'];
 for (let z = 0; z < 2; z++) {

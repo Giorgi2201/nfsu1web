@@ -60,7 +60,7 @@
      ws_set_mapping(g_aspfix);
      { void metal_set_ui_aspect(float, float); metal_set_ui_aspect(ws_ui_x(), ws_ui_y()); }
      fprintf(stderr,"com: device resolution %ux%u -> %ux%u (aspfix=%.4f)\n",
-@@ -1566,6 +1577,110 @@
+@@ -1566,6 +1577,112 @@
   * it returns 0 and the caller falls back to the old (index expansion) path. */
  static struct { uint32_t n, vbo, ibo, isz; int32_t base; uint64_t gh; } g_ix;
  static uint64_t g_dip_ix = 0, g_dip_ixfb[6];
@@ -145,14 +145,13 @@
 +    if (count == CAP) fprintf(stderr, "[nfsu1 depth] unique-state log limit reached\n");
 +}
 +
-+/* Menu quads use the original logical 640x480 coordinates. Tag their
-+ * submissions so the page fits the complete canvas over the scene. The
-+ * narrow race HUD uses that canvas too. Only these original UI submitters
-+ * qualify; world views and composites retain the full render target. */
++/* All FE/HUD objects retain the original logical 640x480 coordinates,
++ * including cached drag gauges and post-race menus. Fit both UI submitters
++ * per draw, using semantic edge anchors for HUD elements and a centered
++ * canvas for menus. World views/composites retain the full render target. */
 +static float nfsu1_fe_canvas(const VSConst *vsk, const VSProg *prog){
 +    extern int nfsu1_widescreen_active(void);
 +    if (!nfsu1_widescreen_active() ||
-+        (MR32(0x0077A920u) != 3u && (uint64_t)g_bb_w * 3u >= (uint64_t)g_bb_h * 4u) ||
 +        !g_com_cpu || !g_bb_w || !g_bb_h) return 0.f;
 +    /* com_call has already popped the guest return address into eip. */
 +    uint32_t caller = g_com_cpu->eip;
@@ -165,16 +164,19 @@
 +        if (fabsf(w[0]) + fabsf(w[1]) + fabsf(w[2]) > 1e-6f ||
 +            fabsf(w[3] - 1.f) > 1e-6f) return 0.f;
 +    }
-+    return 1.f;
++    /* Keep every glyph/quad in a cached FE element on the same edge.
++     * The viewport is chosen by the page from this frame's target size. */
++    extern float nfsu1_widescreen_ui_canvas(CPU *);
++    return nfsu1_widescreen_ui_canvas(g_com_cpu);
 +}
 +
  static int draw_up(uint32_t pt, uint32_t nv, uint32_t vp, uint32_t stride){
      uint64_t _t0 = now_ns();
      static TVert tv[4096];
-@@ -1579,0 +1695,2 @@
+@@ -1579,0 +1697,2 @@
 +    { void metal_set_fe_canvas(float);
 +      metal_set_fe_canvas(nfsu1_fe_canvas(vsk, prog)); }
-@@ -1642,6 +1759,8 @@
+@@ -1642,6 +1761,8 @@
      const DElem *el = dcc[dci].el; int nel = dcc[dci].nel;
      int p_off = dcc[dci].p_off, p_type = dcc[dci].p_type, c_off = dcc[dci].c_off,
          c_type = dcc[dci].c_type, t_off = dcc[dci].t_off, t_type = dcc[dci].t_type;
@@ -183,7 +185,7 @@
  
      /* ---------------- GPU vertex shader (GPUVS) ----------------
       * Measured: ~45% of the run time was in the CPU vs_run interpreter,
-@@ -2285,7 +2404,12 @@
+@@ -2285,7 +2406,12 @@
                             MR32(pm)   = ml[0];
                             MR32(pm+4) = ml[1];
                             MR32(pm+8) = 60;
@@ -197,7 +199,7 @@
                     r=0; } }
          else if (MID(GetAdapterDisplayMode)){
              uint32_t pm=A(c,2);
-@@ -3962,6 +4086,10 @@
+@@ -3962,6 +4088,10 @@
                if (!(flags & 0x1u)){
                    audio_init();
                    MR32(b+28) = (uint32_t)audio_register(MR32(b+8), bytes, rate, chans, bits);
@@ -208,7 +210,7 @@
                } }
              if(pp) MR32(pp)=b; r=0; }
          else if (MID(GetCaps)){
-@@ -4072,6 +4200,17 @@
+@@ -4072,6 +4202,17 @@
              if(pn2){ mem_commit(pn2,4); MR32(pn2)= b2; }
              r=0; }
          else if (MID(Unlock)){
@@ -226,7 +228,7 @@
              /* VOICELOG=1: the game's OWN sound channel table.
               * sub_00725378 walks the table with address [0x8b466c], stride
               * 0x90, count [0x8b460c] (int16); it tests byte +0x26 as "in use".
-@@ -4729,7 +4868,7 @@
+@@ -4729,7 +4870,7 @@
  }
  
  static void fill_caps(uint32_t p){

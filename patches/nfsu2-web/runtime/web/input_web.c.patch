@@ -1,6 +1,6 @@
 --- a/runtime/web/input_web.c
 +++ b/runtime/web/input_web.c
-@@ -298,12 +298,42 @@
+@@ -298,10 +298,49 @@
   * relative motion DirectInput reports is the same move in game pixels */
  static double g_last_nx = -1, g_last_ny = -1, g_frac_dx, g_frac_dy;
 +static unsigned g_mouse_map_w, g_mouse_map_h;
@@ -18,8 +18,7 @@
 +      extern void nfsu1_widescreen_device_size(unsigned *, unsigned *);
 +      unsigned cw = 0, ch = 0;
 +      nfsu1_widescreen_device_size(&cw, &ch);
-+      if (nfsu1_widescreen_active() && cw && ch &&
-+          (MR32(0x0077A920u) == 3u || (uint64_t)cw * 3u <= (uint64_t)ch * 4u)){
++      if (nfsu1_widescreen_active() && cw && ch){
 +          unsigned width = cw < ch * 4u / 3u ? cw : ch * 4u / 3u;
 +          unsigned height = ch < cw * 3u / 4u ? ch : cw * 3u / 4u;
 +          if (width && height){
@@ -27,6 +26,12 @@
 +              ax = (double)width / cw; ay = (double)height / ch;
 +              ox = (double)((cw - width) / 2u) / cw;
 +              oy = (double)((ch - height) / 2u) / ch;
++              /* Race UI is pinned to the corresponding screen edge.
++               * The extra space between the two halves has no UI targets. */
++              if (MR32(0x0077A920u) != 3u && width < cw){
++                  double px = (double)e->a / 65536.;
++                  ox = px < .5 ? 0. : (double)(cw - width) / cw;
++              }
 +          }
 +      }
 +    }
@@ -40,6 +45,10 @@
 +        g_mouse_map_ox = ox; g_mouse_map_oy = oy;
 +    }
 +    double nx = ((double)e->a / 65536.0 - ox) / ax;
++    if (MR32(0x0077A920u) != 3u && ax < 1. && lw == 640){
++        double px = (double)e->a / 65536.;
++        if ((px < .5 && nx > .5) || (px >= .5 && nx < .5)) nx = .5;
++    }
 +    double ny = ((double)e->b / 65536.0 - oy) / ay;
      if (g_last_nx >= -0.5){
          g_frac_dx += (nx - g_last_nx) * lw; g_frac_dy += (ny - g_last_ny) * lh;

@@ -61,15 +61,18 @@ int main(void){
     assert(atomic_load(&g_mouse_dx) == 0 && atomic_load(&g_mouse_dy) == 0);
     move(.25, .275); expect(160, 0);
     move(.75, .725); expect(480, 479);
-    /* The narrow race HUD shares the same fitted frame. */
+    /* Race and results UI share the fitted frame at every aspect. */
     state = 6;
     move(.5, .5); expect(320, 240);
     atomic_store(&g_mouse_dx, 0); atomic_store(&g_mouse_dy, 0);
     cw = 1920; ch = 1080;
-    move(.5, .5); expect(640, 360);
-    assert(atomic_load(&g_mouse_dx) == 0 && atomic_load(&g_mouse_dy) == 0);
-    state = 3;
     move(.5, .5); expect(320, 240);
+    assert(atomic_load(&g_mouse_dx) == 0 && atomic_load(&g_mouse_dy) == 0);
+    move(.125, .5); expect(106, 240);
+    move(.875, .5); expect(533, 240);
+    atomic_store(&g_mouse_dx, 0); atomic_store(&g_mouse_dy, 0);
+    state = 3;
+    move(.125, .5); expect(0, 240);
     assert(atomic_load(&g_mouse_dx) == 0 && atomic_load(&g_mouse_dy) == 0);
     return 0;
 }

@@ -1,7 +1,8 @@
 """Scope host HUD constants to verified projection operands, not shared data.
 
 The original float pool is also read by FE layout and animation routines.
-Only these PC 1.4 instruction sites consume the widescreen replacements.
+These PC 1.4 sites retain the accessor ABI in cached emissions. The runtime
+now returns the original HUD units; the host fits both UI submitters together.
 No game bytes or translated instructions are stored here.
 """
 from types import MethodType
