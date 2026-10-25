@@ -209,7 +209,7 @@
        <h2 id="game-data-title">Game data on this PC</h2>
        <p class="hint" id="cache-info">Counting…</p>
        <div class="bar" id="data-bar" role="progressbar" aria-label="Game data preload" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
-@@ -163,12 +115,32 @@
+@@ -163,13 +114,31 @@
        </div>
        <p class="msg" id="data-msg" role="status"></p>
      </section>
@@ -224,7 +224,7 @@
 +        <p class="msg" id="saves-msg" role="status"></p>
 +        <p class="msg warn" id="storage-note" hidden></p>
 +      </section>
-+-  </div>
+-  </div>
 +      <p class="screen-note">Game data is cached in this browser. Clearing browser site data can also remove your local settings and saves.</p>
 +    </div>
  
@@ -245,7 +245,7 @@
  <div class="stage" id="stage" hidden>
    <div class="hud-fps" id="fps" hidden></div>
    <div class="toast" id="toast" hidden></div>
-@@ -194,7 +166,6 @@
+@@ -194,7 +164,6 @@
    <div class="menu-actions">
      <button type="button" class="btn selected" data-act="resume">Back to the game</button>
      <button type="button" class="btn" data-act="fullscreen">Full screen</button>
