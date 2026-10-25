@@ -23,13 +23,8 @@ Graphics presets use NFSU1's own detail levels and capability limits; they do
 not enable the upstream NFSU2 enhancement system. Their exact mapping is in
 [`runtime/nfsu1_graphics.c`](../runtime/nfsu1_graphics.c).
 
-Menu artwork uses its original 640×480 canvas, fitted and centered over the
-garage background in both wide and narrow windows. The background fills the
-view; menu objects parked outside the logical canvas remain hidden.
-Race HUD and results elements retain their original proportions and anchor
-to the left or right screen edge using the HUD element table. Menus and
-centered messages remain centered. Edge placement uses the current render
-target on each draw, so resizing does not rebuild or move cached guest geometry.
+Menus keep their original proportions and remain centered. Race HUD and results
+elements anchor to the left or right screen edge in wide layouts.
 
 **F9** opens the game overlay. **F10** temporarily disables keyboard aliases for
 typing. The WASD preset sends arrow keys; actions follow the game's Controls
@@ -60,11 +55,9 @@ manifest under `work/mods/hd-fonts`. It refuses a nonempty output directory;
 use a fresh `--output` for another import. Original game files stay unchanged.
 Rebuild an older Wasm module with the current tools before enabling fonts.
 
-The server prints `HD fonts enabled (local overlay; gauges unchanged)` when
-the overlay is selected. To use stock fonts, restart without `--hd-fonts`.
-Restart after replacing assets, then reload the same browser address. Cache
-versions derive from content hashes; deleting saves or clearing storage is
-unnecessary.
+To use stock fonts, restart without `--hd-fonts`. Restart after replacing
+assets, then reload the same browser address. Cache versions derive from
+content hashes; deleting saves or clearing storage is unnecessary.
 
-If menu or race text disappears, restart without `--hd-fonts`. HD gauges are a
-separate future port.
+If menu or race text disappears, restart without `--hd-fonts`. Gauges remain
+stock.

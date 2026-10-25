@@ -1,6 +1,7 @@
 # Tools
 
-Python here is for building Wasm/catalogs on a workstation, the same way upstream nfsu2-web keeps `tools/lift.py`.
+These scripts prepare local game catalogs, build the browser runtime, and apply
+the NFSU1 overlays.
 
 ## Host / serve (no Python)
 
@@ -15,13 +16,12 @@ Python here is for building Wasm/catalogs on a workstation, the same way upstrea
 
 ## Lift / catalog (upstream Python, thin wrappers)
 
-These call Capstone/pefile analysis the same way upstream does — we do not
-reimplement the emitter here.
+These use Capstone/pefile for analysis and call the pinned upstream emitter.
 
 | Command | Invokes |
 | --- | --- |
 | `catalog.sh` | `prepare_game_catalog.py` → nfsu1-recompiled + pcrecomp scripts |
 | `lift.sh` | `lift_catalog.py` → nfsu2-web `tools/lift.py` via `catalog_bridge.py` |
 
-Related Python (`prepare_abk_catalog.py`, `lift_abk_catalog.py`, smokes) stays
-for the same reason upstream keeps `tools/*.py`: analysis, not serving.
+Related Python (`prepare_abk_catalog.py`, `lift_abk_catalog.py`, and smoke
+tools) handles catalog analysis and focused command-line checks.

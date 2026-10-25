@@ -1,11 +1,11 @@
 # NFSU1 Online lobby protocol (reference)
 
 Evidence: HarpyWar/3PriedeZ [nfsuserver](https://github.com/HarpyWar/nfsuserver)
-(`nfsuserver.cpp`, `server.cpp`, `objects.cpp`) and PC `Speed.exe` 1.4 format
-strings. This is what the browser lobby stand-in in `server/src/online.rs` must
-match. U2 Dirtysock articles describe the same 12-byte header shape.
+(`nfsuserver.cpp`, `server.cpp`, `objects.cpp`) and local analysis of PC
+`Speed.exe` 1.4. This documents the guest-visible protocol implemented by the
+browser lobby stand-in in `server/src/online.rs`.
 
-## Transport
+## Guest-visible transport
 
 | Port | Role |
 | --- | --- |
@@ -16,6 +16,10 @@ match. U2 Dirtysock articles describe the same 12-byte header shape.
 | UDP 3658 | Race host P2P (after `+ses`; not lobby TCP) |
 
 Virtual LAN maps `ps2nfs04.ea.com` → `10.77.0.1`.
+
+These are game-protocol ports inside the virtual network. The local service
+exposes HTTP and a `/lan` WebSocket; it does not bind a host socket for each row.
+Race peer traffic remains separate from the lobby protocol.
 
 ## Dirtysock frame
 
@@ -145,20 +149,3 @@ payload reply required.
 Language help for the player list: pad to move highlight, **pad right** toggles
 Created Games List, **Select** opens the action pop-up for the highlighted
 player (`ONLINE_SEND_CHALLENGE`, etc.).
-
-## Server coverage and limits
-
-The local server supports login, lobby and room management, private messages,
-challenge invites, created games, and keepalives. News, player statistics and
-rankings use placeholder data. It does not provide a database.
-
-Online lobby traffic uses TCP 10900/10901. After the server starts a race, the
-clients communicate over UDP 3658. A lobby connection alone does not provide
-race networking. The local browser build includes the client challenge action.
-
-## Car-data compatibility
-
-Some modified game installs need a local car-data overlay for Online race
-starts. The build prepares and selects it automatically when required; see the
-[build guide](building.md). Race completion and broader multiplayer support
-are not available yet.

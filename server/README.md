@@ -18,6 +18,15 @@ overlay). `NFSU2_ONLINE` and `NFSU2_ROAM` stay off — no SPEED2 lobby/roam host
 `start.sh` selects `work/mods/online-data/` automatically after a build.
 Source game files remain unchanged.
 
+## Online lobby
+
+The local lobby implements login, rooms, private messages, challenge invites,
+created games, and keepalives. News, statistics, and rankings are placeholders;
+there is no database. Lobby details are in the
+[protocol reference](../docs/online-protocol.md). A lobby connection does not
+provide race peer networking, and actual multiplayer race behavior is not
+established.
+
 For non-loopback access, use `--public --host 0.0.0.0` (or `NFSU1_PUBLIC=1`).
 
 The relay defaults to 512 players (`--max-players N`, up to 2045) on a /21

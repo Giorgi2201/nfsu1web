@@ -2,27 +2,20 @@
 
 This is an experimental local integration. Small, focused fixes, build-guide
 corrections and reproducible compatibility reports are useful. Read the
-[README](README.md), [build guide](docs/building.md) and
-[current status](docs/status.md) before changing the runtime.
+[README](README.md) and [build guide](docs/building.md) before changing the
+runtime.
 
 ## Source boundaries
 
-Contribute handwritten tooling, runtime adapters, documentation and synthetic
-fixtures. Do not submit game executables, assets, archives, saves, real catalogs,
-game-derived generated code, object files or playable builds. Keep private
-inputs and outputs in ignored `work/`, `gen/` and `out/`. Review staged files
-before publishing; `.gitignore` is a convenience, not an audit.
+Contribute handwritten tooling, runtime adapters, documentation, and synthetic
+fixtures. Keep game-derived inputs and outputs local; see the [source
+permission record](docs/source-permissions.md) for the exclusions. Review staged
+files before publishing; `.gitignore` is not an audit.
 
-Preserve upstream notices and attribution. For reused source, identify its
-repository, revision and applicable permission or license in
-[source-permissions.md](docs/source-permissions.md) and the
-[source manifest](docs/source-manifest.json). See [NOTICE.md](NOTICE.md) for the
-current source boundaries. Do not assume that an upstream source license
-licenses game content.
-
-Submit original contributions under the project's [MIT license](LICENSE).
-Third-party code must retain its applicable terms; see the
-[source terms](docs/source-permissions.md).
+License original contributions under the project's [MIT license](LICENSE).
+Preserve third-party terms and attribution; see [NOTICE.md](NOTICE.md), the
+[permission record](docs/source-permissions.md), and the [source
+manifest](docs/source-manifest.json). These do not grant rights to game content.
 
 ## Changes and checks
 
