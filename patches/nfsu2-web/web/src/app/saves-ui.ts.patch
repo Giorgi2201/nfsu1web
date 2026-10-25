@@ -1,0 +1,69 @@
+--- a/web/src/app/saves-ui.ts
++++ b/web/src/app/saves-ui.ts
+@@ -1,13 +1,11 @@
+-// The saves section of the start page: the profiles in this browser (each can
+-// be renamed: profile.ts renameProfile), a backup of the whole save
++// The saves section of the start page: NFSU1 profiles in this browser, a backup of the whole save
+ // overlay as a zip (profiles, registry.txt, settings.ini, screenshots) and
+-// restoring one, or adding the PC game's profiles beside the ones here
+-// (readBackup tells them apart).  And the section at the bottom of the page, the game data on
++// restoring one. And the section at the bottom of the page, the game data on
+ // this PC: how much of it, all of it downloaded ahead (predownload.ts), or
+ // deleted.  The game data is never part of a backup and never written back:
+ // it stays on the server.
+ 
+-import { cacheBytes, clearCache, clearSaveDir, filesOf, listFiles, listProfiles, PROFILES_DIR, readBytes, writeFile, type Profile } from './savefs';
++import { cacheBytes, clearCache, clearSaveDir, filesOf, listFiles, listProfiles, NFSU1_PROFILES_DIR, nfsu1NamesFromIndex, nfsu1ProfileName, PROFILES_DIR, readBytes, writeFile, type Profile } from './savefs';
+ import { AUTOSAVE_SEEN, coverOf, isProfileFile, modCars, NAME_MAX, profileName, renameProfile, type RenameFiles } from './profile';
+ import { listZip, unzip, zip, ZipError, type ZipEntry } from './zip';
+ import { downloadBlob, stamp } from './logs';
+@@ -75,7 +73,7 @@
+     if (isScreenshot(f.path)) shotBytes += data.length;
+     entries.push({ name: f.path, data, mtime: f.mtime });
+   }
+-  return { zip: zip(entries), files: entries.length, name: `nfsu2-saves-${stamp()}.zip`, shotBytes };
++  return { zip: zip(entries), files: entries.length, name: `nfsu1-saves-${stamp()}.zip`, shotBytes };
+ }
+ 
+ export interface Restore {
+@@ -131,6 +129,14 @@
+     if (why) { out.refused.push({ name: s[1], why }); gone.add(lower(s[1])); continue; }
+     out.profiles.push(s[1]);
+     if (modCars(e.data)) out.modded.push(s[1]);
++  }
++  const known = new Set(out.profiles.map(lower));
++  for (const e of files) {
++    if (!e.path.toLowerCase().startsWith(`${NFSU1_PROFILES_DIR}/`)) continue;
++    const names = e.path.split('/').pop()?.toLowerCase() === 'profiles.usr'
++      ? nfsu1NamesFromIndex(e.data)
++      : [nfsu1ProfileName(e.path)].filter((name): name is string => !!name);
++    for (const name of names) if (!known.has(lower(name))) { out.profiles.push(name); known.add(lower(name)); }
+   }
+   out.entries = files.filter(e => {
+     const s = e.path.split('/');
+@@ -308,7 +314,7 @@
+     ul.replaceChildren();
+     if (!this.profiles.length) {
+       const li = document.createElement('li'); li.className = 'empty';
+-      li.textContent = 'No profiles yet. Create one in the game: it is saved in this browser.';
++      li.textContent = 'No profiles yet. Create a driver profile in the game; its profile list is saved in this browser.';
+       ul.append(li);
+     }
+     for (const p of this.profiles) {
+@@ -324,12 +330,10 @@
+       }
+       const n = document.createElement('span'); n.className = 'name'; n.textContent = p.name;
+       const m = document.createElement('span'); m.className = 'meta';
+-      m.textContent = `saved ${new Date(p.mtime).toLocaleString()}, ${fmtBytes(p.size)}`;
+-      const b = document.createElement('button'); b.type = 'button'; b.className = 'text-btn rename-btn'; b.textContent = 'Rename';
+-      b.setAttribute('aria-label', `Rename ${p.name}`); b.disabled = busy;
+-      b.onclick = () => { this.renaming = p.name; this.showProfiles(); };
+-      if (p.name === this.focusName) focus = b;
+-      li.append(n, m, b); ul.append(li);
++      m.textContent = p.files
++        ? `saved ${new Date(p.mtime).toLocaleString()}, ${fmtBytes(p.size)}`
++        : 'listed in Profiles.usr; no profile files found yet';
++      li.append(n, m); ul.append(li);
+     }
+     this.focusName = null;
+     if (focus) { focus.focus(); if (focus instanceof HTMLInputElement) focus.select(); }

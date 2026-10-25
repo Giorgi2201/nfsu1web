@@ -33,7 +33,8 @@ target on each draw, so resizing does not rebuild or move cached guest geometry.
 
 **F9** opens the game overlay. **F10** temporarily disables keyboard aliases for
 typing. The WASD preset sends arrow keys; actions follow the game's Controls
-menu. Aliases are stored separately from save backups in browser local storage.
+menu. The website keyboard controls also let you remap nitrous (Alt by default).
+Aliases are stored separately from save backups in browser local storage.
 
 Saves use `save-nfsu1`, game-data caching uses `cache-nfsu1`. Keep the same
 host and port to retain the same browser storage.

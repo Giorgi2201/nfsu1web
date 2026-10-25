@@ -216,7 +216,7 @@
 +      <section class="panel" id="saves" aria-labelledby="saves-title">
 +        <h2 id="saves-title">Save data</h2>
 +        <ul class="profiles" id="profiles" aria-label="Profiles in this browser"></ul>
-+        <p class="hint">Back up your profiles and settings to a ZIP file.</p>
++        <p class="hint">Back up your game saves and settings in one ZIP file.</p>
 +        <div class="row">
 +          <button type="button" class="btn" id="export">Download backup</button>
 +          <label class="btn file-btn">Restore backup<input type="file" id="import"></label>

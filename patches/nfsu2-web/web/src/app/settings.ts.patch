@@ -35,7 +35,7 @@
  #intro = skippable
  
  # Sound output.  [NOSOUND, inverted]
-@@ -192,6 +197,15 @@
+@@ -192,6 +197,17 @@
  # [NFSU2_WATCHDOG]
  #watchdog = 15
  
@@ -44,6 +44,8 @@
 +# Game uses the graphics options saved in the game. Other presets apply at
 +# launch; Maximum enables the mapped original effects. [NFSU1_GRAPHICS]
 +#graphics_quality = max
++# Widescreen FOV and HUD layout are enabled by default. [NFSU1_WIDESCREEN]
++#widescreen = on
 +# Render resolution automatically follows the window and full-screen size
 +# at device pixel density. Widescreen FOV/HUD hooks run by default; set
 +# NFSU1_WIDESCREEN=0 to letterbox to the saved guest aspect instead.
@@ -51,7 +53,7 @@
  # ---- Display -------------------------------------------------------------
  
  # Play in the browser window (off), or go full screen when you press Play
-@@ -349,7 +363,7 @@
+@@ -349,7 +365,7 @@
  // set the autotest "quit" command and the forced-quit path would only raise
  // a flag nobody reads (autotest.c do_quit, lifecycle.c leave).
  export const APP_DEFAULTS: Readonly<Record<string, string>> = {
@@ -60,7 +62,7 @@
    NFSU2_READONLY_DATA: '1',
    // the browser's: play in the window unless settings.ini asks for full screen
    NFSFULL: '0',
-@@ -361,7 +375,7 @@
+@@ -361,7 +377,7 @@
    // for the log players send after a crash: a line per front-end screen change, and every 3600 frames (a minute
    // at 60 fps) a [status] line with the guest heap, address space and frame times (runtime/autotest.c), but not
    // the sound's own status every 5 s that NFSU2_STATUS_EVERY also turns on (runtime/web/audio_web.c)

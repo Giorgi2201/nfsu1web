@@ -6,6 +6,7 @@ const TARGETS = [
   { code: 'ArrowLeft', action: 'Steer left' },
   { code: 'ArrowRight', action: 'Steer right' },
   { code: 'Space', action: 'Handbrake' },
+  { code: 'AltLeft', action: 'Nitrous' },
   { code: 'ShiftLeft', action: 'Shift up (manual)' },
   { code: 'ControlLeft', action: 'Shift down (manual)' },
   { code: 'KeyC', action: 'Change camera' },
@@ -15,8 +16,8 @@ const TARGETS = [
 type Target = typeof TARGETS[number]['code'];
 const targetCodes = TARGETS.map(({ code }) => code) as Target[];
 type Bindings = Partial<Record<Target, string>>;
-const RESERVED = new Set(['Escape', 'Enter', 'Tab', 'F9', 'F10', 'F11', 'F12', 'MetaLeft', 'MetaRight', 'OSLeft', 'OSRight', 'CapsLock', 'AltLeft', 'AltRight']);
-const validCode = (code: unknown): code is string => typeof code === 'string' && !RESERVED.has(code) && /^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Space|Shift(Left|Right)|Control(Left|Right)|Backspace|Home|End|Page(Up|Down)|Insert|Delete|Minus|Equal|Bracket(Left|Right)|Backslash|Semicolon|Quote|Backquote|Comma|Period|Slash|Numpad([0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F[1-8]|F10)$/.test(code);
+const RESERVED = new Set(['Escape', 'Enter', 'Tab', 'F9', 'F10', 'F11', 'F12', 'MetaLeft', 'MetaRight', 'OSLeft', 'OSRight', 'CapsLock']);
+const validCode = (code: unknown): code is string => typeof code === 'string' && !RESERVED.has(code) && /^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Space|Shift(Left|Right)|Control(Left|Right)|Alt(Left|Right)|Backspace|Home|End|Page(Up|Down)|Insert|Delete|Minus|Equal|Bracket(Left|Right)|Backslash|Semicolon|Quote|Backquote|Comma|Period|Slash|Numpad([0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F[1-8]|F10)$/.test(code);
 
 function readBindings(): Bindings {
   try {
@@ -25,7 +26,7 @@ function readBindings(): Bindings {
     const result: Bindings = {}, used = new Set<string>();
     for (const target of targetCodes) {
       const source = (parsed as Record<string, unknown>)[target];
-      if (validCode(source) && source !== target && !used.has(source)) {
+      if (validCode(source) && source !== target && !(source.startsWith('Alt') && target !== 'AltLeft') && !used.has(source)) {
         result[target] = source;
         used.add(source);
       }
@@ -52,6 +53,7 @@ export function toggleKeyboardAliases(): boolean {
 export function keyboardLabel(code: string): string {
   const labels: Record<string, string> = {
     ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Space: 'Space',
+    AltLeft: 'Alt', AltRight: 'Right Alt',
     ShiftLeft: 'Left Shift', ShiftRight: 'Right Shift', ControlLeft: 'Left Ctrl', ControlRight: 'Right Ctrl',
     Backspace: 'Backspace', Escape: 'Esc',
   };
@@ -125,7 +127,8 @@ export function mountKeyboardControls(root: HTMLElement): void {
       e.preventDefault(); e.stopImmediatePropagation();
       if (e.repeat || e.isComposing) return;
       if (e.code === 'Escape') { stop(); status.textContent = 'Key change cancelled.'; return; }
-      if (!validCode(e.code) || e.metaKey || e.altKey || (e.ctrlKey && !e.code.startsWith('Control'))) {
+      const nitrousAlt = target === 'AltLeft' && (e.code === 'AltLeft' || e.code === 'AltRight');
+      if (!validCode(e.code) || e.metaKey || (e.altKey && !nitrousAlt) || (e.ctrlKey && !e.code.startsWith('Control'))) {
         status.textContent = 'That key or shortcut is reserved. Choose another key, or press Esc to cancel.';
         return;
       }

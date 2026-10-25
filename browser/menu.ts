@@ -31,7 +31,7 @@ function mountControllerSettings(): void {
   if (!source || !target) return;
   const move = () => {
     for (const group of source.querySelectorAll<HTMLElement>(':scope > .group')) {
-      if (group.querySelector('h3')?.textContent?.trim() === 'Controller') target.append(group);
+      if (group.querySelector('h3')?.textContent?.trim() === 'Controller') target.replaceChildren(group);
     }
   };
   new MutationObserver(move).observe(source, { childList: true, subtree: true });
