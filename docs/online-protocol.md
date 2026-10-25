@@ -73,6 +73,16 @@ Typical order: `addr`/`skey` → `acct` → `auth` → `cper`/`pers` → `news` 
 
 **Client →** `move` with room name at +17.
 
+Room names are Dirtysock strings: `TagFieldSetString` (`0x667950` in PC 1.4)
+quotes names containing spaces and percent-escapes reserved characters. For
+example, the client sends `NAME="A.Main Lobby"` even though the server stores
+`A.Main Lobby`. Remove enclosing quotes before creation or lookup; comparing
+the quoted wire value against the stored name returns the leave-room ack
+(`IDENT=0`) and omits the local roster. A subsequent `gcre` then has no room
+membership and cannot complete. Keep nested challenge TEXT/PARAMS escaping
+intact, and preserve percent escapes in stored names so reserved characters
+remain safe when names are sent back in fields.
+
 **Server (RoomClass::AddUser)** → in order:
 
 1. `move` — `IDENT` `NAME` `COUNT` (count *before* add) `FLAGS=C`

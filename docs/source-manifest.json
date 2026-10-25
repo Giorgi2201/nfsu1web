@@ -536,6 +536,12 @@
     "evidence": "Local PC 1.4 action-table labels and keyboard map switch; game-derived code and assets remain local.",
     "validation": "Focused browser-mailbox and native input checks; online chat and race behavior require user game validation."
   },
+  "online_room_name_quotes": {
+    "date": "2026-10-25",
+    "implementation": "Remove Dirtysock string quotes when storing and looking up room names, so predefined Main Lobby rooms match the client's space-containing NAME value.",
+    "evidence": "Local PC 1.4 TagFieldSetString at 0x667950 quotes space-containing names. User log showed a 33-byte move followed by the 52-byte missing-room response and no roster or race-create response; custom rooms worked.",
+    "validation": "Focused local relay regression for quoted room joins, creator roster and race creation; browser confirmation remains required."
+  },
   "audio_stream_freshness": {
     "date": "2026-10-25",
     "repository": "th0mk/nfsu2-web",

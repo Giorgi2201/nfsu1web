@@ -772,7 +772,9 @@ impl OnlineHost {
     }
 
     fn handle_room(&mut self, key: ConnKey, cmd: &[u8]) -> Vec<Vec<u8>> {
-        let room_name = field_at(cmd, 17).unwrap_or_else(|| format!("Room{}", self.next_room_id));
+        let room_name = field_at(cmd, 17)
+            .map(|name| unquote_tag_string(&name))
+            .unwrap_or_else(|| format!("Room{}", self.next_room_id));
         if room_name.is_empty() || self.rooms.iter().any(|r| r.name == room_name) {
             return vec![tcp_data(
                 key.peer,
@@ -869,7 +871,9 @@ impl OnlineHost {
     }
 
     fn handle_move(&mut self, key: ConnKey, cmd: &[u8]) -> Vec<Vec<u8>> {
-        let room_name = field_at(cmd, 17).unwrap_or_default();
+        let room_name = field_at(cmd, 17)
+            .map(|name| unquote_tag_string(&name))
+            .unwrap_or_default();
         if let Some(id) = self
             .rooms
             .iter()
@@ -1014,7 +1018,7 @@ impl OnlineHost {
         let fields = parse_kv_fields(cmd);
         let parsed = parse_gcre_fields(cmd, &fields);
         let game_name = parsed.name;
-        let room_name = parsed.room;
+        let room_name = unquote_tag_string(&parsed.room);
         let max = parsed.max;
         let min = parsed.min;
         let sysflags = parsed.sysflags;
@@ -1896,6 +1900,16 @@ fn extract_name(cmd: &[u8]) -> Option<String> {
     field_at(cmd, 17).or_else(|| field_at(cmd, 12))
 }
 
+/// TagFieldSetString quotes names containing spaces. Keep percent escapes
+/// intact so reserved bytes remain safe when names are sent back as fields.
+fn unquote_tag_string(value: &str) -> String {
+    value
+        .strip_prefix('"')
+        .and_then(|name| name.strip_suffix('"'))
+        .unwrap_or(value)
+        .to_string()
+}
+
 fn field_at(cmd: &[u8], off: usize) -> Option<String> {
     if cmd.len() <= off {
         return None;
@@ -2077,6 +2091,50 @@ mod tests {
         assert!(names.iter().any(|n| n.starts_with("+usr")), "{names:?}");
         // No invented gcre (stock server waits for client).
         assert!(!names.iter().any(|n| n.starts_with("gcre")), "{names:?}");
+    }
+
+    #[test]
+    fn quoted_room_move_joins_and_allows_race_creation() {
+        let mut host = OnlineHost::new();
+        let peer = u32::from_be_bytes([10, 77, 0, 2]);
+        let sport = 40000;
+        let cid = 1;
+        host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_SYN, cid, &[]));
+        // TagFieldSetString quotes the space; the guest terminates its body
+        // with newline and NUL. This is the observed 33-byte move request.
+        let request = make_command("move", &["NAME=\"A.Main Lobby\"\n"]);
+        assert_eq!(request.len(), 33);
+        let replies = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &request));
+        let commands = reply_cmds(&replies);
+        assert!(commands.iter().any(|n| n == "+who"));
+        assert!(commands.iter().any(|n| n == "+usr"));
+        let request = make_command(
+            "gcre",
+            &[
+                "NAME=Race",
+                "ROOM=\"A.Main Lobby\"",
+                "MAXSIZE=4",
+                "MINSIZE=2",
+                "SYSFLAGS=0",
+                "PARAMS=TRACK%3d1003",
+            ],
+        );
+        let replies = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &request));
+        assert!(reply_cmds(&replies).iter().any(|n| n == "gcre"));
+        assert_eq!(host.rooms[0].games[0].members.len(), 1);
+        let request = make_command("room", &["NAME=\"A.Custom Room\""]);
+        host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &request));
+        assert_eq!(host.rooms.last().unwrap().name, "A.Custom Room");
+        let custom_id = host.rooms.last().unwrap().id;
+        let request = make_command("move", &["NAME=\"A.Main Lobby\""]);
+        host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &request));
+        let request = make_command("move", &["NAME=\"A.Custom Room\""]);
+        let replies = host.on_frame(&lan_tcp(peer, sport, PORT_LOBBY, TCP_DATA, cid, &request));
+        assert!(reply_cmds(&replies).iter().any(|n| n == "+who"));
+        assert_eq!(
+            host.rooms.iter().find(|r| r.id == custom_id).unwrap().members.len(),
+            1
+        );
     }
 
     #[test]
