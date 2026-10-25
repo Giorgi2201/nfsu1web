@@ -48,7 +48,7 @@
    const canvas = stageCanvas();
    untrack = trackCanvasSize(canvas);
 -  setPhase('starting', 'Starting', full ? 'Going full screen and starting the game.' : 'Starting the game.');
-+  setPhase('starting', 'Starting game', full ? 'Going full screen and starting the experimental runtime.' : 'Starting the experimental runtime.');
++  setPhase('starting', 'Starting game', full ? 'Going full screen.' : '');
    let fsNote = '';
    if (full) {
      const fs = await enterFullscreen(stage);
@@ -82,7 +82,7 @@
    // more of this browser than its major version and system (the audit's PRIV-5).  These session lines stay when
    // a long game fills the log (logs.ts keep).
 -  log.keep(`=== NFSU2 web, ${new Date().toISOString()}, game ${loaded!.info.rev}, server ${serverKind()} ===`);
-+  log.keep(`=== PC NFSU1 experimental browser bring-up, ${new Date().toISOString()}, game ${loaded!.info.rev}, server ${serverKind()} ===`);
++  log.keep(`=== Need for Speed: Underground, ${new Date().toISOString()}, game ${loaded!.info.rev}, server ${serverKind()} ===`);
    log.keep(`[app] save folder: OPFS ${SAVE} (/save); canvas ${size.w}x${size.h} device pixels, display ${displayHz} Hz; ${browserBrief()}`);
    for (const n of r.notes) log.keep(`[app] ${n}`);
    const reg = r.env.NFSU2_REGFILE.replace(/^\/save\//, '');
@@ -157,7 +157,7 @@
 +  'GPUVS', 'FIXMAT', 'FIXMAT_MODE', 'ALARM', 'NOMOVIES', 'NOSOUND', 'NFSU2_BACKGROUND', 'SNDSYNC', 'NFSFULL', 'NFSMAXPIX',
 +  'NFSU2_PAD', 'NFSU2_PAD_DEADZONE', 'NFSU2_PAD_TRIGGER_DEADZONE', 'NFSU2_PAD_TRIGGER_CLICK', 'NFSU2_FF',
 +  'NFSU2_AUDIO_LATENCY', 'NFSU2_TZ', 'NFSU2_TZ_NAME',
-+  'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'NFSU1_DEPTH_DIAGNOSTICS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
++  'NFSU1_DYNAMIC_RESOLUTION', 'NFSU1_GRAPHICS', 'NFSU1_INTRO', 'NFSU1_WIDESCREEN', 'NFSU1_DIAGNOSTICS', 'NFSU1_DIAGNOSTIC_WORDS', 'NFSU1_DEPTH_DIAGNOSTICS', 'COMTRACE', 'TRACE_MAX', 'FILELIST', 'PRESENTBT', 'BT',
 +  'NFSU2_AUTOSAVE', 'NFSU2_NET', 'NFSU2_ONLINE', 'NFSU2_ROAM', 'NFSU2_SEED_REGISTRY', 'NFSU2_FPS_COUNTER', 'NFSU2_PAD_FE_KEYS',
 +]);
 +/** Pass only host contracts and explicitly supported bring-up diagnostics to the process. */
@@ -180,8 +180,8 @@
 -    const base = code === 0 ? `The game closed normally after ${mins}.` : code === -1 ? `The game was stopped after ${mins}.`
 -      : `The game stopped with error code ${code} after ${mins}.`;
 -    // what is kept: the game's last profile save, never a claim it did not make
-+    const base = code === 0 ? `The runtime exited normally after ${mins}.` : code === -1 ? `The runtime was stopped after ${mins}.`
-+      : `The runtime stopped with error code ${code} after ${mins}.`;
++    const base = code === 0 ? `The game closed after ${mins}.` : code === -1 ? `The game was stopped after ${mins}.`
++      : `The game stopped with error code ${code} after ${mins}.`;
      const sv = saved;
 -    setPhase('exited', code === 0 ? 'See you' : 'Stopped', !sv ? base : code === 0 ? `${base} Progress saved in this browser at ${when(sv.at)} (${sv.name}).`
 -      : `${base} Your progress up to the last save, at ${when(sv.at)} (${sv.name}), is kept.`);
@@ -191,8 +191,8 @@
 -        sub.textContent = `${base} ${p ? `Nothing was saved during this game; the last save is from ${when(p.mtime)} (${p.name}).` : 'No profile is saved in this browser yet.'}`;
 -    });
 +    setPhase('exited', code === 0 ? 'Game closed' : 'Stopped', !sv
-+      ? `${base} No file writes were reported.`
-+      : `${base} ${sv.count} file write(s) were reported during this experiment at ${when(sv.at)}.`);
++      ? `${base} No game data was saved during this session.`
++      : `${base} Game data was saved at ${when(sv.at)}.`);
    }
    void saves.refresh();               // new or changed profiles
    showNewer();                        // the note on the log, now that there is one
@@ -209,9 +209,9 @@
 -  if (session) toast(`Progress saved (${p[1]}).`, 2500);
 -  if ($<HTMLDialogElement>('#menu').open) $('#menu-save').textContent = `Last saved at ${when(saved.at)} (${saved.name}).`;
 +  saved = { at: Date.now(), count: (saved?.count ?? 0) + 1 };
-+  log.add(`[app] a file was written in isolated browser storage (${saved.count} reported this experiment)`);
-+  if (session) toast('A file was written to isolated browser storage.', 3000);
-+  if ($<HTMLDialogElement>('#menu').open) $('#menu-save').textContent = `File writes reported: ${saved.count}.`;
++  log.add(`[app] game data changed (${saved.count} write(s))`);
++  if (session) toast('Game data saved.', 2500);
++  if ($<HTMLDialogElement>('#menu').open) $('#menu-save').textContent = `Game data saved at ${when(saved.at)}.`;
  }
  /** the newest profile in this browser (listProfiles sorts by time), or null */
  async function newestProfile() { return (await listProfiles(SAVE).catch(() => []))[0] ?? null; }
@@ -238,7 +238,7 @@
 -      if (!saved && m.open) line.textContent = p ? `Nothing saved during this game yet. Last save: ${when(p.mtime)} (${p.name}).` : 'No profile is saved in this browser yet.';
 -    });
 -  }
-+  line.textContent = saved ? `File writes reported: ${saved.count}.` : 'No file writes reported during this experiment.';
++  line.textContent = saved ? `Game data saved at ${when(saved.at)}.` : 'Game data has not been saved during this session.';
    $('#stage').classList.add('cursor');
    m.showModal();
  }

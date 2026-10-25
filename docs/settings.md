@@ -10,10 +10,14 @@ control difficulty, transmission, camera and action bindings.
 | --- | --- |
 | Graphics quality | Game, Low, Medium, High or Maximum; Maximum is the default. Game uses the saved profile's choices. |
 | Resolution | Automatic canvas device pixels, with an 8192-pixel dimension limit. Resize/fullscreen triggers a device reset. |
-| Widescreen | Enabled by default; the scene fills the window and the complete menu fits over it without stretching. `NFSU1_WIDESCREEN=0` uses guest-aspect letterboxing. |
-| Startup movies | Skippable by default; Original retains native behavior, Off skips on the first update. Story/tutorial movies are unchanged. |
-| Audio/background | Sound, output latency and Pause / Keep running policy. |
+| Widescreen | On by default; turn it off in Options for the original 4:3 view. |
+| Startup movies | Skippable by default; Original keeps the game's usual behavior, Off skips them automatically. |
+| Movie playback | Turn in-game movie playback on or off. |
+| Audio | Sound output and audio response. |
 | Controller | Device policy, dead zones, trigger threshold and vibration permission. |
+
+Open **Game data** to download or restore a ZIP backup of profiles and settings.
+The game data cache is separate from these backups.
 
 Graphics presets use NFSU1's own detail levels and capability limits; they do
 not enable the upstream NFSU2 enhancement system. Their exact mapping is in

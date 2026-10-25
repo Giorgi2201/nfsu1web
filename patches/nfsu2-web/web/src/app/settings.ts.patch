@@ -1,6 +1,6 @@
 --- a/web/src/app/settings.ts
 +++ b/web/src/app/settings.ts
-@@ -48,13 +48,17 @@
+@@ -48,13 +48,18 @@
    // app
    { key: 'game_folder', env: 'NFSU2_DATA', kind: 'path', scope: 'mac' },
    { key: 'movies', env: 'NOMOVIES', kind: 'boolInv', scope: 'web' },
@@ -14,12 +14,13 @@
    { key: 'watchdog', env: 'NFSU2_WATCHDOG', kind: 'num', scope: 'web' },
 +  // NFSU1 graphics quality; resolution follows the live canvas.
 +  { key: 'graphics_quality', env: 'NFSU1_GRAPHICS', kind: 'enum', vals: 'game|low|medium|high|max', scope: 'web' },
++  { key: 'widescreen', env: 'NFSU1_WIDESCREEN', kind: 'bool', scope: 'web' },
 +  // Legacy setting is accepted on restore but no longer controls rendering.
 +  { key: 'render_resolution', env: 'NFSU1_RESOLUTION', kind: 'enum', vals: 'game|window|800x600|1280x960|1600x1200|1920x1440|2560x1920', scope: 'web' },
    // display
    { key: 'fullscreen', env: 'NFSFULL', kind: 'bool', scope: 'web' },
    { key: 'native_resolution', env: 'NFSNATIVE', kind: 'bool', scope: 'web' },
-@@ -154,10 +158,10 @@
+@@ -154,10 +159,10 @@
  # Intro, story and FMV movies.  [NOMOVIES, inverted]
  #movies = on
  
@@ -34,7 +35,7 @@
  #intro = skippable
  
  # Sound output.  [NOSOUND, inverted]
-@@ -192,6 +196,15 @@
+@@ -192,6 +197,15 @@
  # [NFSU2_WATCHDOG]
  #watchdog = 15
  
@@ -50,16 +51,16 @@
  # ---- Display -------------------------------------------------------------
  
  # Play in the browser window (off), or go full screen when you press Play
-@@ -349,7 +362,7 @@
+@@ -349,7 +363,7 @@
  // set the autotest "quit" command and the forced-quit path would only raise
  // a flag nobody reads (autotest.c do_quit, lifecycle.c leave).
  export const APP_DEFAULTS: Readonly<Record<string, string>> = {
 -  ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
-+  NFSU1_GRAPHICS: 'max', NFSU1_INTRO: 'skippable', ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
++  NFSU1_GRAPHICS: 'max', NFSU1_INTRO: 'skippable', NFSU1_WIDESCREEN: '1', ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
    NFSU2_READONLY_DATA: '1',
    // the browser's: play in the window unless settings.ini asks for full screen
    NFSFULL: '0',
-@@ -361,7 +374,7 @@
+@@ -361,7 +375,7 @@
    // for the log players send after a crash: a line per front-end screen change, and every 3600 frames (a minute
    // at 60 fps) a [status] line with the guest heap, address space and frame times (runtime/autotest.c), but not
    // the sound's own status every 5 s that NFSU2_STATUS_EVERY also turns on (runtime/web/audio_web.c)

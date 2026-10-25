@@ -20,5 +20,20 @@ export function mountMenu() {
     if (document.body.dataset.phase === 'error') show('play');
   }).observe(document.body, { attributes: true, attributeFilter: ['data-phase'] });
   mountKeyboardControls(document.querySelector<HTMLElement>('#keyboard-controls')!);
+  mountControllerSettings();
   show('play');
+}
+
+/** Keep controller options beside keyboard bindings, even though settings load later. */
+function mountControllerSettings(): void {
+  const source = document.querySelector<HTMLElement>('#settings-body');
+  const target = document.querySelector<HTMLElement>('#controller-settings');
+  if (!source || !target) return;
+  const move = () => {
+    for (const group of source.querySelectorAll<HTMLElement>(':scope > .group')) {
+      if (group.querySelector('h3')?.textContent?.trim() === 'Controller') target.append(group);
+    }
+  };
+  new MutationObserver(move).observe(source, { childList: true, subtree: true });
+  move();
 }

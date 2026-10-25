@@ -1,7 +1,19 @@
 // Browser key aliases. The game's own Controls menu remains the source of action bindings.
 const STORAGE_KEY = 'nfsu1-keyboard-v1';
-const TARGETS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ControlLeft', 'KeyC', 'KeyR', 'Backspace'] as const;
-type Target = typeof TARGETS[number];
+const TARGETS = [
+  { code: 'ArrowUp', action: 'Throttle' },
+  { code: 'ArrowDown', action: 'Brake / reverse' },
+  { code: 'ArrowLeft', action: 'Steer left' },
+  { code: 'ArrowRight', action: 'Steer right' },
+  { code: 'Space', action: 'Handbrake' },
+  { code: 'ShiftLeft', action: 'Shift up (manual)' },
+  { code: 'ControlLeft', action: 'Shift down (manual)' },
+  { code: 'KeyC', action: 'Change camera' },
+  { code: 'KeyB', action: 'Look back' },
+  { code: 'KeyR', action: 'Reset car' },
+] as const;
+type Target = typeof TARGETS[number]['code'];
+const targetCodes = TARGETS.map(({ code }) => code) as Target[];
 type Bindings = Partial<Record<Target, string>>;
 const RESERVED = new Set(['Escape', 'Enter', 'Tab', 'F9', 'F10', 'F11', 'F12', 'MetaLeft', 'MetaRight', 'OSLeft', 'OSRight', 'CapsLock', 'AltLeft', 'AltRight']);
 const validCode = (code: unknown): code is string => typeof code === 'string' && !RESERVED.has(code) && /^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Space|Shift(Left|Right)|Control(Left|Right)|Backspace|Home|End|Page(Up|Down)|Insert|Delete|Minus|Equal|Bracket(Left|Right)|Backslash|Semicolon|Quote|Backquote|Comma|Period|Slash|Numpad([0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F[1-8]|F10)$/.test(code);
@@ -11,7 +23,7 @@ function readBindings(): Bindings {
     const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
     const result: Bindings = {}, used = new Set<string>();
-    for (const target of TARGETS) {
+    for (const target of targetCodes) {
       const source = (parsed as Record<string, unknown>)[target];
       if (validCode(source) && source !== target && !used.has(source)) {
         result[target] = source;
@@ -19,9 +31,9 @@ function readBindings(): Bindings {
       }
     }
     // Reject sources that would override another row still showing its original key.
-    for (const target of TARGETS) {
+    for (const target of targetCodes) {
       const source = result[target];
-      if (source && TARGETS.includes(source as Target) && !result[source as Target]) delete result[target];
+      if (source && targetCodes.includes(source as Target) && !result[source as Target]) delete result[target];
     }
     return result;
   } catch { return {}; }
@@ -51,7 +63,7 @@ export function keyboardLabel(code: string): string {
 export function translateKeyboardEvent(e: KeyboardEvent): string | undefined {
   if (!aliasesEnabled) return undefined;
   if (e.metaKey || e.isComposing) return undefined;
-  for (const target of TARGETS) if (bindings[target] === e.code) return target;
+  for (const target of targetCodes) if (bindings[target] === e.code) return target;
   return undefined;
 }
 
@@ -63,7 +75,7 @@ export function mountKeyboardControls(root: HTMLElement): void {
   heading.textContent = 'Keyboard controls';
   const help = document.createElement('p');
   help.className = 'muted';
-  help.textContent = 'Choose a key to send to the game. Game actions follow Options → Controls in the game. Original keys still work unless reassigned. Changes apply immediately and stay in this browser. While playing, F10 temporarily turns mappings off or on for typing names.';
+  help.textContent = 'Choose a physical key for each action. These are the default game bindings; custom bindings in Options → Controls still apply. Changes are saved in this browser. Press F10 while playing to turn remapping off for text entry.';
   const rows = document.createElement('div');
   rows.className = 'keyboard-bindings';
   const status = document.createElement('p');
@@ -117,14 +129,14 @@ export function mountKeyboardControls(root: HTMLElement): void {
         status.textContent = 'That key or shortcut is reserved. Choose another key, or press Esc to cancel.';
         return;
       }
-      const conflict = TARGETS.find(other => other !== target && (bindings[other] ?? other) === e.code);
+      const conflict = targetCodes.find(other => other !== target && (bindings[other] ?? other) === e.code);
       if (conflict) {
-        status.textContent = `${keyboardLabel(e.code)} is already assigned to game key ${keyboardLabel(conflict)}. Choose another key, or reset that binding first.`;
+        status.textContent = `${keyboardLabel(e.code)} is already assigned to ${actionFor(conflict)}. Choose another key, or reset that binding first.`;
         return;
       }
       const next = { ...bindings };
       if (e.code === target) delete next[target]; else next[target] = e.code;
-      save(next, `${keyboardLabel(e.code)} now sends ${keyboardLabel(target)} to the game.`);
+      save(next, `${actionFor(target)} is now ${keyboardLabel(e.code)}.`);
     };
     cancelCapture = stop;
     document.addEventListener('keydown', onKey, true);
@@ -136,17 +148,17 @@ export function mountKeyboardControls(root: HTMLElement): void {
     const focusedTarget = rows.contains(document.activeElement)
       ? (document.activeElement as HTMLElement).dataset.target : undefined;
     rows.replaceChildren();
-    for (const target of TARGETS) {
+    for (const target of targetCodes) {
       const row = document.createElement('div');
       row.className = 'keyboard-binding';
       const label = document.createElement('span');
-      label.textContent = `Game key ${keyboardLabel(target)}`;
+      label.textContent = actionFor(target);
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'btn key-binding';
       button.dataset.target = target;
       button.textContent = keyboardLabel(bindings[target] ?? target);
-      button.setAttribute('aria-label', `Change physical key for game key ${keyboardLabel(target)}`);
+      button.setAttribute('aria-label', `Change key for ${actionFor(target)}`);
       button.setAttribute('aria-pressed', 'false');
       button.onclick = () => capture(target, button);
       row.append(label, button);
@@ -160,11 +172,11 @@ export function mountKeyboardControls(root: HTMLElement): void {
       const title = document.createElement('h3');
       title.textContent = 'Your keyboard';
       const note = document.createElement('p');
-      note.textContent = 'Physical keys below send the listed game key. Game actions follow the in-game Controls menu.';
+      note.textContent = 'Actions use the default game bindings. Change actions in the in-game Controls menu.';
       const list = document.createElement('dl');
-      for (const target of TARGETS) {
+      for (const target of targetCodes) {
         const term = document.createElement('dt'), value = document.createElement('dd');
-        term.textContent = `Game ${keyboardLabel(target)}`;
+        term.textContent = actionFor(target);
         value.textContent = keyboardLabel(bindings[target] ?? target);
         list.append(term, value);
       }
@@ -172,7 +184,11 @@ export function mountKeyboardControls(root: HTMLElement): void {
     }
   }
 
-  wasd.onclick = () => save({ ArrowUp: 'KeyW', ArrowDown: 'KeyS', ArrowLeft: 'KeyA', ArrowRight: 'KeyD' }, 'WASD sends the arrow keys. Other aliases have been reset.');
+  wasd.onclick = () => save({ ArrowUp: 'KeyW', ArrowDown: 'KeyS', ArrowLeft: 'KeyA', ArrowRight: 'KeyD' }, 'Throttle, brake and steering now use W, S, A and D.');
   reset.onclick = () => save({}, 'Original keyboard restored.');
   render();
+}
+
+function actionFor(target: Target): string {
+  return TARGETS.find(item => item.code === target)!.action;
 }
