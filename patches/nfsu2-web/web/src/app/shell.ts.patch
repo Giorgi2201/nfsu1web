@@ -320,7 +320,7 @@
 -    if (session && (e.code === 'F8' || e.code === 'F9')) {
 +    if (session && e.code === 'F10') {
        e.preventDefault(); e.stopImmediatePropagation();
-+      if (!e.repeat) toast(`Keyboard mappings ${toggleKeyboardAliases() ? 'on' : 'off — original keys for typing'}. F10 toggles.`, 3500);
++      if (!e.repeat) toast(`Custom driving bindings ${toggleKeyboardAliases() ? 'on' : 'off'}. F10 toggles.`, 3500);
 +      return;
 +    }
 +    if (session && e.code === 'F9') {

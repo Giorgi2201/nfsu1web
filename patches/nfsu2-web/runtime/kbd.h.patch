@@ -1,0 +1,22 @@
+--- a/runtime/kbd.h
++++ b/runtime/kbd.h
+@@ -14,6 +14,9 @@
+  * state is also recorded as an event for DirectInput's buffered data. */
+ enum { KSRC_HOST = 0, KSRC_SCRIPT = 1, KSRC_LEGACY = 2 };
+ void kbd_set_key(int src, unsigned dik, int down);       /* any thread */
++/* Physical keys remain intact for text, frontend maps and raw capture.
++ * Only NFSU1's race action map consumes the separately mapped stream. */
++void kbd_set_mapped_key(int src, unsigned physical, unsigned race, int down);
+ void kbd_release_source(int src);                        /* every key of src up */
+ void kbd_state(uint8_t *dst, unsigned n);                /* 0x80 = down */
+ int  kbd_key_down(unsigned dik);
+@@ -22,6 +25,9 @@
+ uint32_t kbd_ev_head(void);                  /* sequence number of the next event */
+ /* 1 = event seq returned, 0 = not recorded yet, -1 = already overwritten */
+ int      kbd_ev_get(uint32_t seq, KbdEv *e);
++void     kbd_race_state(uint8_t *dst, unsigned n);
++uint32_t kbd_race_ev_head(void);
++int      kbd_race_ev_get(uint32_t seq, KbdEv *e);
+ 
+ /* ---- window messages from the host -------------------------------------- */
+ void kbd_post(uint32_t msg, uint32_t wp, uint32_t lp);   /* any thread */

@@ -1,0 +1,95 @@
+--- a/runtime/keyboard.c
++++ b/runtime/keyboard.c
+@@ -48,6 +48,10 @@
+ #define EVN 1024u                        /* power of two */
+ static KbdEv    g_ev[EVN];
+ static uint32_t g_seq = 1;               /* next sequence number (0 = never used) */
++static uint8_t g_race_target[8][256];    /* cached target for each held physical source */
++static uint16_t g_race_holds[256];      /* multiple physical keys may share a target */
++static KbdEv g_race_ev[EVN];
++static uint32_t g_race_seq = 1;
+ 
+ static void push_ev_locked(unsigned dik, int down){
+     KbdEv *e = &g_ev[g_seq & (EVN - 1u)];
+@@ -55,25 +59,44 @@
+     e->ms = host_ms();                   /* dwTimeStamp in GetTickCount time */
+     e->seq = g_seq++;
+ }
+-void kbd_set_key(int src, unsigned dik, int down){
+-    if (dik == 0 || dik > 255u || src < 0 || src > 7) return;
++static void push_race_ev_locked(unsigned dik, int down){
++    KbdEv *e = &g_race_ev[g_race_seq & (EVN - 1u)];
++    e->dik = (uint8_t)dik; e->down = (uint8_t)(down ? 1 : 0);
++    e->ms = host_ms(); e->seq = g_race_seq++;
++}
++static void set_mapped_locked(int src, unsigned dik, unsigned race, int down){
+     uint8_t bit = (uint8_t)(1u << src);
+-    pthread_mutex_lock(&g_kmx);
++    int held = (g_src[dik] & bit) != 0;
++    if (!!down == held) return;
+     int was = g_src[dik] != 0;
+-    if (down) g_src[dik] |= bit; else g_src[dik] &= (uint8_t)~bit;
++    if (down){
++        g_src[dik] |= bit;
++        g_race_target[src][dik] = (uint8_t)race;
++        if (g_race_holds[race]++ == 0) push_race_ev_locked(race, 1);
++    } else {
++        g_src[dik] &= (uint8_t)~bit;
++        race = g_race_target[src][dik];
++        g_race_target[src][dik] = 0;
++        if (race && --g_race_holds[race] == 0) push_race_ev_locked(race, 0);
++    }
+     int now = g_src[dik] != 0;
+     if (now != was) push_ev_locked(dik, now);
++}
++void kbd_set_mapped_key(int src, unsigned dik, unsigned race, int down){
++    if (dik == 0 || dik > 255u || src < 0 || src > 7) return;
++    if (race == 0 || race > 255u) race = dik;
++    pthread_mutex_lock(&g_kmx);
++    set_mapped_locked(src, dik, race, down);
+     pthread_mutex_unlock(&g_kmx);
+ }
++void kbd_set_key(int src, unsigned dik, int down){
++    kbd_set_mapped_key(src, dik, dik, down);
++}
+ void kbd_release_source(int src){
+     if (src < 0 || src > 7) return;
+-    uint8_t bit = (uint8_t)(1u << src);
+     pthread_mutex_lock(&g_kmx);
+     for (unsigned k = 1; k < 256u; k++)
+-        if (g_src[k] & bit){
+-            g_src[k] &= (uint8_t)~bit;
+-            if (!g_src[k]) push_ev_locked(k, 0);
+-        }
++        set_mapped_locked(src, k, k, 0);
+     pthread_mutex_unlock(&g_kmx);
+ }
+ void kbd_state(uint8_t *dst, unsigned n){
+@@ -104,6 +127,27 @@
+     pthread_mutex_unlock(&g_kmx);
+     return r;
+ }
++void kbd_race_state(uint8_t *dst, unsigned n){
++    if (n > 256u) n = 256u;
++    pthread_mutex_lock(&g_kmx);
++    for (unsigned k = 0; k < n; k++) dst[k] = g_race_holds[k] ? 0x80 : 0;
++    pthread_mutex_unlock(&g_kmx);
++}
++uint32_t kbd_race_ev_head(void){
++    pthread_mutex_lock(&g_kmx);
++    uint32_t s = g_race_seq;
++    pthread_mutex_unlock(&g_kmx);
++    return s;
++}
++int kbd_race_ev_get(uint32_t seq, KbdEv *e){
++    pthread_mutex_lock(&g_kmx);
++    int r;
++    if ((int32_t)(seq - g_race_seq) >= 0) r = 0;
++    else if (g_race_seq - seq > EVN) r = -1;
++    else { *e = g_race_ev[seq & (EVN - 1u)]; r = 1; }
++    pthread_mutex_unlock(&g_kmx);
++    return r;
++}
+ 
+ /* ---- host -> guest window messages --------------------------------------- */
+ #define MQN 1024u

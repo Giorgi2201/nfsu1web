@@ -1,6 +1,69 @@
 --- a/runtime/web/input_web.c
 +++ b/runtime/web/input_web.c
-@@ -298,10 +298,49 @@
+@@ -135,7 +135,7 @@
+ /* ---- keys: keyboard_mac.m's delivery rules ------------------------------- */
+ /* alttext: pressed with Option/AltGr and typed text, so its release is a
+  * WM_KEYUP even while Alt is still down, as with AltGr on Windows */
+-typedef struct { uint8_t down, vk, sys, alttext; } Down;
++typedef struct { uint8_t down, vk, sys, alttext, race; } Down;
+ static Down g_down[256];             /* by DIK: keys the game has seen go down */
+ static int  g_alt_other;             /* a key was pressed while Alt was down */
+ static int  g_nheld;
+@@ -149,12 +149,12 @@
+     if (kbd_log()) fprintf(stderr, "[key]   -> %s 0x%02x lParam 0x%08x\n", kbd_msg_name(m), wp, lp);
+ }
+ static int is_alt(unsigned dik){ return dik == DIK_LMENU || dik == DIK_RMENU; }
+-static void press(unsigned dik, unsigned vk, int sys, int repeat){
++static void press(unsigned dik, unsigned race, unsigned vk, int sys, int repeat){
+     if (!repeat){
+         if (!g_down[dik].down) g_nheld++;
+         g_down[dik].down = 1; g_down[dik].vk = (uint8_t)vk; g_down[dik].sys = (uint8_t)sys;
+-        g_down[dik].alttext = 0;
+-        kbd_set_key(KSRC_HOST, dik, 1);
++        g_down[dik].alttext = 0; g_down[dik].race = (uint8_t)race;
++        kbd_set_mapped_key(KSRC_HOST, dik, race, 1);
+     }
+     if (vk) post(sys ? WM_SYSKEYDOWN : WM_KEYDOWN, vk, key_lparam(dik, sys, repeat, 0));
+ }
+@@ -162,7 +162,7 @@
+     Down *d = &g_down[dik];
+     if (!d->down) return;
+     d->down = 0; g_nheld--;
+-    kbd_set_key(KSRC_HOST, dik, 0);
++    kbd_set_mapped_key(KSRC_HOST, dik, d->race, 0);
+     /* Alt alone: WM_SYSKEYUP; a key released while Alt is down too, unless
+      * it was pressed as text (WM_KEYDOWN, so WM_KEYUP) */
+     int sys = is_alt(dik) ? !g_alt_other : (alt && !d->alttext);
+@@ -195,6 +195,9 @@
+ }
+ static void key_down(const InEv *e){
+     unsigned dik = e->dik;
++    /* Key-event a: 0 keeps the physical key; 1..255 selects a driving
++     * destination. Window messages, characters and modifiers stay physical. */
++    unsigned race = e->a > 0 && e->a < 256 ? (unsigned)e->a : dik;
+     if (!dik || dik == 0xDB || dik == 0xDC) return;            /* Meta: the browser's */
+     int repeat = (e->flags & IKF_REPEAT) != 0;
+     if (repeat && !g_down[dik].down) return;    /* pressed with Meta, or released by a focus loss */
+@@ -210,7 +213,7 @@
+             if (is_alt(dik)) g_alt_other = 0;
+             else if (g_down[DIK_LMENU].down || g_down[DIK_RMENU].down) g_alt_other = 1;
+         }
+-        press(dik, e->vk, is_alt(dik) || alt, repeat);
++        press(dik, race, e->vk, is_alt(dik) || alt, repeat);
+         return;
+     }
+     int dead = (e->flags & IKF_DEAD) ? (e->nch ? e->ch[0] : '?') : 0;
+@@ -223,7 +226,7 @@
+     int sys = opt && !text;
+     if (sys) nch = 0;
+     if (g_down[DIK_LMENU].down || g_down[DIK_RMENU].down) g_alt_other = 1;
+-    press(dik, e->vk, sys, repeat);
++    press(dik, race, e->vk, sys, repeat);
+     if (!repeat) g_down[dik].alttext = (uint8_t)(opt && text);
+     if (dead) post(sys ? WM_SYSDEADCHAR : WM_DEADCHAR, (uint32_t)dead, key_lparam(dik, sys, repeat, 0));
+     for (int i = 0; i < nch; i++) post(WM_CHAR, e->ch[i], key_lparam(dik, 0, repeat, 0));
+@@ -297,12 +300,51 @@
+  * area, narrowed to the HUD's area as metal.m's mouse_from_point does; the
   * relative motion DirectInput reports is the same move in game pixels */
  static double g_last_nx = -1, g_last_ny = -1, g_frac_dx, g_frac_dy;
 +static unsigned g_mouse_map_w, g_mouse_map_h;
@@ -52,3 +115,4 @@
 +    double ny = ((double)e->b / 65536.0 - oy) / ay;
      if (g_last_nx >= -0.5){
          g_frac_dx += (nx - g_last_nx) * lw; g_frac_dy += (ny - g_last_ny) * lh;
+         int dx = (int)g_frac_dx, dy = (int)g_frac_dy;

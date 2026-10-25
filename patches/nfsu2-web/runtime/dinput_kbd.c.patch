@@ -1,0 +1,136 @@
+--- a/runtime/dinput_kbd.c
++++ b/runtime/dinput_kbd.c
+@@ -96,6 +96,7 @@
+ typedef struct {
+     uint32_t self;
+     int      fmt;
++    int      race_keys;          /* NFSU1 race map only; frontend/raw keep physical keys */
+     uint32_t datasize;
+     int16_t  ofs_of[256];        /* FMT_RAW: data offset of each key, -1 = not in the format */
+     int16_t  act_of[256];        /* FMT_ACTIONS: action index of each key, -1 = unmapped */
+@@ -109,6 +110,9 @@
+ static KDev g_kd[8];
+ static int  g_nkd;
+ static uint64_t g_maps_saved, g_maps_loaded;
++/* Bounded NFSU1 evidence: the active map and the failing driving keys. */
++static unsigned g_nfsu1_input_events;
++static unsigned g_nfsu1_input_maps;
+ 
+ static KDev *kdev(uint32_t self){
+     for (int i = 0; i < g_nkd; i++) if (g_kd[i].self == self) return &g_kd[i];
+@@ -120,6 +124,12 @@
+     return d;
+ }
+ void dikbd_created(uint32_t self){ kdev(self); }
++static uint32_t key_head(const KDev *d){
++    return d->race_keys ? kbd_race_ev_head() : kbd_ev_head();
++}
++static int key_event(const KDev *d, uint32_t seq, KbdEv *e){
++    return d->race_keys ? kbd_race_ev_get(seq, e) : kbd_ev_get(seq, e);
++}
+ 
+ static int lg(void){ return kbd_log() || getenv("DIMAP"); }
+ 
+@@ -170,7 +180,7 @@
+         if (dik == 0 || dik > 255 || ofs >= dsz) continue;
+         d->ofs_of[dik] = (int16_t)ofs;
+     }
+-    d->fmt = FMT_RAW; d->datasize = dsz;
++    d->fmt = FMT_RAW; d->race_keys = 0; d->datasize = dsz;
+     MR32(d->self + 4) = df;
+     d->cursor = kbd_ev_head();
+     if (lg()) fprintf(stderr, "[dikbd] SetDataFormat(0x%08x): %u objects, %u bytes\n", df, nobj, dsz);
+@@ -287,6 +297,12 @@
+ static uint32_t set_map(KDev *d, uint32_t af, uint32_t flags){
+     AF f;
+     if (!read_af(af, &f)) return DIERR_INVALIDPARAM;
++    int diagnose = g_nfsu1_input_maps < 16u;
++    if (diagnose){
++        g_nfsu1_input_maps++;
++        fprintf(stderr, "[nfsu1 input] active map=%s device=%08x actions=%u\n",
++                f.guid, d->self, f.nact);
++    }
+     for (int k = 0; k < 256; k++){ d->act_of[k] = -1; d->app_of[k] = 0; }
+     int n = 0;
+     for (uint32_t k = 0; k < f.nact; k++){
+@@ -302,14 +318,20 @@
+         unsigned dik = (obj >> 8) & 0xFFFFu;
+         if (!(obj & DIDFT_BUTTON) || dik == 0 || dik > 255 || d->act_of[dik] >= 0) continue;
+         d->act_of[dik] = (int16_t)k; d->app_of[dik] = MR32(a);
++        if (diagnose && MR32(a) >= 5u && MR32(a) <= 8u)
++            fprintf(stderr, "[nfsu1 input] map=%s device=%08x action=%u key=%02x (%s)\n",
++                    f.guid, d->self, MR32(a), dik, key_label(dik));
+         n++;
+         if (getenv("DIMAP"))
+             fprintf(stderr, "  [map] dik=0x%02x -> action 0x%x (ofs %u)\n", dik, MR32(a), k * 4u);
+     }
+     d->fmt = FMT_ACTIONS; d->nact = f.nact;
++    /* Pinned PC NFSU1: sub_00407ca0 builds race DIACTIONFORMAT at 0x719798.
++     * The following formats are frontend/menu input, including online chat. */
++    d->race_keys = af == 0x00719798u;
+     d->datasize = MR32(af + 8) ? MR32(af + 8) : 4u * f.nact;
+     if (MR32(af + 40)) d->bufsize = MR32(af + 40);
+-    d->cursor = kbd_ev_head();
++    d->cursor = key_head(d);
+     if (flags & DIDSAM_FORCESAVE) save_user_map(&f);
+     if (lg()) fprintf(stderr, "[dikbd] SetActionMap %s: %u actions, %d keys mapped%s\n",
+                       f.guid, f.nact, n, (flags & DIDSAM_FORCESAVE) ? ", saved" : "");
+@@ -348,9 +370,9 @@
+         if (!d->acquired) return DIERR_NOTACQUIRED;
+         if (!pn || !mem_is_committed(pn + 3) || (rg && (cb < 16u || cb > 64u))) return DIERR_INVALIDPARAM;
+         if (d->fmt == FMT_NONE){ MR32(pn) = 0; return DIERR_INVALIDPARAM; }
+-        uint32_t want = MR32(pn), n = 0, s = d->cursor, head = kbd_ev_head(), r = DI_OK;
++        uint32_t want = MR32(pn), n = 0, s = d->cursor, head = key_head(d), r = DI_OK;
+         while (s != head && n < want){
+-            KbdEv e; int g = kbd_ev_get(s, &e);
++            KbdEv e; int g = key_event(d, s, &e);
+             if (g < 0){ r = DI_BUFFEROVERFLOW; s++; continue; }
+             if (g == 0) break;
+             s++;
+@@ -359,9 +381,26 @@
+                 if (d->ofs_of[e.dik] < 0) continue;
+                 ofs = (uint32_t)d->ofs_of[e.dik];
+             } else {
+-                if (d->act_of[e.dik] < 0) continue;
++                if (d->act_of[e.dik] < 0){
++                    if (!(fl & DIGDD_PEEK) &&
++                        (e.dik == 0x36u || e.dik == 0xd2u || e.dik == 0xd3u) &&
++                        g_nfsu1_input_events < 24u){
++                        g_nfsu1_input_events++;
++                        fprintf(stderr, "[nfsu1 input] device=%08x key=%02x %s UNMAPPED in active map\n",
++                                d->self, e.dik, e.down ? "down" : "up");
++                    }
++                    continue;
++                }
+                 ofs = 4u * (uint32_t)d->act_of[e.dik]; app = d->app_of[e.dik];
+             }
++            if (!(fl & DIGDD_PEEK) &&
++                ((app >= 5u && app <= 8u) || e.dik == 0x36u ||
++                 e.dik == 0xd2u || e.dik == 0xd3u) && g_nfsu1_input_events < 24u){
++                g_nfsu1_input_events++;
++                fprintf(stderr, "[nfsu1 input] device=%08x key=%02x %s delivered action=%u offset=%u format=%s\n",
++                        d->self, e.dik, e.down ? "down" : "up", app, ofs,
++                        d->fmt == FMT_RAW ? "raw" : "actions");
++            }
+             if (rg){
+                 uint32_t p = rg + n * cb;
+                 mem_commit(p, cb); memset(g_mem + p, 0, cb);
+@@ -383,7 +422,8 @@
+         uint32_t cb = a[1], p = a[2];
+         if (!d->acquired) return DIERR_NOTACQUIRED;
+         if (!p || !cb || cb > 4096u) return DIERR_INVALIDPARAM;
+-        uint8_t st[256]; kbd_state(st, 256);
++        uint8_t st[256];
++        if (d->race_keys) kbd_race_state(st, 256); else kbd_state(st, 256);
+         mem_commit(p, cb); memset(g_mem + p, 0, cb);
+         for (int k = 1; k < 256; k++){
+             if (!st[k]) continue;
+@@ -396,7 +436,7 @@
+     }
+     if (!strcmp(nm, "Acquire")){
+         if (d->acquired) return DI_NOEFFECT;
+-        d->acquired = 1; d->cursor = kbd_ev_head();      /* nothing is buffered while unacquired */
++        d->acquired = 1; d->cursor = key_head(d);      /* nothing is buffered while unacquired */
+         return DI_OK;
+     }
+     if (!strcmp(nm, "Unacquire")){

@@ -35,6 +35,9 @@ listed in the source manifest; it does not run ASI, Binary, or TexWizard tools.
 The source manifest identifies reused upstream files and blobs. Reversible
 overlays adapt the pinned browser/runtime sources for the `CPU *` ABI, COM,
 graphics, input, saves, date/time, audio, startup movies, and shader handling.
+The input overlay extends the pinned keyboard event rings with a separate
+driving stream; original physical keys and text remain available to menus and
+chat. The upstream MIT notice remains in `patches/nfsu2-web.LICENSE`.
 The Rust Online relay is handwritten and implements the pinned browser
 runtime's kind-32 wire format. Local protocol adapters use PC 1.4 analysis;
 game function bodies are not included.

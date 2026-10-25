@@ -30,7 +30,7 @@ if (!source.includes('import { translateKeyboardEvent }')) {
 const require = createRequire(path.join(upstream, 'web/build.mjs'));
 const esbuild = require('esbuild');
 const result = await esbuild.build({
-  stdin: { contents: `${source}\nexport { toggleKeyboardAliases } from '../app/keyboard';\nexport { INPUT_MAGIC, INPUT_VERSION, IM_MAGIC, IM_VERSION, IM_EV_W, IM_EV_R, IM_OFF_EV, IEV_KEY_DOWN, IEV_KEY_UP, IEV_RELEASE_ALL, IEV_FOCUS };`, loader: 'ts', resolveDir: path.dirname(inputPath) },
+  stdin: { contents: `${source}\nexport { toggleKeyboardAliases, translateKeyboardEvent } from '../app/keyboard';\nexport { INPUT_MAGIC, INPUT_VERSION, IM_MAGIC, IM_VERSION, IM_EV_W, IM_EV_R, IM_OFF_EV, IEV_KEY_DOWN, IEV_KEY_UP, IEV_RELEASE_ALL, IEV_FOCUS };`, loader: 'ts', resolveDir: path.dirname(inputPath) },
   bundle: true, write: false, platform: 'node', format: 'cjs', target: 'es2022',
   plugins: [{ name: 'tracked-keyboard', setup(build) {
     build.onResolve({ filter: /\/app\/keyboard$/ }, () => ({ path: path.join(root, 'browser/keyboard.ts') }));
@@ -56,7 +56,7 @@ class Element extends Target {
 }
 const window = new Target(), document = new Target();
 Object.assign(document, { hidden: false, fullscreenElement: null, hasFocus: () => true, querySelector: () => null });
-const storage = new Map([['nfsu1-keyboard-v1', JSON.stringify({ ArrowUp: 'KeyW', ArrowDown: 'KeyS', ArrowLeft: 'KeyA', ArrowRight: 'KeyD' })]]);
+const storage = new Map([['nfsu1-keyboard-v1', JSON.stringify({ ArrowUp: 'KeyW', ArrowDown: 'KeyS', ArrowLeft: 'KeyA', ArrowRight: 'KeyD', Space: 'KeyH', AltLeft: 'KeyN', ShiftLeft: 'KeyE', ControlLeft: 'KeyX' })]]);
 const context = vm.createContext({
   module: { exports: {} }, console, document, window, HTMLElement: Element, Event,
   navigator: { platform: 'Linux' }, performance,
@@ -67,6 +67,11 @@ const context = vm.createContext({
 });
 vm.runInContext(result.outputFiles[0].text, context);
 const p = context.module.exports;
+const defaults = vm.createContext({ module: { exports: {} }, localStorage: { getItem: () => '{}' } });
+vm.runInContext(result.outputFiles[0].text, defaults);
+for (const [code, destination] of [['ShiftRight', undefined], ['Space', undefined], ['Insert', undefined], ['Delete', undefined]]) {
+  assert.equal(defaults.module.exports.translateKeyboardEvent({ code }), destination);
+}
 const buffer = new SharedArrayBuffer(32768), ptr = 64;
 const header = new Int32Array(buffer, ptr, 64), bytes = new Uint8Array(buffer);
 header[p.IM_MAGIC] = p.INPUT_MAGIC;
@@ -81,7 +86,9 @@ function events() {
   const rows = [];
   for (let i = header[p.IM_EV_R]; i < header[p.IM_EV_W]; i++) {
     const at = ptr + p.IM_OFF_EV + (i & 1023) * 16;
-    rows.push({ type: bytes[at], dik: bytes[at + 1], vk: bytes[at + 2], chars: [...bytes.slice(at + 5, at + 5 + bytes[at + 4])] });
+    const raceDik = new DataView(buffer).getInt32(at + 8, true);
+    rows.push({ type: bytes[at], dik: bytes[at + 1], vk: bytes[at + 2], chars: [...bytes.slice(at + 5, at + 5 + bytes[at + 4])],
+      ...(raceDik ? { raceDik } : {}) });
   }
   header[p.IM_EV_R] = header[p.IM_EV_W];
   return rows;
@@ -91,17 +98,28 @@ function key(type, code, extra = {}) {
     target: canvas, keyCode: 0, repeat: false, isComposing: false, metaKey: false, ctrlKey: false, altKey: false,
     shiftKey: false, isTrusted: true, getModifierState: () => false, preventDefault() {}, ...extra });
 }
+// Existing saved row IDs must route to NFSU1 keys, rather than NFSU2 guesses.
+for (const [code, physicalDik, raceDik] of [['KeyH', 0x23, 0x36], ['KeyN', 0x31, 0x39], ['KeyE', 0x12, 0xd2], ['KeyX', 0x2d, 0xd3]]) {
+  key('keydown', code);
+  assert.deepEqual(events().map(e => [e.type, e.dik, e.raceDik, e.chars]),
+    [[p.IEV_KEY_DOWN, physicalDik, raceDik, [code.charCodeAt(3) + 32]]]);
+  key('keyup', code);
+  assert.deepEqual(events().map(e => [e.type, e.dik, e.raceDik]), [[p.IEV_KEY_UP, physicalDik, raceDik]]);
+}
 key('keydown', 'KeyW');
-assert.deepEqual(events(), [{ type: p.IEV_KEY_DOWN, dik: 0xc8, vk: 0x26, chars: [] }]);
-key('keydown', 'ArrowUp'); assert.equal(events().length, 0);
-key('keyup', 'KeyW'); assert.equal(events().length, 0);
+assert.deepEqual(events(), [{ type: p.IEV_KEY_DOWN, dik: 0x11, vk: 0x57, chars: [0x77], raceDik: 0xc8 }]);
+key('keydown', 'ArrowUp'); assert.equal(events()[0].dik, 0xc8);
+key('keydown', 'KeyW', { repeat: true });
+assert.deepEqual(events()[0].chars, [0x77], 'Overlapping driving keys must preserve independent text repeats');
+key('keyup', 'KeyW'); assert.equal(events()[0].dik, 0x11);
 key('keyup', 'ArrowUp'); assert.deepEqual(events().map(e => [e.type, e.dik]), [[p.IEV_KEY_UP, 0xc8]]);
 key('keydown', 'KeyW', { ctrlKey: true });
-assert.equal(events()[0].dik, 0xc8, 'Ctrl held during driving must preserve the WASD alias');
-key('keyup', 'KeyW', { ctrlKey: false }); assert.equal(events()[0].dik, 0xc8);
+assert.equal(events()[0].raceDik, 0xc8, 'Ctrl held during driving must preserve the WASD binding');
+key('keyup', 'KeyW', { ctrlKey: false }); assert.equal(events()[0].dik, 0x11);
 assert.equal(p.toggleKeyboardAliases(), false);
 assert.equal(events()[0].type, p.IEV_RELEASE_ALL);
-key('keydown', 'KeyW'); assert.deepEqual(events()[0].chars, [0x77], 'Temporarily disabling aliases restores typing');
+key('keydown', 'KeyW');
+assert.deepEqual(events(), [{ type: p.IEV_KEY_DOWN, dik: 0x11, vk: 0x57, chars: [0x77] }], 'F10 disables only the driving binding');
 key('keyup', 'KeyW'); events();
 assert.equal(p.toggleKeyboardAliases(), true); events();
 key('keydown', 'KeyQ'); assert.deepEqual(events()[0].chars, [0x71], 'Unmapped text preserves WM_CHAR');
@@ -123,4 +141,4 @@ input.detach(); events();
 assert.equal(window.listeners.get('nfsu1-keyboard-change').size, 0);
 assert.equal(document.listeners.get('focusin').size, 0);
 key('keydown', 'KeyW'); assert.equal(events().length, 0);
-console.log('Keyboard mailbox smoke passed: aliases, overlapping holds, Ctrl steering, text-entry toggle, map changes, blur, UI focus and detach. No browser/game validation.');
+console.log('Keyboard mailbox smoke passed: physical text/VK/DIK, separate driving destinations, overlapping keys, repeats, driving toggle, map changes, blur, UI focus and detach. No browser/game validation.');

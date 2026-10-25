@@ -4,7 +4,7 @@
 
 Use the launcher's Options and Controls screens. Most settings apply on the
 next game launch; keyboard aliases apply immediately. In-game Options still
-control difficulty, transmission, camera and action bindings.
+control difficulty, transmission and camera.
 
 | Setting | Behavior |
 | --- | --- |
@@ -26,9 +26,19 @@ not enable the upstream NFSU2 enhancement system. Their exact mapping is in
 Menus keep their original proportions and remain centered. Race HUD and results
 elements anchor to the left or right screen edge in wide layouts.
 
-**F9** opens the game overlay. **F10** temporarily disables keyboard aliases for
-typing. The WASD preset sends arrow keys; actions follow the game's Controls
-menu. The website keyboard controls also let you remap nitrous (Alt by default).
+**F9** opens the game overlay. **F10** temporarily disables custom driving
+bindings. Remapping applies only to NFSU1's race action map. Menus, raw keyboard
+capture and text entry receive the original physical keys and characters, so
+WASD can drive without replacing the letters typed in chat.
+Website controls target NFSU1's default driving bindings: handbrake uses Right
+Shift, nitrous uses Space, shift up uses Insert, and shift down uses Delete.
+Reset keyboard restores these same
+NFSU1 keys in the website. Existing custom website remaps are preserved.
+Use the game's default
+keyboard bindings when using website remaps; custom in-game bindings can change
+the resulting actions.
+The game's **Options → Controller → Controller Setup** entry opens keyboard
+configuration too; the original English menu calls the category “Controller”.
 Aliases are stored separately from save backups in browser local storage.
 
 Saves use `save-nfsu1`, game-data caching uses `cache-nfsu1`. Keep the same
