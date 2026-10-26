@@ -75,6 +75,35 @@ def stack_slot_fixture(case="positive"):
     return bytes(data), catalog, jt_site, targets
 
 
+def partitioned_switches():
+    # Two indirect jumps whose saved arms are disjoint. Neither table equals
+    # every jump target. The bounded jump is proved on its own; the byte-index
+    # jump is not, because its selector is reloaded through another register.
+    base = 0x1000
+    data = bytearray(b"\xcc" * 0x500)
+    data[0:5] = bytes.fromhex("83f802777b")  # cmp eax,2; ja 0x1080
+    data[5:12] = bytes.fromhex("ff2485") + struct.pack("<I", 0x1400)
+    data[0x20:0x24] = bytes.fromhex("8b542418")  # mov edx,[esp+0x18]
+    data[0x24:0x2b] = bytes.fromhex("0fb682") + struct.pack("<I", 0x1480)
+    data[0x2b:0x32] = bytes.fromhex("ff2485") + struct.pack("<I", 0x1440)
+    data[0x80] = 0xc3
+    arms_a = [0x1100, 0x1101, 0x1102]
+    arms_b = [0x1110, 0x1111]
+    for arm in arms_a + arms_b:
+        data[arm - base] = 0xc3
+    data[0x400:0x400 + 12] = struct.pack("<3I", *arms_a)
+    data[0x440:0x440 + 8] = struct.pack("<2I", *arms_b)
+    blocks = [[0x1000, 0x1005, [0x1005, 0x1080], 0],
+              [0x1005, 0x100c, [], 0],
+              [0x1020, 0x1032, [], 0],
+              [0x1080, 0x1081, [], 1]]
+    blocks += [[arm, arm + 1, [], 1] for arm in arms_a + arms_b]
+    catalog = {"image_base": base, "code_start": base, "code_end": base + len(data),
+               "functions": [{"address": base, "blocks": blocks, "calls_to": [],
+                              "jump_targets": arms_a + arms_b}]}
+    return bytes(data), catalog, 0x1005, arms_a, 0x102b, arms_b
+
+
 def saved_table_fixture():
     # An alias enters after a guard, reloads an ESP spill, and has no saved
     # indirect successors. Only jump_targets records the known switch arms.
@@ -156,6 +185,25 @@ def main():
             assert "case 4u: if (MR32(0x1050u) == 0x1022u) goto L_00001022;" in code
             assert "DISPATCH_TAIL(c, MR32(c->ecx*4+0x1040u))" in code
         print(f"PASS: alias with {case}")
+
+    data, catalog, jump_a, arms_a, jump_b, arms_b = partitioned_switches()
+    lifter = module.RawLifter(data, base=0x1000)
+    attach_catalog(lifter, catalog)
+    lifter.discover(0x1000)
+    assert lifter.jtab[jump_a][2] == arms_a, lifter.jtab
+    assert lifter.jtab[jump_b][2] == arms_b, lifter.jtab
+    code, _ = lifter.lift(0x1000)
+    assert "case 2u: if (MR32(0x1408u) == 0x1102u) goto L_00001102;" in code
+    assert "case 1u: if (MR32(0x1444u) == 0x1111u) goto L_00001111;" in code
+    print("PASS: partitioned switches")
+
+    truncated = bytearray(data)
+    truncated[0x444:0x448] = struct.pack("<I", 0x1300)
+    lifter = module.RawLifter(bytes(truncated), base=0x1000)
+    attach_catalog(lifter, catalog)
+    lifter.discover(0x1000)
+    assert jump_a in lifter.jtab and jump_b not in lifter.jtab, lifter.jtab
+    print("PASS: truncated second table stays indirect")
 
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ static struct {
 void sub_004de9f0(CPU *);
 void sub_004deb30(CPU *);
 void sub_004dec50(CPU *);
+void sub_004c40a0(CPU *);
 void dispatch_patch(uint32_t, guest_fn_t);
 
 static uint32_t pad_buttons(void) {
@@ -116,6 +117,26 @@ static void psa_message(CPU *c) {
   movie_message(c, sub_004dec50, "PSA", 1);
 }
 
+/* ChooseCareerCarScreen sits between MU_UG_NewCareerFMV and
+ * MU_UG_NewCareerExtroFMV. Confirm sets byte +0x88, then the screen waits
+ * 0x78 ticks and until tick +0x9c passes +0x98 (initialized to 0x3c) before
+ * it loads the second movie. Skipping the first movie does not finish those
+ * counters. Once the confirm is accepted, satisfy both counters. */
+#define MSG_CAR_NOTIFY 0xc407210u
+
+static void choose_car_between_movies(CPU *c) {
+  uint32_t message = MR32(c->esp + 4u);
+  uint32_t screen = c->ecx;
+  sub_004c40a0(c);
+  if (message != MSG_CAR_NOTIFY || screen < 0x10000u || screen > 0xfffffff0u ||
+      MR8(screen + 0x88u) == 0)
+    return;
+  MR32(screen + 0x90u) = MR32(screen + 0x8cu);
+  MR8(screen + 0x94u) = 1;
+  MR32(screen + 0x9cu) = MR32(screen + 0x98u) + 1u;
+  fprintf(stderr, "NFSU1 career: car choice continues to the next movie\n");
+}
+
 void nfsu1_intro_install(void) {
   const char *setting = getenv("NFSU1_INTRO");
   mode = INTRO_SKIPPABLE;
@@ -134,6 +155,7 @@ void nfsu1_intro_install(void) {
   dispatch_patch(0x004de9f0u, intro_message);
   dispatch_patch(0x004deb30u, bumper_message);
   dispatch_patch(0x004dec50u, psa_message);
+  dispatch_patch(0x004c40a0u, choose_car_between_movies);
   fprintf(stderr, "[nfsu1 intro] startup movies: %s\n",
           mode == INTRO_OFF ? "off" : mode == INTRO_ORIGINAL ? "original" : "skippable");
 }

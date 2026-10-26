@@ -274,8 +274,8 @@ def attach_catalog(lifter, catalog, route_catalog_tails=False,
                         else branch.operands[0].imm & 0xffffffff)
                 return slot, limit.imm & 0xffffffff, held
 
-            def saved_table(insns):
-                """Recover a table whose arms are explicitly saved in this CFG.
+            def scanned_saved_table(insns):
+                """Maximal saved-arm prefix of one indirect jump.
 
                 A selector may be spilled or enter through an alias without
                 its guard. No bound proof is needed for the upstream emitter's
@@ -306,9 +306,15 @@ def attach_catalog(lifter, catalog, route_catalog_tails=False,
                     if target not in saved:
                         break
                     targets.append(target)
-                if set(targets) != saved:
+                if not targets:
                     return None
                 return mem.index, table_address, targets
+
+            def saved_table(insns):
+                scanned = scanned_saved_table(insns)
+                if scanned is None or set(scanned[2]) != set(function["jump_targets"]):
+                    return None
+                return scanned
 
             bounds = {}
             stack_bounds = {}
@@ -374,6 +380,36 @@ def attach_catalog(lifter, catalog, route_catalog_tails=False,
                             address=target, size=0, mnemonic="ret",
                             operands=[], catalog_tail=True)]
                 self.jtab[instructions[-1].address] = table
+            # One function can contain several switches. Requiring each table
+            # to equal every saved arm dropped all of them, and the emitter
+            # then tail-dispatched to mid-function case labels. Accept the
+            # unrecovered sites only when their arms are disjoint and together
+            # they are exactly the arms a proved bound did not already claim.
+            proved = set()
+            for table in self.jtab.values():
+                proved.update(table[2])
+            remaining = set(function["jump_targets"]) - proved
+            if remaining and remaining <= blocks.keys():
+                candidates = []
+                covered = set()
+                disjoint = True
+                for instructions in blocks.values():
+                    if not instructions or instructions[-1].address in self.jtab:
+                        continue
+                    scanned = scanned_saved_table(instructions)
+                    if scanned is None:
+                        continue
+                    targets = set(scanned[2])
+                    if not targets or not targets <= remaining:
+                        continue
+                    if targets & covered:
+                        disjoint = False
+                        break
+                    covered |= targets
+                    candidates.append((instructions[-1].address, scanned))
+                if disjoint and candidates and covered == remaining:
+                    for address, table in candidates:
+                        self.jtab[address] = table
         if route_catalog_tails:
             tails = set()
             for instructions in blocks.values():

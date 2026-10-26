@@ -18,14 +18,14 @@ HARNESS = r'''
 #include "gamepad.h"
 
 uint8_t *g_mem;
-static guest_fn_t hooks[3];
+static guest_fn_t hooks[4];
 static uint32_t seen, head, buttons;
-static int called;
+static int called, car_accepted;
 static KbdEv events[256];
 
 void dispatch_patch(uint32_t address, guest_fn_t fn) {
   int i = address == 0x4de9f0u ? 0 : address == 0x4deb30u ? 1 :
-          address == 0x4dec50u ? 2 : -1;
+          address == 0x4dec50u ? 2 : address == 0x4c40a0u ? 3 : -1;
   assert(i >= 0 && !hooks[i]);
   hooks[i] = fn;
 }
@@ -56,6 +56,11 @@ static void original(CPU *c, int which) {
 void sub_004de9f0(CPU *c) { original(c, 0); }
 void sub_004deb30(CPU *c) { original(c, 1); }
 void sub_004dec50(CPU *c) { original(c, 2); }
+void sub_004c40a0(CPU *c) {
+  if (car_accepted && c->ecx >= 0x10000u) MR8(c->ecx + 0x88u) = 1;
+  POP32(c->eip);
+  c->esp += 16u;
+}
 void nfsu1_intro_install(void);
 
 static void press(unsigned dik) {
@@ -78,10 +83,10 @@ static uint32_t message(int which, uint32_t self, uint32_t value) {
 int main(int argc, char **argv) {
   assert(argc == 2);
   const uint32_t tick = 0xc98356bau, end = 0xc3960eb9u, accept = 0x406415e3u;
-  g_mem = calloc(1, 0x10000u);
+  g_mem = calloc(1, 0x800000u);
   assert(g_mem);
   nfsu1_intro_install();
-  assert(hooks[0] && hooks[1] && hooks[2]);
+  assert(hooks[0] && hooks[1] && hooks[2] && hooks[3]);
   for (int i = 0; i < 3; i++) {
     uint32_t self = 0x2000u + (uint32_t)i * 0x100u;
     MR32(self) = 0x6000u + (uint32_t)i;
@@ -115,6 +120,24 @@ int main(int argc, char **argv) {
              (!strcmp(argv[1], "original") || i != 1 ? accept : end));
     }
     assert(message(i, self, end) == end);
+  }
+  MR32(0x2008cu) = 0x78u;
+  MR32(0x20098u) = 0x3cu;
+  {
+    CPU cpu = {0};
+    cpu.ecx = 0x20000u;
+    cpu.esp = 0x1000u;
+    MR32(0x1000u) = 0x11223344u;
+    MR32(0x1004u) = 0xb5971bf1u;
+    hooks[3](&cpu);
+    assert(MR8(0x20088u) == 0 && MR32(0x20090u) == 0 && MR8(0x20094u) == 0);
+    car_accepted = 1;
+    cpu.esp = 0x1000u;
+    MR32(0x1000u) = 0x11223344u;
+    MR32(0x1004u) = 0xc407210u;
+    hooks[3](&cpu);
+    assert(MR8(0x20088u) == 1 && MR32(0x20090u) == 0x78u && MR8(0x20094u) == 1);
+    assert(MR32(0x2009cu) == 0x3du);
   }
   free(g_mem);
   return 0;
