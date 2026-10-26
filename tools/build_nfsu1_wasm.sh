@@ -228,7 +228,7 @@ PAGES=$(( INITIAL_MB * 16 ))
 # time independently of the renderer. The Wasm linker wraps both
 # direct calls and function-table references, including calls in the same
 # shard. Refuse a build that optimized away a required wrapped call.
-for entry in sub_0041c680 sub_00410e50 sub_0066e8b0 sub_004f6360; do
+for entry in sub_0041c680 sub_00410e50 sub_0066e8b0 sub_004f6360 sub_004f2cb0; do
   wrapper_refs=0
   for src in gen/all/shard_*.c; do
     if grep -Fq "$entry(c)" "$src"; then
@@ -248,7 +248,7 @@ $CC $TARGET $OPT $FEAT $EXTRA -o "$OUT/nfsu1.wasm" "${OBJS[@]}" \
   -Wl,--wrap=sub_00547db0,--wrap=sub_00547dc0,--wrap=sub_00548610 \
   -Wl,--wrap=sub_00546d70,--wrap=sub_00546e00,--wrap=sub_00547ae0,--wrap=sub_0054e2f0 \
   -Wl,--wrap=sub_0043a220,--wrap=sub_0043a830,--wrap=sub_004390d0 \
-  -Wl,--wrap=sub_005647d0,--wrap=sub_004f6360 \
+  -Wl,--wrap=sub_005647d0,--wrap=sub_004f6360,--wrap=sub_004f2cb0 \
   -Wl,--import-memory,--export-memory,--shared-memory,--max-memory=4294967296 \
   -Wl,--initial-memory=$(( INITIAL_MB * 1048576 )),--global-base=$GUEST_END \
   -Wl,-z,stack-size=$(( 8 * 1048576 )) -Wl,--no-stack-first \

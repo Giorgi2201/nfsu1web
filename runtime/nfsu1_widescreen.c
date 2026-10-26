@@ -77,61 +77,84 @@ float nfsu1_widescreen_hud_scale_x(void) {
     return 1.0f / 320.0f;
 }
 
-/* The original anchor table identifies whole UI elements, including their
- * text/backing variants. Use its side at submission time; never write the
- * aspect into a guest transform or cached quad. */
-typedef struct { uint32_t x, y; float off_x, off_y; } hud_entry;
+/* Resolve authored identity through the original FE group hierarchy. Each
+ * traversal retains its source element while text builds nested glyph caches.
+ * Guest animation matrices and cached translations never select an edge. */
+typedef struct { uint32_t hash, id; uint8_t canvas; } hud_entry;
 static const hud_entry k_hud[] = {
 #include "widescreen_hud.inc"
 };
+static uint32_t s_fe_instance, s_fe_element;
+
+static int readable(uint32_t address, uint32_t last) {
+    return address && address <= UINT32_MAX - last &&
+        mem_is_committed(address) && mem_is_committed(address + last);
+}
+
+static float element_canvas(uint32_t instance, uint32_t element) {
+    if (!readable(instance, 0x341Fu)) return 1.f;
+    uint32_t seen[65];
+    unsigned count = 0;
+    float canvas = 1.f;
+    for (;;) {
+        if (!readable(element, 0x23u) || count == 65u) return 1.f;
+        for (unsigned i = 0; i < count; i++)
+            if (seen[i] == element) return 1.f;
+        seen[count++] = element;
+        uint32_t hash = MR32(element + 0x0Cu), id = MR32(element + 0x10u);
+        /* The closest explicitly named subcomposite wins. The drag turbo
+         * is intentionally on the right inside the left gauge cluster. */
+        if (canvas == 1.f) {
+            for (unsigned i = 0; i < sizeof k_hud / sizeof k_hud[0]; i++) {
+                if (k_hud[i].hash != hash || k_hud[i].id != id) continue;
+                /* The noninteractive music banner can cross flow changes
+                 * while visible; retain one anchor for its whole animation. */
+                if ((hash == 0x82009C1Fu && id == 0x53F4u) ||
+                    MR32(0x0077A920u) == 6u)
+                    canvas = (float)k_hud[i].canvas;
+                break;
+            }
+        }
+        uint32_t group = MR16(element + 0x20u);
+        if (!group) return canvas;
+        if (group >= 64u) return 1.f;
+        /* 0x4F2E30 stores the group's originating element at slot +50.
+         * Its own parent index gives the next authored ancestor. */
+        uint32_t slot = instance + 0x20u + group * 0xD0u;
+        if (!readable(slot, 0x53u)) return 1.f;
+        element = MR32(slot + 0x50u);
+    }
+}
+
+/* 0x4F2CB0 dispatches both cached quads and text using edi = FE instance,
+ * eax = originating element. Keep context only while the original executes;
+ * the GPU draw record captures its canvas before deferred rendering. */
+extern void __real_sub_004f2cb0(CPU *);
+void __wrap_sub_004f2cb0(CPU *c) {
+    uint32_t previous_instance = s_fe_instance, previous_element = s_fe_element;
+    s_fe_instance = c->edi;
+    s_fe_element = c->eax;
+    __real_sub_004f2cb0(c);
+    s_fe_instance = previous_instance;
+    s_fe_element = previous_element;
+}
 
 float nfsu1_widescreen_ui_canvas(CPU *c) {
     if (!nfsu1_widescreen_active()) return 0.f;
-    if (MR32(0x0077A920u) == 3u || s_device_width * 3ull <= s_device_height * 4ull)
-        return 1.f;
-    /* The shader minimap submitter does not establish its own ebp frame. */
+    if (s_device_width * 3ull <= s_device_height * 4ull) return 1.f;
+    if (s_fe_instance && s_fe_element)
+        return element_canvas(s_fe_instance, s_fe_element);
+    /* Immediate minimap geometry has no FE source element. These are its
+     * verified submitters; menus, loading screens and the cursor stay centered. */
+    if (MR32(0x0077A920u) != 6u) return 1.f;
     if (c->eip == 0x0040C4A8u) {
-        if (mem_is_committed(c->esp + 0x83u) && MR32(c->esp + 0x80u) == 0x00589907u)
+        if (readable(c->esp, 0x83u) && MR32(c->esp + 0x80u) == 0x00589907u)
             return 2.f;
         return 1.f;
     }
-    if (!mem_is_committed(c->ebp + 7u)) return 1.f;
+    if (!readable(c->ebp, 7u)) return 1.f;
     uint32_t caller = MR32(c->ebp + 4u);
-    /* The minimap's immediate geometry has no FE cache container. */
     if (caller == 0x0058FAFBu || caller == 0x00590AB4u) return 2.f;
-    if (caller == 0x004F37CDu) {
-        extern void metal_get_cursor(int *, int *);
-        int x = 320; metal_get_cursor(&x, 0);
-        return x < 320 ? 2.f : x > 320 ? 3.f : 1.f;
-    }
-    if (caller != 0x00514BC7u || !mem_is_committed(c->ebx + 11u)) return 1.f;
-    /* 0x514B90 preserves ebx = cache container throughout its quad loop.
-     * +8 is the originating FE element; +2C is its original transform. */
-    uint32_t element = MR32(c->ebx + 8u);
-    if (!element || !mem_is_committed(element + 0x2Fu)) return 1.f;
-    uint32_t transform = MR32(element + 0x2Cu);
-    if (transform && mem_is_committed(transform + 0x23u)) {
-        uint32_t x = MR32(transform + 0x1Cu), y = MR32(transform + 0x20u);
-        for (unsigned i = 0; i < sizeof k_hud / sizeof k_hud[0]; i++) {
-            if (k_hud[i].x != x || k_hud[i].y != y) continue;
-            if (fabsf(k_hud[i].off_x) > 1000.f) return 1.f;
-            return k_hud[i].off_x < 0.f ? 2.f : 3.f;
-        }
-    }
-    /* Group children have LOCAL transforms, which cannot match the anchor
-     * table. The cached matrix at +20 is composed by 0x4F1810/0x4F2000 with
-     * the animation/group matrices and the original (320,240) origin.
-     * Text copies the same composed matrix in 0x4F49BB.
-     * Its translation (+50) locates the element in the original 640-wide
-     * canvas. Use that origin for the whole glyph/quad list, never individual
-     * glyph positions or animated vertices. Center-origin messages stay put. */
-    if (mem_is_committed(c->ebx + 0x53u)) {
-        float x = MRF32(c->ebx + 0x50u);
-        if (isfinite(x) && x >= -1024.f && x <= 2048.f) {
-            if (x < 319.f) return 2.f;
-            if (x > 321.f) return 3.f;
-        }
-    }
     return 1.f;
 }
 

@@ -62,7 +62,7 @@
      if (!repeat) g_down[dik].alttext = (uint8_t)(opt && text);
      if (dead) post(sys ? WM_SYSDEADCHAR : WM_DEADCHAR, (uint32_t)dead, key_lparam(dik, sys, repeat, 0));
      for (int i = 0; i < nch; i++) post(WM_CHAR, e->ch[i], key_lparam(dik, 0, repeat, 0));
-@@ -297,12 +300,51 @@
+@@ -297,12 +300,41 @@
   * area, narrowed to the HUD's area as metal.m's mouse_from_point does; the
   * relative motion DirectInput reports is the same move in game pixels */
  static double g_last_nx = -1, g_last_ny = -1, g_frac_dx, g_frac_dy;
@@ -89,12 +89,6 @@
 +              ax = (double)width / cw; ay = (double)height / ch;
 +              ox = (double)((cw - width) / 2u) / cw;
 +              oy = (double)((ch - height) / 2u) / ch;
-+              /* Race UI is pinned to the corresponding screen edge.
-+               * The extra space between the two halves has no UI targets. */
-+              if (MR32(0x0077A920u) != 3u && width < cw){
-+                  double px = (double)e->a / 65536.;
-+                  ox = px < .5 ? 0. : (double)(cw - width) / cw;
-+              }
 +          }
 +      }
 +    }
@@ -108,10 +102,6 @@
 +        g_mouse_map_ox = ox; g_mouse_map_oy = oy;
 +    }
 +    double nx = ((double)e->a / 65536.0 - ox) / ax;
-+    if (MR32(0x0077A920u) != 3u && ax < 1. && lw == 640){
-+        double px = (double)e->a / 65536.;
-+        if ((px < .5 && nx > .5) || (px >= .5 && nx < .5)) nx = .5;
-+    }
 +    double ny = ((double)e->b / 65536.0 - oy) / ay;
      if (g_last_nx >= -0.5){
          g_frac_dx += (nx - g_last_nx) * lw; g_frac_dy += (ny - g_last_ny) * lh;

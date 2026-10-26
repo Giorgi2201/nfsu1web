@@ -23,8 +23,11 @@ Graphics presets use NFSU1's own detail levels and capability limits; they do
 not enable the upstream NFSU2 enhancement system. Their exact mapping is in
 [`runtime/nfsu1_graphics.c`](../runtime/nfsu1_graphics.c).
 
-Menus keep their original proportions and remain centered. Race HUD and results
-elements anchor to the left or right screen edge in wide layouts.
+Menus, loading screens, pause screens and results keep their original proportions
+on one centered canvas. Recognized race HUD components and music banners anchor
+as complete groups to the screen edges, including their text and backings.
+Music banners retain their alignment through loading transitions. Pointer
+mapping follows the centered canvas used by interactive screens.
 
 **F9** opens the game overlay. **F10** temporarily disables custom driving
 bindings. Remapping applies only to NFSU1's race action map. Menus, raw keyboard

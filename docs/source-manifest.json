@@ -428,7 +428,14 @@
     "widescreen_layout_correction": {
       "date": "2026-10-23",
       "implementation": "Preserve generic frontend quad extents; scope HUD scale to four render operands and center to one comparison, leaving the shared float pool intact.",
-      "evidence": "Local PC 1.4 instruction inspection. Original mod comparison: https://github.com/ThirteenAG/WidescreenFixesPack/blob/master/source/NFSUnderground.WidescreenFix/Frontend.ixx"
+      "evidence": "Local PC 1.4 instruction inspection. Original mod comparison: https://github.com/ThirteenAG/WidescreenFixesPack/blob/master/source/NFSUnderground.WidescreenFix/Frontend.ixx",
+      "semantic_group_layout": {
+        "date": "2026-10-25",
+        "implementation": "Recognize noninteractive HUD and music components by their original FE object identities and inherit their canvas through group ancestry. Loading, menus, pause, results and unrecognized components use one centered canvas; pointer mapping uses that same centered canvas. Cached positions and animation values never select an edge.",
+        "evidence": "Read-only local PC 1.4 FE lookup and submission inspection: object name hash at +0x0C, object ID at +0x10, parent group index at +0x20, group slot stride 0xD0 and originating group object at slot +0x50. Stock private FNG metadata confirms loading frame/fill and Chyron music-banner ancestry. Decoded assets and emitted game code remain local.",
+        "reuse": "No additional third-party source copied. Existing PC analysis attribution and widescreen notices retained.",
+        "limitations": "Focused command-line checks validate host layout decisions; browser/game appearance remains user-validated."
+      }
     }
   },
   "character_skinning": {

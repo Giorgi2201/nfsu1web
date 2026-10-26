@@ -16,7 +16,8 @@ int nfsu1_widescreen_active(void);
 /* Emitted operand ABI: UI always retains its original 640x480 units. */
 float nfsu1_widescreen_hud_pos_x(void);
 float nfsu1_widescreen_hud_scale_x(void);
-/* Per-draw canvas: 0 full target, 1 centered, 2 left, 3 right. */
+/* Per-draw canvas: 0 full target, 1 centered, 2 left, 3 right.
+ * Named HUD composites inherit their authored group identity. */
 float nfsu1_widescreen_ui_canvas(CPU *c);
 int nfsu1_ws_hook(CPU *c, uint32_t ip);
 

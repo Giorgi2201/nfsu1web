@@ -1,238 +1,92 @@
-/* HUD element anchors and wide-screen offsets from ThirteenAG's
- * NFSUnderground.WidescreenFix.dat (WidescreenFixesPack, MIT License,
- * https://github.com/ThirteenAG/WidescreenFixesPack). Position bits as the
- * game stores them, offsets in 480-line HUD units. */
-    { 0xC3870000u, 0x432F0000u, -109.0f, 0.0f }, /* EA_Trax_Pos */
-    { 0x42AC0000u, 0x43700000u, -109.0f, 0.0f }, /* MiniMap_Pos */
-    { 0x42AC0000u, 0x43880000u, -109.0f, 0.0f }, /* Drift_MiniMap_Pos */
-    { 0xC3940000u, 0xC32A0000u, -109.0f, 0.0f }, /* Lap_Time_Text_Pos_1 */
-    { 0xC3940000u, 0xC3140000u, -109.0f, 0.0f }, /* Lap_Time_Text_Pos_2 */
-    { 0xC3130000u, 0xC32A0000u, -109.0f, 0.0f }, /* Lap_Time_Text_Pos_3 */
-    { 0xC3140000u, 0xC3140000u, -109.0f, 0.0f }, /* Lap_Time_Text_Pos_4 */
-    { 0xC35D0000u, 0xC31F0000u, -109.0f, 0.0f }, /* Lap_Time_Backing_Pos_1 */
-    { 0xC35D0000u, 0xC3090000u, -109.0f, 0.0f }, /* Lap_Time_Backing_Pos_2 */
-    { 0xC36D0000u, 0xC35C0000u, -109.0f, 0.0f }, /* Drift_Lap_Text_Pos_1 */
-    { 0xC3620000u, 0xC35A0000u, -109.0f, 0.0f }, /* Drift_Lap_Text_Pos_2 */
-    { 0xC3660000u, 0xC3450000u, -109.0f, 0.0f }, /* Lap_Text_Pos_1 */
-    { 0xC36C0000u, 0xC35C0000u, -109.0f, 0.0f }, /* Lap_Text_Pos_2 */
-    { 0xC3620000u, 0xC3590000u, -109.0f, 0.0f }, /* Lap_Text_Pos_3 */
-    { 0xC3600000u, 0xC3450000u, -109.0f, 0.0f }, /* Lap_Text_Pos_4 */
-    { 0xC3320000u, 0xC3400000u, -109.0f, 0.0f }, /* Lap_Backing_Pos */
-    { 0xC3460000u, 0xC2A00000u, -109.0f, 0.0f }, /* Drift_Multiplier_Pos */
-    { 0xC3940000u, 0xC3290000u, -109.0f, 0.0f }, /* Best_Drift_Text_Pos_1 */
-    { 0xC3170000u, 0xC3290000u, -109.0f, 0.0f }, /* Best_Drift_Text_Pos_2 */
-    { 0xC35D0000u, 0xC31F0000u, -109.0f, 0.0f }, /* Best_Drift_Backing_Pos */
-    { 0xC36B0000u, 0xC30F0000u, -109.0f, 0.0f }, /* Total_Drift_Pos */
-    { 0xC3968000u, 0xC2900000u, -109.0f, 0.0f }, /* Too_Slow_Text_Pos */
-    { 0x430E0000u, 0x43440000u, 119.0f, 0.0f }, /* Tachometer_Pos */
-    { 0x434D0000u, 0x43350000u, 119.0f, 0.0f }, /* Drift_Tachometer_Pos */
-    { 0xC2DA6AABu, 0xC1CE871Eu, -109.0f, 0.0f }, /* Drag_Tachometer_Pos_1 */
-    { 0xC3960000u, 0xC1980000u, -109.0f, 0.0f }, /* Drag_Tachometer_Pos_2 */
-    { 0x43AB9AABu, 0x43512639u, 238.0f, 0.0f }, /* Drag_Turbo_Pos_1 */
-    { 0x439A9AABu, 0x433FD0E4u, 238.0f, 0.0f }, /* Drag_Turbo_Pos_2 */
-    { 0x43BB9AABu, 0x4349D0E4u, 238.0f, 0.0f }, /* Drag_Turbo_Pos_3 */
-    { 0x42D40000u, 0xC2E60000u, 119.0f, 0.0f }, /* Drag_Shift_Light_Pos */
-    { 0x41B80000u, 0x43370000u, 119.0f, 0.0f }, /* Drift_Angle_Meter_Text_Pos1 */
-    { 0x422C0000u, 0x43300000u, 119.0f, 0.0f }, /* Drift_Angle_Meter_Text_Pos2 */
-    { 0xC45D4000u, 0x438E8000u, 119.0f, 0.0f }, /* Drift_Angle_Meter_Text_Pos3 */
-    { 0x42880000u, 0x43440000u, 119.0f, 0.0f }, /* Drift_Angle_Meter_Pos1 */
-    { 0x42B00000u, 0x435E0000u, 119.0f, 0.0f }, /* Drift_Angle_Meter_Pos2 */
-    { 0x423C0000u, 0x43460000u, 119.0f, 0.0f }, /* Drift_Angle_Meter_Pos3 */
-    { 0x42860000u, 0x43420000u, 119.0f, 0.0f }, /* Drift_Angle_Meter_Pos4 */
-    { 0x433B0000u, 0xC3470000u, 119.0f, 0.0f }, /* Drag_Position_Text_Pos */
-    { 0x43818000u, 0xC32C0000u, 119.0f, 0.0f }, /* Drag_Position_Backing_Pos */
-    { 0x3F800000u, 0xC1000000u, 119.0f, 0.0f }, /* Drift_Position_Text_Pos_1 */
-    { 0xC0800000u, 0x41300000u, 119.0f, 0.0f }, /* Drift_Position_Text_Pos_2 */
-    { 0xC0C00000u, 0xC0E00000u, 119.0f, 0.0f }, /* Drift_Position_Text_Pos_3 */
-    { 0x43550000u, 0xC35F0000u, 119.0f, 0.0f }, /* Position_Text_Pos */
-    { 0x43250000u, 0xC3400000u, 119.0f, 0.0f }, /* Position_Backing_Pos */
-    { 0x43888000u, 0xC30E0000u, 119.0f, 0.0f }, /* Drag_Time_Text_Pos */
-    { 0x435F0000u, 0xC2D80000u, 119.0f, 0.0f }, /* Drag_Speed_Text_Pos */
-    { 0x43818000u, 0xC2B20000u, 119.0f, 0.0f }, /* Drag_Speed_Backing_Pos */
-    { 0x43050000u, 0xC2DE0000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_1 */
-    { 0x43050000u, 0xC3030000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_2 */
-    { 0x43050000u, 0xC3160000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_3 */
-    { 0x43050000u, 0xC32A0000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_4 */
-    { 0x438E8000u, 0xC2DC0000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_5 */
-    { 0x438E8000u, 0xC3020000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_6 */
-    { 0x438E8000u, 0xC3160000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_7 */
-    { 0x438E8000u, 0xC32A0000u, 119.0f, 0.0f }, /* Drift_Leaderboard_Text_Pos_8 */
-    { 0x438E0000u, 0xC32A0000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_1 */
-    { 0x438E0000u, 0xC2DC0000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_2 */
-    { 0x438E0000u, 0xC3020000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_3 */
-    { 0x438E0000u, 0xC3160000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_4 */
-    { 0x43060000u, 0xC32A0000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_5 */
-    { 0x43060000u, 0xC2DE0000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_6 */
-    { 0x43060000u, 0xC3030000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_7 */
-    { 0x43060000u, 0xC3170000u, 119.0f, 0.0f }, /* Leaderboard_Text_Pos_8 */
-    { 0x430B0000u, 0xC2C80000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_1 */
-    { 0x430B0000u, 0xC2F00000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_2 */
-    { 0x430B0000u, 0xC30C0000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_3 */
-    { 0x430B0000u, 0xC3200000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_4 */
-    { 0x435C0000u, 0xC2C80000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_5 */
-    { 0x435C0000u, 0xC2F00000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_6 */
-    { 0x435C0000u, 0xC30C0000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_7 */
-    { 0x435C0000u, 0xC3200000u, 119.0f, 0.0f }, /* Leaderboard_Backing_Pos_8 */
-    { 0x43960000u, 0xC2540000u, 119.0f, 0.0f }, /* Drag_Style_Point_Text_Pos_1 */
-    { 0x43960000u, 0xC1D80000u, 119.0f, 0.0f }, /* Drag_Style_Point_Text_Pos_2 */
-    { 0x43938000u, 0x41100000u, 119.0f, 0.0f }, /* Drag_Style_Point_Text_Pos_3 */
-    { 0x43938000u, 0xBF800000u, 119.0f, 0.0f }, /* Drag_Style_Point_Text_Pos_3 */
-    { 0x43760000u, 0xC1880000u, 119.0f, 0.0f }, /* Drag_Style_Point_Backing_Pos_1 */
-    { 0x43760000u, 0xC22C0000u, 119.0f, 0.0f }, /* Drag_Style_Point_Backing_Pos_2 */
-    { 0x42200000u, 0x41300000u, 119.0f, 0.0f }, /* Style_Point_Text_Pos_1 */
-    { 0x42200000u, 0xC1100000u, 119.0f, 0.0f }, /* Style_Point_Text_Pos_2 */
-    { 0x42180000u, 0x422C0000u, 119.0f, 0.0f }, /* Style_Point_Text_Pos_3 */
-    { 0x42180000u, 0x42040000u, 119.0f, 0.0f }, /* Style_Point_Text_Pos_4 */
-    { 0xC20C0000u, 0x41A80000u, 119.0f, 0.0f }, /* Style_Point_Backing_Pos_1 */
-    { 0xC20C0000u, 0x3F800000u, 119.0f, 0.0f }, /* Style_Point_Backing_Pos_2 */
-    { 0xC3A98000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_1 */
-    { 0xC3A98000u, 0xC2280000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_2 */
-    { 0xC3A98000u, 0xC2000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_3 */
-    { 0xC3A98000u, 0xC1B00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_4 */
-    { 0xC3A98000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_5 */
-    { 0xC3A98000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_6 */
-    { 0xC3A98000u, 0x42180000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_7 */
-    { 0xC3BD8000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_8 */
-    { 0xC3BD8000u, 0xC2280000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_9 */
-    { 0xC3BD8000u, 0xC1B00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_10 */
-    { 0xC3BD8000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_11 */
-    { 0xC3BD8000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_12 */
-    { 0xC3B88000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_13 */
-    { 0xC3B38000u, 0xC2580000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_14 */
-    { 0xC3B88000u, 0xC2500000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_15 */
-    { 0xC3B88000u, 0xC2280000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_16 */
-    { 0xC3B88000u, 0xC1B00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_17 */
-    { 0xC3B88000u, 0xC1400000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_18 */
-    { 0xC3B88000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_19 */
-    { 0xC3B88000u, 0x41000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_20 */
-    { 0xC3B88000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_21 */
-    { 0xC3B38000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_22 */
-    { 0xC3B38000u, 0xC2500000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_23 */
-    { 0xC3B38000u, 0xC1400000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_24 */
-    { 0xC3B38000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_25 */
-    { 0xC3B38000u, 0x40C00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_26 */
-    { 0xC3B38000u, 0x41000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_27 */
-    { 0xC3B38000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_28 */
-    { 0xC3B38000u, 0x41E00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_29 */
-    { 0xC3CC8000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_30 */
-    { 0xC3CC8000u, 0xC1B00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_31 */
-    { 0xC3CC8000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_32 */
-    { 0xC3CC8000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_33 */
-    { 0xC3CC8000u, 0x42180000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_34 */
-    { 0xC3C78000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_35 */
-    { 0xC3C78000u, 0xC1B00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_36 */
-    { 0xC3C78000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_37 */
-    { 0xC3C78000u, 0x41880000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_38 */
-    { 0xC3C78000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_39 */
-    { 0xC3C28000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_40 */
-    { 0xC3C28000u, 0xC1B00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_41 */
-    { 0xC3C28000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_42 */
-    { 0xC3C28000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_43 */
-    { 0xC3D18000u, 0xC0000000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_44 */
-    { 0xC3D18000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_45 */
-    { 0xC3D18000u, 0xC2780000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_46 */
-    { 0xC3D18000u, 0xC1B00000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_47 */
-    { 0xC3AA0000u, 0x41900000u, -9999.0f, -9999.0f }, /* Red_Square_Removal_Pos_48 */
-    { 0xC4138000u, 0xC0C00000u, -9999.0f, -9999.0f }, /* Drift_Text_Removal_Pos_1 */
-    { 0xC4138000u, 0x42D20000u, -9999.0f, -9999.0f }, /* Drift_Text_Removal_Pos_2 */
-    { 0xC4138000u, 0x43550000u, -9999.0f, -9999.0f }, /* Drift_Text_Removal_Pos_3 */
-    { 0x44034000u, 0x41B80000u, -9999.0f, -9999.0f }, /* Drag_MiniMap_Removal_Pos */
-    { 0x43FA0000u, 0xC2CE0000u, -9999.0f, -9999.0f }, /* Car_Logo_Removal_Pos */
-    { 0xC39B8000u, 0x42900000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_1 */
-    { 0xC39B8000u, 0x41C80000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_2 */
-    { 0xC39B8000u, 0xC1B00000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_3 */
-    { 0xC39B8000u, 0xC28A0000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_4 */
-    { 0xC3940000u, 0xC2100000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_5 */
-    { 0xC3940000u, 0x41400000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_6 */
-    { 0xC3940000u, 0x42700000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_7 */
-    { 0xC3960000u, 0xC2A40000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_8 */
-    { 0xC38E0000u, 0xC1C80000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_9 */
-    { 0xC38E0000u, 0xC2EE0000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_10 */
-    { 0xC38E0000u, 0xC2900000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_11 */
-    { 0xC38E0000u, 0x41B00000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_12 */
-    { 0xC38E0000u, 0x428C0000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_13 */
-    { 0xC38E0000u, 0xC3260000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_14 */
-    { 0xC3880000u, 0x42640000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_15 */
-    { 0xC3880000u, 0x41100000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_16 */
-    { 0xC3880000u, 0xC2140000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_17 */
-    { 0xC3880000u, 0xC2AA0000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_18 */
-    { 0xC3880000u, 0xC3040000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_19 */
-    { 0xC3880000u, 0xC3330000u, -109.0f, 0.0f }, /* Pause_Menu_Pos_20 */
-    { 0x43870000u, 0x43060000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_21 */
-    { 0x43870000u, 0x42B00000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_22 */
-    { 0x43870000u, 0x42240000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_23 */
-    { 0x43870000u, 0xC2540000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_24 */
-    { 0x43870000u, 0xC0C00000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_25 */
-    { 0x438E0000u, 0x42CC0000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_26 */
-    { 0x438E0000u, 0x43150000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_27 */
-    { 0x438E0000u, 0x425C0000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_28 */
-    { 0x438E0000u, 0x41000000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_29 */
-    { 0x438E0000u, 0xC21C0000u, 119.0f, 0.0f }, /* Pause_Menu_Pos_30 */
-    { 0xC3A86DB7u, 0x42996DB7u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_1 */
-    { 0xC3594000u, 0x4374EC00u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_2 */
-    { 0xC34CEAC8u, 0xC1C80000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_3 */
-    { 0xC34CEAC8u, 0x41B00000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_4 */
-    { 0xC34CEAC8u, 0x428C0000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_5 */
-    { 0xC34CEAC8u, 0xC2EE0000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_6 */
-    { 0xC34CEAC8u, 0x431CA000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_7 */
-    { 0xC34CEAC8u, 0xC3260000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_8 */
-    { 0xC34CEAC8u, 0xC2900000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_9 */
-    { 0xC34CB2A4u, 0xC3670000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_10 */
-    { 0xC2640000u, 0x43650000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_11 */
-    { 0x43387FFFu, 0x425C0000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_12 */
-    { 0x43387FFFu, 0x42CC0000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_13 */
-    { 0x43387FFFu, 0x43150000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_14 */
-    { 0x43375001u, 0xC3230000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_15 */
-    { 0x43387FFFu, 0x41000000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_16 */
-    { 0x43387FFFu, 0xC21C0000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_17 */
-    { 0x43375001u, 0xC3808000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_18 */
-    { 0x43375001u, 0xC3520000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_19 */
-    { 0x433A4000u, 0x43440000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_20 */
-    { 0x43462001u, 0x43829000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_21 */
-    { 0x00000000u, 0x43650000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_22 */
-    { 0xC346669Au, 0xC1400000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_23 */
-    { 0xC3378000u, 0x3FC00000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_24 */
-    { 0xC2C00000u, 0x435E0000u, -109.0f, 0.0f }, /* Pause_Menu_Backing_Pos_25 */
-    { 0x431A7FFFu, 0xC20C0000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_26 */
-    { 0x42200000u, 0x435E0000u, 119.0f, 0.0f }, /* Pause_Menu_Backing_Pos_27 */
-    { 0x42BC0000u, 0xC2B00000u, 119.0f, 0.0f }, /* Race_Results_Pos_1 */
-    { 0x42BC0000u, 0x40000000u, 119.0f, 0.0f }, /* Race_Results_Pos_2 */
-    { 0x42BC0000u, 0x42BE0000u, 119.0f, 0.0f }, /* Race_Results_Pos_3 */
-    { 0x42BC0000u, 0xC2380000u, 119.0f, 0.0f }, /* Race_Results_Pos_4 */
-    { 0x42BC0000u, 0x43210000u, 119.0f, 0.0f }, /* Race_Results_Pos_5 */
-    { 0x42BC0000u, 0x43660000u, 119.0f, 0.0f }, /* Race_Results_Pos_6 */
-    { 0x42BC0000u, 0x42380000u, 119.0f, 0.0f }, /* Race_Results_Pos_7 */
-    { 0x42BC0000u, 0x433B0000u, 119.0f, 0.0f }, /* Race_Results_Pos_8 */
-    { 0x42BC0000u, 0x42E80000u, 119.0f, 0.0f }, /* Race_Results_Pos_9 */
-    { 0x42BC0000u, 0x41C00000u, 119.0f, 0.0f }, /* Race_Results_Pos_10 */
-    { 0x42BC0000u, 0xC2860000u, 119.0f, 0.0f }, /* Race_Results_Pos_11 */
-    { 0x42BC0000u, 0x43500000u, 119.0f, 0.0f }, /* Race_Results_Pos_12 */
-    { 0x42BC0000u, 0xC1C00000u, 119.0f, 0.0f }, /* Race_Results_Pos_13 */
-    { 0x42BC0000u, 0x42880000u, 119.0f, 0.0f }, /* Race_Results_Pos_14 */
-    { 0x42BC0000u, 0x437D0000u, 119.0f, 0.0f }, /* Race_Results_Pos_15 */
-    { 0x42BA0000u, 0x430A0000u, 119.0f, 0.0f }, /* Race_Results_Pos_16 */
-    { 0xC2EA0000u, 0x43460000u, 119.0f, 0.0f }, /* Race_Results_Pos_17 */
-    { 0xC2EA0000u, 0x42D60000u, 119.0f, 0.0f }, /* Race_Results_Pos_18 */
-    { 0xC2EA0000u, 0x41500000u, 119.0f, 0.0f }, /* Race_Results_Pos_19 */
-    { 0xC2EA0000u, 0xC29A0000u, 119.0f, 0.0f }, /* Race_Results_Pos_20 */
-    { 0xC2FC0000u, 0xC2880000u, 119.0f, 0.0f }, /* Race_Results_Pos_21 */
-    { 0xC3010000u, 0x41B80000u, 119.0f, 0.0f }, /* Race_Results_Pos_22 */
-    { 0xC3020000u, 0x42EC0000u, 119.0f, 0.0f }, /* Race_Results_Pos_23 */
-    { 0xC3020000u, 0x43500000u, 119.0f, 0.0f }, /* Race_Results_Pos_24 */
-    { 0xC2540000u, 0x40E80000u, 87.2f, 0.0f }, /* Race_Results_Backing_Pos_1 */
-    { 0xC2504000u, 0x40E80000u, 87.2f, 0.0f }, /* Race_Results_Backing_Pos_2 */
-    { 0xC2778000u, 0xC26A4000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_3 */
-    { 0xC2836000u, 0x42418000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_4 */
-    { 0xC2836000u, 0x4382B800u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_5 */
-    { 0xC2836000u, 0x431A6FFDu, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_6 */
-    { 0x422CE114u, 0x42D60000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_7 */
-    { 0x423F27A8u, 0x41600000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_8 */
-    { 0x42160004u, 0xC29A0000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_9 */
-    { 0x421A9A80u, 0x42FA0000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_10 */
-    { 0x4223BDCCu, 0x42000000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_11 */
-    { 0x422BFFF8u, 0xC2700000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_12 */
-    { 0x421A4000u, 0x43A97800u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_13 */
-    { 0x4223BDCCu, 0x43590000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_14 */
-    { 0x422CE114u, 0x43470000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_15 */
-    { 0x435A8000u, 0xC384C000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_16 */
-    { 0x41500000u, 0x42AC0000u, 119.0f, 0.0f }, /* Race_Results_Backing_Pos_17 */
+/* Named noninteractive HUD roots, verified against the local PC assets.
+ * Identity is (element name hash, editor object ID); coordinates are never
+ * identity. Left/right semantics preserve the corresponding HUD entries in
+ * ThirteenAG NFSUnderground.WidescreenFix.dat (MIT). Nested drag turbo
+ * elements explicitly use the right edge inside the left gauge cluster.
+ * ChyronGroup covers the complete EA TRAX banner, including text and caps. */
+    { 0xDC497EC7u, 0x000D1F26u, 3 }, /* Style_Point_Backing */
+    { 0xE7F8CB5Eu, 0x000D1F1Cu, 3 }, /* speed_backing */
+    { 0x27754C7Fu, 0x00008DC3u, 3 }, /* SP_Trick_Type */
+    { 0x15D0E247u, 0x00008DBEu, 3 }, /* SP_Trick_Point */
+    { 0xCA5A113Bu, 0x00008DB0u, 3 }, /* SP_DATA */
+    { 0x4B19B22Du, 0x00008DACu, 3 }, /* Style_Points_Title */
+    { 0x14A458F7u, 0x00008D6Fu, 3 }, /* Style_Point_Backing_1 */
+    { 0x657CB989u, 0x000000D8u, 3 }, /* RaceTime */
+    { 0x01B0E3B1u, 0x0000008Fu, 2 }, /* konopaoverheat(119) */
+    { 0x411301E3u, 0x00000012u, 3 }, /* PositionBacking */
+    { 0x02DDF58Cu, 0x00000021u, 3 }, /* Group */
+    { 0x78634AAEu, 0x00000035u, 3 }, /* Group(1) */
+    { 0x5164D4EAu, 0x00008BD6u, 2 }, /* GaugeCluster */
+    { 0x411301E3u, 0x0000535Au, 3 }, /* PositionBacking */
+    { 0xA86C3C9Bu, 0x00005344u, 2 }, /* LapCounterBacking_1 */
+    { 0x2AF89FDAu, 0x00004E8Fu, 3 }, /* LBData_4 */
+    { 0x4FDDD64Fu, 0x00004E8Eu, 3 }, /* LBBacking_4 */
+    { 0x2AF89FD9u, 0x00004E86u, 3 }, /* LBData_3 */
+    { 0x4FDDD64Eu, 0x00004E85u, 3 }, /* LBBacking_3 */
+    { 0x2AF89FD8u, 0x00004E78u, 3 }, /* LBData_2 */
+    { 0x4FDDD64Du, 0x00004E77u, 3 }, /* LBBacking_2 */
+    { 0x2AF89FD7u, 0x00004E31u, 3 }, /* LBData_1 */
+    { 0x4FDDD64Cu, 0x00004E1Du, 3 }, /* LBBacking_1 */
+    { 0xA86C3C9Du, 0x000046ABu, 2 }, /* LapCounterBacking_3 */
+    { 0xA86C3C9Cu, 0x00001E8Eu, 2 }, /* LapCounterBacking_2 */
+    { 0x30D9802Eu, 0x00001E80u, 2 }, /* CurrentLapTime */
+    { 0x05092833u, 0x00001E7Eu, 2 }, /* CurrentLapTimeText */
+    { 0x097F4B79u, 0x00001E77u, 2 }, /* BestLapTime */
+    { 0x06E9A0FEu, 0x00001E73u, 2 }, /* BestLapTimeText */
+    { 0xF2685238u, 0x00001E6Cu, 2 }, /* NumberLaps */
+    { 0x57F0E3A5u, 0x00001E6Au, 2 }, /* LapNumber */
+    { 0x8B7E6EA1u, 0x00001E66u, 2 }, /* LapText */
+    { 0xE8434EB4u, 0x00001DD0u, 3 }, /* POSITION */
+    { 0xFA3D7B74u, 0x00004861u, 3 }, /* LBTextBacking_4 */
+    { 0xFA3D7B73u, 0x00004860u, 3 }, /* LBTextBacking_3 */
+    { 0xFA3D7B72u, 0x0000485Fu, 3 }, /* LBTextBacking_2 */
+    { 0x4183E0A4u, 0x00001EF0u, 3 }, /* LeaderText_4 */
+    { 0x4183E0A3u, 0x00001EEDu, 3 }, /* LeaderText_3 */
+    { 0x4183E0A2u, 0x00001EEAu, 3 }, /* LeaderText_2 */
+    { 0x4183E0A1u, 0x00001EDEu, 3 }, /* LeaderText_1 */
+    { 0x5164D4EAu, 0x00008B81u, 3 }, /* GaugeCluster */
+    { 0xFA3D7B71u, 0x0000485Eu, 3 }, /* LBTextBacking_1 */
+    { 0x4A4980E9u, 0x000D05B4u, 2 }, /* SlowMessage */
+    { 0x70E3521Bu, 0x00011F58u, 3 }, /* 3rdperson_DriftAngle_Filler */
+    { 0x11DE6FC3u, 0x00011F1Fu, 3 }, /* 3rdperson_Driftometer */
+    { 0x2AF89FDAu, 0x00008E90u, 3 }, /* LBData_4 */
+    { 0x2AF89FD9u, 0x00008E88u, 3 }, /* LBData_3 */
+    { 0x2AF89FD8u, 0x00008E81u, 3 }, /* LBData_2 */
+    { 0x2AF89FD7u, 0x00008E77u, 3 }, /* LBData_1 */
+    { 0x4183E0A4u, 0x00008E5Du, 3 }, /* LeaderText_4 */
+    { 0x4183E0A3u, 0x00008E58u, 3 }, /* LeaderText_3 */
+    { 0x4183E0A2u, 0x00008E50u, 3 }, /* LeaderText_2 */
+    { 0x4183E0A1u, 0x00008E42u, 3 }, /* LeaderText_1 */
+    { 0xFA3D7B74u, 0x00008E33u, 3 }, /* LBTextBacking_4 */
+    { 0x4FDDD64Fu, 0x00008E32u, 3 }, /* LBBacking_4 */
+    { 0xFA3D7B73u, 0x00008E2Bu, 3 }, /* LBTextBacking_3 */
+    { 0x4FDDD64Eu, 0x00008E2Au, 3 }, /* LBBacking_3 */
+    { 0xFA3D7B72u, 0x00008E23u, 3 }, /* LBTextBacking_2 */
+    { 0x4FDDD64Du, 0x00008E22u, 3 }, /* LBBacking_2 */
+    { 0xFA3D7B71u, 0x00008E08u, 3 }, /* LBTextBacking_1 */
+    { 0x4FDDD64Cu, 0x00008DF0u, 3 }, /* LBBacking_1 */
+    { 0xA86C3C9Bu, 0x0000809Du, 2 }, /* LapCounterBacking_1 */
+    { 0x411301E3u, 0x00008074u, 3 }, /* PositionBacking */
+    { 0x097F4B79u, 0x000051F9u, 2 }, /* BestLapTime */
+    { 0x06E9A0FEu, 0x000051F8u, 2 }, /* BestLapTimeText */
+    { 0xF2685238u, 0x000051F7u, 2 }, /* NumberLaps */
+    { 0x57F0E3A5u, 0x000051F6u, 2 }, /* LapNumber */
+    { 0x8B7E6EA1u, 0x000051F5u, 2 }, /* LapText */
+    { 0xA86C3C9Du, 0x000051F4u, 2 }, /* LapCounterBacking_3 */
+    { 0x5164D4EAu, 0x00008EAFu, 3 }, /* GaugeCluster */
+    { 0x8B4AC4B0u, 0x00010759u, 3 }, /* Driftometer_Group */
+    { 0x79A62CBAu, 0x00008FF6u, 2 }, /* StylePointsGroup */
+    { 0x1AC732CDu, 0x000D0630u, 2 }, /* TotalPointsGroup */
+    { 0xB5C6103Bu, 0x00011DBCu, 3 }, /* Angle_Indicator_DATA */
+    { 0x19B17682u, 0x00011F6Eu, 3 }, /* 3rdperson_DriftAngle_Angle_degrees */
+    { 0x03E857DAu, 0x00011F00u, 3 }, /* 3rdperson_DriftAngle_Meter */
+    { 0x30787B84u, 0x000D209Fu, 3 }, /* Angle_degrees */
+    { 0x82009C1Fu, 0x000053F4u, 2 }, /* ChyronGroup */
+    { 0x79A62CBAu, 0x000D03AFu, 3 }, /* StylePointsGroup */
+    { 0x79A62CBAu, 0x000D2758u, 3 }, /* StylePointsGroup */
+    { 0xE8434EB4u, 0x00008FCBu, 3 }, /* POSITION */
+    { 0x24D28793u, 0x00001DF4u, 2 }, /* Single race minimap backing */
+    { 0x24D28793u, 0x000051F2u, 2 }, /* Drift minimap backing */
+    { 0x84CCA1C0u, 0x00000286u, 3 }, /* Group(12) */
+    { 0xEE84DDEFu, 0x00008557u, 3 }, /* TurboPlus */
+    { 0xBEE88FF7u, 0x0000855Au, 3 }, /* TurboMinus */
