@@ -1,0 +1,54 @@
+--- a/runtime/lifecycle.c
++++ b/runtime/lifecycle.c
+@@ -29,6 +29,7 @@
+  * touches the guest message queue runs on the guest thread, in
+  * PeekMessageA/GetMessageA (lifecycle_pump), so the queue stays
+  * single-threaded. */
++#include "cpu.h"
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -163,24 +164,20 @@
+     set_active(0, "autotest blur");
+ }
+ 
+-/* win32_ext.c GetMessageA: may the inactive game be parked there?  The game
+- * never parks in a network race: its pump (0x5BF1C0) only peeks while
+- * World::IsOnline (0x5F00F0: [0x89CF69], [0x8669F4] > 0 or [0x866A14] > 0).
+- * In the LAN screens, the lobby and the game room it does, and a parked game
+- * stops answering its lobby server's ping (server.cfg PINGWAIT 30 s): the
+- * server drops it, and a host's own drop ends every player's session.  Mac
+- * players switch apps often, so while a LAN session is open (from the
+- * game's WSAStartup on its LAN screens to the last WSACleanup) the game is
+- * not parked: the deactivation messages still went out (the game paused its
+- * sound and ignores input, [0x870988] = 0), it just keeps running as in a
+- * network race, with the output muted as when parked.  Single-player is
+- * unchanged. */
+-int winsock_session_active(void);                                  /* winsock.c */
++/* NFSU1 initializes Winsock at startup, including in single-player, so the
++ * upstream WSAStartup count cannot identify an active network session.
++ * PC 1.4's own message pump (0x411030) tests this byte before the activation
++ * flag: when set it keeps polling even while inactive. Follow that decision
++ * for parking, audio and watchdog status instead of NFSU2's session heuristic.
++ * Read only on the guest thread, like the original pump. */
++static int background_session_active(void){
++    return mem_is_committed(0x00735e78u) && MR8(0x00735e78u) != 0;
++}
+ void audio_set_muted(int on);                                      /* audio.m */
+ static int g_inactive_gen, g_park_noted = -1, g_session_muted;
+ int lifecycle_may_park(void){
+     if (g_told_active) return 0;
+-    if (winsock_session_active()){
++    if (background_session_active()){
+         if (g_park_noted != g_inactive_gen){
+             g_park_noted = g_inactive_gen;
+             fprintf(stderr, "app: in the background during a LAN session: the game keeps running (sound paused) "
+@@ -196,7 +193,7 @@
+  * watchdog (no report: no frames on purpose) and the Discord status
+  * ("Paused").  During a LAN session in the background the game keeps
+  * running, so neither treats it as parked. */
+-int lifecycle_game_parked(void){ return !g_told_active && !winsock_session_active(); }
++int lifecycle_game_parked(void){ return !g_told_active && !background_session_active(); }
+ /* Passes lifecycle_game_parked() on when it changes: the Discord status
+  * ("Paused") and free-roam friends (roam_game.c: "paused") follow the
+  * parked state, not the activation, so a game kept running in a LAN session

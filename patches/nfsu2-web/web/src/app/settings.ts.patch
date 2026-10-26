@@ -58,7 +58,7 @@
  // a flag nobody reads (autotest.c do_quit, lifecycle.c leave).
  export const APP_DEFAULTS: Readonly<Record<string, string>> = {
 -  ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
-+  NFSU1_GRAPHICS: 'max', NFSU1_INTRO: 'skippable', NFSU1_WIDESCREEN: '1', ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
++  NFSU2_BACKGROUND: 'pause', NFSU1_GRAPHICS: 'max', NFSU1_INTRO: 'skippable', NFSU1_WIDESCREEN: '1', ALARM: '0', FIXMAT: '0', FIXMAT_MODE: '3', NOMOVIES: '0', SNDSYNC: '0', GPUVS: '1',
    NFSU2_READONLY_DATA: '1',
    // the browser's: play in the window unless settings.ini asks for full screen
    NFSFULL: '0',

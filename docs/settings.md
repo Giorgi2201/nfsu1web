@@ -14,6 +14,7 @@ control difficulty, transmission and camera.
 | Startup movies | Skippable by default; Original keeps the game's usual behavior, Off skips them automatically. |
 | Movie playback | Turn in-game movie playback on or off. |
 | Audio | Sound output and audio response. |
+| When the game loses focus | Pause (default) freezes the game and sound when switching tabs or windows, then resumes on return. Keep running continues the game. The game’s network background-run flag can keep its network screens running with sound muted. Applies on the next launch. |
 | Controller | Device policy, dead zones, trigger threshold and vibration permission. |
 
 Open **Game data** to download or restore a ZIP backup of profiles and settings.
@@ -74,3 +75,9 @@ content hashes; deleting saves or clearing storage is unnecessary.
 
 If menu or race text disappears, restart without `--hd-fonts`. Gauges remain
 stock.
+
+Focus-loss parking follows PC 1.4's own background polling flag, rather than
+the upstream Winsock initialization count: NFSU1 initializes Winsock even in
+single-player. The native synthetic check is
+`python3 tools/lifecycle_runtime_smoke.py` after applying the runtime overlay;
+it checks lifecycle policy, not rendered game behavior.

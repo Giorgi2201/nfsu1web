@@ -38,6 +38,11 @@ graphics, input, saves, date/time, audio, startup movies, and shader handling.
 The input overlay extends the pinned keyboard event rings with a separate
 driving stream; original physical keys and text remain available to menus and
 chat. The upstream MIT notice remains in `patches/nfsu2-web.LICENSE`.
+The focus-loss option reuses the pinned upstream `background` setting, browser
+focus events and runtime lifecycle, with Pause as the launcher default and an
+exposed Keep running choice. The lifecycle overlay uses PC 1.4’s own background
+polling flag instead of the NFSU2-specific Winsock startup heuristic. No
+additional upstream source revision is used.
 The Rust Online relay is handwritten and implements the pinned browser
 runtime's kind-32 wire format. Local protocol adapters use PC 1.4 analysis;
 game function bodies are not included.

@@ -1,6 +1,6 @@
 {
   "inspected_on": "2026-10-21",
-  "updated_on": "2026-10-25",
+  "updated_on": "2026-10-26",
   "repositories": [
     {
       "repository": "codepdbh/nfsu1-recompiled",
@@ -560,5 +560,17 @@
     "license": "MIT; patches/nfsu2-web.LICENSE",
     "implementation": "Track consumed frames for non-static looping buffers partially rewritten during playback; report both Unlock regions, silence stale PCM and continue advancing DirectSound cursors.",
     "validation": "Native synthetic mixer smoke; browser/game confirmation required."
+  },
+  "focus_loss_controls": {
+    "date": "2026-10-26",
+    "upstream_revision": "31da468582c3de14fd6f4233831f62816e2df83d",
+    "sources": [
+      "web/src/app/settings.ts",
+      "web/src/app/settings-ui.ts",
+      "web/src/app/shell.ts",
+      "web/src/input/index.ts",
+      "runtime/lifecycle.c"
+    ],
+    "reuse": "Existing background setting and focus/lifecycle contracts; expose Pause / Keep running and default to Pause instead of forcing run. Runtime lifecycle uses PC 1.4 background polling flag 0x735e78, as tested by message pump 0x411030, instead of Winsock startup count (initialized even in single-player). Native synthetic lifecycle smoke covers this distinction; browser/game validation remains manual. MIT notice retained in patches/nfsu2-web.LICENSE."
   }
 }

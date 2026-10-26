@@ -52,7 +52,7 @@
    let fsNote = '';
    if (full) {
      const fs = await enterFullscreen(stage);
-@@ -299,9 +300,24 @@
+@@ -299,9 +300,22 @@
    // the save overlay: registry seed (bundle.m app_seed_registry), test inputs
    const host: Record<string, string> = {
      HOME: '/save', NFSU2_DATA: '/data', NFSU2_SAVEDIR: '/save', NFSU2_REGFILE: '/save/registry.txt',
@@ -69,15 +69,13 @@
 +  // Preserve shared host options; filter unsupported game variables before startup.
 +  Object.assign(r.env, {
 +    NFSU2_AUTOSAVE: '0', NFSU2_NET: 'on', NFSU2_ONLINE: '1', NFSU2_ROAM: '0',
-+    // Two browser tabs: a hidden tab must not freeze (kills Online UDP / loops host audio).
-+    NFSU2_BACKGROUND: 'run',
 +    NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NFSU2_PAD_FE_KEYS: '0',
 +    NFSU2_FNG_LOG: '0', NFSU2_STATUS_EVERY: '0', NFSU2_AUDIO_STATUS: '0',
 +  });
    // offline mode: the server does not answer.  The movies stream from it, so unless every one of them is in this
    // browser they are off for this game (a movie the game could not read would stop it).
    setReach(await serverAnswers(2000));
-@@ -317,7 +333,7 @@
+@@ -317,7 +331,7 @@
    // the log is for sharing when asking for help: it names neither the server (a private server's address) nor
    // more of this browser than its major version and system (the audit's PRIV-5).  These session lines stay when
    // a long game fills the log (logs.ts keep).
@@ -86,7 +84,7 @@
    log.keep(`[app] save folder: OPFS ${SAVE} (/save); canvas ${size.w}x${size.h} device pixels, display ${displayHz} Hz; ${browserBrief()}`);
    for (const n of r.notes) log.keep(`[app] ${n}`);
    const reg = r.env.NFSU2_REGFILE.replace(/^\/save\//, '');
-@@ -328,19 +344,7 @@
+@@ -328,19 +342,7 @@
      if (r.env.NFSU2_SEED_REGISTRY === '0') log.add('[app] no registry yet, the game will run its first-run check');
      else { await writeFile(SAVE, reg, registryDefaults); log.add(`[app] first launch, registry seeded with the built-in defaults (/save/${reg})`); }
    }
@@ -107,7 +105,7 @@
    if (q.get('script')) {
      await writeFile(SAVE, 'autotest-script.txt', await (await fetch(q.get('script')!, { cache: 'no-store' })).text());
      if (!('NFSU2_INPUT_SCRIPT' in r.env)) r.env.NFSU2_INPUT_SCRIPT = '/save/autotest-script.txt';
-@@ -351,9 +355,10 @@
+@@ -351,9 +353,10 @@
    await download.pause();
    // the server's virtual LAN: the game's own LAN races and Online mode (network = on, the default) and free
    // roam all need it; only network = off stays off it (the game then shows its own network error)
@@ -119,7 +117,7 @@
    fatal = null;
    quitAt = null;
    saved = null;
-@@ -363,7 +368,7 @@
+@@ -363,7 +366,7 @@
      // longer than the game), and a closure from this function would keep its
      // scope, and with it this game, reachable
      session = await GameSession.start({
@@ -128,7 +126,7 @@
        artifacts: q.get('artifacts') ?? undefined, dumpScale: q.get('dumpscale') ? +q.get('dumpscale')! : undefined,
        toggleFullscreen, log: logLine, onFatal: stopFatal,
      });
-@@ -376,7 +381,7 @@
+@@ -376,7 +379,7 @@
      download.resume();
      return;
    }
@@ -137,7 +135,7 @@
    document.body.dataset.phase = 'playing';
    away = new AwayCheck(session, awayLimits(), awayLine, logLine);
    fps.memory = session.proc.memory;
-@@ -384,8 +389,7 @@
+@@ -384,8 +387,7 @@
    const waitStatus = setInterval(() => { if (st.status) { fps.reader = st.status; clearInterval(waitStatus); } }, 100);
    fps.set((r.env.NFSU2_FPS_COUNTER as FpsMode) in { off: 1, on: 1, detailed: 1 } ? r.env.NFSU2_FPS_COUNTER as FpsMode : 'off');
    const hint = offlineNote + (fsNote || (full ? 'F9 opens the menu. Hold Esc to leave full screen.' : 'F9 opens the menu: full screen, controls, quit.'));
@@ -147,7 +145,7 @@
    void st.exited.then(code => { clearInterval(waitStatus); onExit(st, code); });
    // Chrome may keep the sound off until a click or a key press (its autoplay
    // rule); a controller button does not count, so say what does
-@@ -396,6 +400,25 @@
+@@ -396,6 +398,24 @@
    }, 3000);
  }
  
@@ -164,7 +162,6 @@
 +function browserEnv(input: Record<string, string>): Record<string, string> {
 +  const out = Object.fromEntries(Object.entries(input).filter(([key]) => BROWSER_ENV.has(key)));
 +  Object.assign(out, { NFSU2_AUTOSAVE: '0', NFSU2_NET: 'on', NFSU2_ONLINE: '1', NFSU2_ROAM: '0',
-+    NFSU2_BACKGROUND: 'run',
 +    NFSU2_SEED_REGISTRY: '0', NFSU2_FPS_COUNTER: 'off', NFSU2_PAD_FE_KEYS: '0',
 +    NFSU1_DYNAMIC_RESOLUTION: '1', NFSU1_SAVEDIR: '/save/nfsu1', NFSU1_READONLY_DATA: '1' });
 +  return out;
@@ -173,7 +170,7 @@
  function logLine(s: string) { log.add(s); }
  /** whether the server answered (the start page's /players, or the check at Play): offline mode when not */
  function setReach(ok: boolean) {
-@@ -473,31 +496,24 @@
+@@ -473,31 +493,24 @@
    if (fatal) setPhase('exited', 'Did not start', `The game was stopped: ${fatal}. Download the log to see why; ` +
      (firefoxVersion() !== null ? 'about:support, Graphics, shows what Firefox thinks of the graphics.' : 'chrome://gpu shows what Chrome thinks of the graphics.'));
    else {
@@ -215,7 +212,7 @@
  }
  /** the newest profile in this browser (listProfiles sorts by time), or null */
  async function newestProfile() { return (await listProfiles(SAVE).catch(() => []))[0] ?? null; }
-@@ -519,7 +535,7 @@
+@@ -519,7 +532,7 @@
  /** the controls sheet of the start page, in a dialog (F9, Controls, while the game runs) */
  function openHelp() {
    const body = $('#help-body');
@@ -224,7 +221,7 @@
    $<HTMLDialogElement>('#help').showModal();
  }
  
-@@ -579,16 +595,9 @@
+@@ -579,16 +592,9 @@
    const m = $<HTMLDialogElement>('#menu');
    if (m.open) { m.close(); return; }
    m.querySelector<HTMLButtonElement>('[data-act="fullscreen"]')!.textContent = isFullscreen() ? 'Leave full screen' : 'Full screen';
@@ -242,7 +239,7 @@
    $('#stage').classList.add('cursor');
    m.showModal();
  }
-@@ -600,26 +609,13 @@
+@@ -600,26 +606,13 @@
        m.close();
        toggleFullscreen();
        break;
@@ -270,7 +267,7 @@
        break;
      }
    }
-@@ -640,10 +636,7 @@
+@@ -640,10 +633,7 @@
    if (!quitAt || quitAt.s !== s) return 0;
    return quitAt.forced && performance.now() - quitAt.t > STOP_AFTER_MS ? 2 : 1;
  }
@@ -282,7 +279,7 @@
  
  // ------------------------------------------------------------- helpers --
  function confirmBox(title: string, body: Node | string, ok: string, danger = false, about = '', cancel = 'Cancel'): Promise<boolean> {
-@@ -657,7 +650,7 @@
+@@ -657,7 +647,7 @@
    d.showModal();
    return new Promise(res => d.addEventListener('close', () => res(d.returnValue === 'ok'), { once: true }));
  }
@@ -291,7 +288,7 @@
  
  // --------------------------------------------------------- game module --
  // A failed download (Wi-Fi drop, the server restarting, the module not built
-@@ -824,7 +817,7 @@
+@@ -824,7 +814,7 @@
    const asked = TEST_PARAMS.some(k => addr.has(k));
    const dev = asked && await devServer();
    const given = takeParams(dev);
@@ -300,7 +297,7 @@
    fps = new FpsOverlay($('#fps'));
    // made here once: a closure made per game (in startGame) would keep that game's scope reachable
    fps.extra = () => session?.stats() ?? {};
-@@ -834,7 +827,7 @@
+@@ -834,7 +824,7 @@
      readOnly: () => !instance.owner, say: pageToast,
    }, $('#online'));
    // who plays on this server now (Online): only while no game runs here
@@ -309,7 +306,7 @@
    window.addEventListener('online', () => players?.now());
    window.addEventListener('resize', placeNotices);
    download = new Predownload(s => saves.showData(s), logLine);
-@@ -849,13 +842,17 @@
+@@ -849,13 +839,17 @@
    $('#menu').addEventListener('click', e => { const a = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-act]'); if (a) void menuAction(a.dataset.act!); });
    $('#menu').addEventListener('close', () => { $('#stage').classList.remove('cursor'); $('#stage').querySelector('canvas')?.focus(); });
  

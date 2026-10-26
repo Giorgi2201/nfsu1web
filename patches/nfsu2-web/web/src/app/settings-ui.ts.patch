@@ -1,6 +1,6 @@
 --- a/web/src/app/settings-ui.ts
 +++ b/web/src/app/settings-ui.ts
-@@ -21,54 +21,27 @@
+@@ -21,54 +21,28 @@
  interface Group { title: string; items: Item[]; status?: boolean; own?: boolean }
  
  const GROUPS: Group[] = [
@@ -55,6 +55,7 @@
 -    { key: 'hfr_fixes', label: 'High-frame-rate fixes', help: 'For the parts of the game that count frames: default, all, none, or a list of ticks, timer, particles, trail, audio, rtf.', c: { t: 'text', placeholder: 'default' }, more: true },
 -    { key: 'nos_trail_length', label: 'Nitrous trail length', help: 'Length factor of the nitrous and speed-streak trails (1 = normal).', c: { t: 'num', min: 0, step: 0.1 }, more: true },
 +  { title: 'Browser', items: [
++    { key: 'background', label: 'When the game loses focus', help: 'Pause freezes the game and its sound when you switch tabs or windows, and resumes when you return. The game’s network screens can keep running with sound muted. Keep running continues the game.', c: { t: 'seg', opts: [['pause', 'Pause'], ['run', 'Keep running']] } },
 +    { key: 'fullscreen', label: 'Full screen on Play', help: 'Open the game full screen when the browser allows it.', c: { t: 'switch' } },
    ] },
 -  { title: 'Controller', items: [
@@ -73,7 +74,7 @@
    ] },
  ];
  
-@@ -284,6 +257,11 @@
+@@ -284,6 +258,11 @@
    private row(it: Item): HTMLElement {
      const def = keyDef(it.key)!;
      const row = document.createElement('div'); row.className = 'set'; row.dataset.key = it.key;
@@ -85,7 +86,7 @@
      const id = `set-${it.key}`;
      const cur = this.current(it.key);
      const f = this.resolved.file[it.key];
-@@ -295,6 +273,7 @@
+@@ -295,6 +274,7 @@
      if (label instanceof HTMLLabelElement) label.htmlFor = id;
      const help = document.createElement('p'); help.className = 'set-help'; help.id = `${id}-help`; help.textContent = it.help;
      const ctl = document.createElement('div'); ctl.className = 'set-control';
@@ -93,7 +94,7 @@
      let described: HTMLElement;                      // what aria-describedby goes on
      if (c.t === 'switch') {
        const on = boolOn(cur || 'off');
-@@ -307,6 +286,7 @@
+@@ -307,6 +287,7 @@
        described = b;
      } else if (c.t === 'seg') {
        const seg = document.createElement('div'); seg.className = 'seg';
